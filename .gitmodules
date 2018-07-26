@@ -1,0 +1,18 @@
+[submodule "Configure"]
+	path = Configure
+	url = https://www.github.com/ox223252/Configure.git
+[submodule "src/lib/config"]
+	path = src/lib/config
+	url = https://github.com/ox223252/config.git
+[submodule "src/lib/freeOnExit"]
+	path = src/lib/freeOnExit
+	url = https://github.com/ox223252/freeOnExit.git
+[submodule "src/lib/signalHandler"]
+	path = src/lib/signalHandler
+	url = https://github.com/ox223252/signalHandler.git
+[submodule "src/lib/termRequest"]
+	path = src/lib/termRequest
+	url = https://github.com/ox223252/termRequest.git
+[submodule "src/lib/log"]
+	path = src/lib/log
+	url = https://www.github.com/ox223252/log.git
