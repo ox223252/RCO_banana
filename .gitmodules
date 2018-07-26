@@ -16,3 +16,6 @@
 [submodule "src/lib/log"]
 	path = src/lib/log
 	url = https://www.github.com/ox223252/log.git
+[submodule "src/lib/timer"]
+	path = src/lib/timer
+	url = https://github.com/ox223252/timer.git

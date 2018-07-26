@@ -7,6 +7,7 @@
 #include "lib/log/log.h"
 #include "lib/signalHandler/signalHandler.h"
 #include "lib/termRequest/request.h"
+#include "lib/timer/timer.h"
 
 enum
 {
@@ -121,14 +122,17 @@ int main ( int argc, char * argv[] )
 	}
 
 	printf ( "run %s\n", ( flag.strat )? "red" : "green" );
-	logVerbose ( "bon bah c'est fini quoi\n" );
+	logVerbose ( "un petit log\n" );
 
-	i = 90;
-	printf ( "\e[2K\r%6d\n\e[A", i );
+	i = 0;
+	printf ( "\e[2K\r%6d\n", i );
+
+	timer ( 9000000, proccessNormalEnd, "stop request by timer", true );
+
 	while ( 1 )
 	{
 		sleep ( 1 );
-		printf ( "\e[2K\r%6d\n\e[A", --i );
+		printf ( "\e[A\e[2K\r%6d\n", ++i );
 	}
 
 	return ( 0 );
