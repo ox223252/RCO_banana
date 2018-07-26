@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "lib/config/config_arg.h"
 #include "lib/freeOnExit/freeOnExit.h"
@@ -14,8 +15,18 @@ enum
 	MENU_exit
 };
 
+void proccessNormalEnd ( void * arg )
+{
+	if ( arg )
+	{
+		printf ( "\e[2K\r\e[1;33m%s\e[0m\n", ( char * )arg );
+	}
+	exit ( 0 );
+}
+
 int main ( int argc, char * argv[] )
 {
+	int i = 0;
 	char *menuItems[] = {
 		"run \e[1;31mRED\e[0m",
 		"run \e[1;32mGREEN\e[0m",
@@ -80,12 +91,45 @@ int main ( int argc, char * argv[] )
 		return ( 0 );
 	}
 
+	// manage ending signals
+	signalHandling signal = {
+		.flag = {
+			.Int = 1, //ctrl+C
+			.Term = 1, // kill
+		},
+		.Int = {
+			.func = proccessNormalEnd,
+			.arg = "Ctrl+C requested"
+		},
+		.Term = {
+			.func = proccessNormalEnd,
+			.arg = "Kill requested"
+		}
+	};
+
+	signalHandlerInit ( &signal );
+
 	logSetQuiet ( flag.quiet );
 	logSetColor ( flag.color );
 	logSetDebug ( flag.debug );
 
+	// init memory free on exit
+	if ( initFreeOnExit ( ) )
+	{
+		logVerbose ( "init free_on_exit's subroutine failed\n" );
+		return ( __LINE__ );
+	}
+
 	printf ( "run %s\n", ( flag.strat )? "red" : "green" );
 	logVerbose ( "bon bah c'est fini quoi\n" );
+
+	i = 90;
+	printf ( "\e[2K\r%6d\n\e[A", i );
+	while ( 1 )
+	{
+		sleep ( 1 );
+		printf ( "\e[2K\r%6d\n\e[A", --i );
+	}
 
 	return ( 0 );
 }
