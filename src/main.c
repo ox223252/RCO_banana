@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "lib/config/config_arg.h"
+#include "lib/config/config_file.h"
 #include "lib/freeOnExit/freeOnExit.h"
 #include "lib/log/log.h"
 #include "lib/signalHandler/signalHandler.h"
@@ -28,6 +29,11 @@ void proccessNormalEnd ( void * arg )
 int main ( int argc, char * argv[] )
 {
 	int i = 0;
+
+	char dynamixelsPath[ 64 ] = { 0 };
+	char motorBoadPath[ 64 ] = { 0 };
+	uint8_t pca9685 = 0;
+
 	char *menuItems[] = {
 		"run \e[1;31mRED\e[0m",
 		"run \e[1;32mGREEN\e[0m",
@@ -38,8 +44,8 @@ int main ( int argc, char * argv[] )
 
 	struct
 	{
-		uint8_t un0:1,  // 0x01
-			strat:1,    // 0x02
+		uint8_t green:1,// 0x01
+			red:1,      // 0x02
 			un2:1,      // 0x04
 			help:1,     // 0x08
 			quiet:1,    // 0x10
@@ -51,26 +57,42 @@ int main ( int argc, char * argv[] )
 	param_el paramList[] = 
 	{
 		{ "--help", "-h",  0x08, cT ( bool ), &flag, "this window" },
+		{ "--green", "-g", 0x01, cT ( bool ), &flag, "launch the green prog" },
 		{ "--red", "-r",   0x02, cT ( bool ), &flag, "launch the red prog" },
-		{ "--green", "-g", 0x00, cT ( bool ), &flag, "launch the green prog" },
 		{ "--q", "-q",     0x10, cT ( bool ), &flag, "hide all trace point" },
 		{ "--debug", "-d", 0x20, cT ( bool ), &flag, "display many trace point" },
 		{ "--color", "-c", 0x40, cT ( bool ), &flag, "add color to debug traces" },
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
 
-	if ( argc < 2 )
-	{ // if no cmd line parameter
+	config_el configList[] =
+	{
+		{ "PATH_DYNA", cT ( str ), dynamixelsPath, "PATH to access to dynamixels"},
+		{ "PATH_MOTOR_BOARD", cT ( str ), motorBoadPath, "PATH to access to dynamixels"},
+		{ "PCA9695_ADDR", cT ( uint8_t ), &pca9685, "pca9685 board i2c addr"},
+		{ NULL, 0, NULL, NULL }
+	};
+
+	if ( readParamArgs ( argc, argv, paramList ) ||
+		readConfigFile ( "res/config.rco", configList ) )
+	{
+		return ( __LINE__ );
+	}
+	
+	if ( !( flag.red ^ flag.green ) )
+	{ // if no color or both colors set
 		switch ( menu ( 0, menuItems, NULL ) )
 		{
 			case MENU_red:
 			{
-				flag.strat = 1;
+				flag.red = 1;
+				flag.green = 0;
 				break;
 			}
 			case MENU_green:
 			{
-				flag.strat = 0;
+				flag.green = 1;
+				flag.red = 0;
 				break;
 			}
 			case MENU_exit :
@@ -79,10 +101,6 @@ int main ( int argc, char * argv[] )
 				return ( __LINE__ );
 			}
 		}
-	}
-	else if ( readParamArgs ( argc, argv, paramList ) )
-	{
-		return ( __LINE__ );
 	}
 
 	if ( flag.help )
@@ -121,8 +139,10 @@ int main ( int argc, char * argv[] )
 		return ( __LINE__ );
 	}
 
-	printf ( "run %s\n", ( flag.strat )? "red" : "green" );
-	logVerbose ( "un petit log\n" );
+	printf ( "run %s\n", ( flag.red )? "\e[1;31mred\e[0m" : "\e[1;32mgreen\e[0m" );
+	logVerbose ( " - dyna : %s\n", dynamixelsPath );
+	logVerbose ( " - robot clow : %s\n", motorBoadPath );
+	logVerbose ( " - pca9685 : %d\n", pca9685 );
 
 	i = 0;
 	printf ( "\e[2K\r%6d\n", i );

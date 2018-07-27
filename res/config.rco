@@ -1,0 +1,14 @@
+# Config file used by RCO
+# this file is used to set static configuration of the robot
+
+# path to dynamixels access point
+# value max length 63 bytes
+PATH_DYNA=/dev/uartx
+
+# path to robotclaw board access point
+# value max length 63 bytes
+PATH_MOTOR_BOARD=/dev/robotClaw
+
+# PCA9685 address
+# default 64
+PCA9695_ADDR=64
