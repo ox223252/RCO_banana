@@ -42,6 +42,14 @@ int main ( int argc, char * argv[] )
 	char dynamixelsPath[ 64 ] = { 0 };
 	char motorBoadPath[ 64 ] = { 0 };
 	uint8_t pca9685 = 0;
+	int8_t maxSpeed = 127;
+
+	struct
+	{
+		int8_t left;
+		int8_t right;
+	}
+	moteur = { 0 };
 
 	char *menuItems[] = {
 		"run \e[1;31mRED\e[0m",
@@ -78,6 +86,7 @@ int main ( int argc, char * argv[] )
 		{ "--q", "-q",     0x10, cT ( bool ), &flag, "hide all trace point" },
 		{ "--debug", "-d", 0x20, cT ( bool ), &flag, "display many trace point" },
 		{ "--color", "-c", 0x40, cT ( bool ), &flag, "add color to debug traces" },
+		{ "--MaxSpeed", "-Ms", 1, cT ( int8_t ), &maxSpeed, "set max speed [ 0 ; 127 ]" },
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
 
@@ -88,6 +97,15 @@ int main ( int argc, char * argv[] )
 		{ "PCA9695_ADDR", cT ( uint8_t ), &pca9685, "pca9685 board i2c addr"},
 		{ NULL, 0, NULL, NULL }
 	};
+
+	if ( maxSpeed > 127 )
+	{
+		maxSpeed = 127;
+	}
+	else if ( maxSpeed < 0 )
+	{
+		maxSpeed = 127;
+	}
 
 	if ( readParamArgs ( argc, argv, paramList ) ||
 		readConfigFile ( "res/config.rco", configList ) )
@@ -113,7 +131,7 @@ int main ( int argc, char * argv[] )
 			}
 			case MENU_manual:
 			{
-				switch ( menu ( 0, manualMenuItems, NULL ) )
+				switch ( menu ( 0, manualMenuItems, "  >", "   ", NULL ) )
 				{
 					case MENU_MANUAL_controller:
 					{
@@ -122,11 +140,78 @@ int main ( int argc, char * argv[] )
 					case MENU_MANUAL_keyboard:
 					{
 						setBlockMode ( &tmp, true );
-						
+
+						i = 1;
 						do
 						{
-							i = getMovePad ( false );
-							printf ( "%d\n", i );
+							printf ( "%4d %4d\r", moteur.left, moteur.right );
+
+							switch ( getMovePad ( false ) )
+							{
+								case 	KEYCODE_ESCAPE:
+								{
+									moteur.left = 0;
+									moteur.right = 0;
+									i = 0;
+									break;
+								}
+								case KEYCODE_UP:
+								{
+									if ( moteur.left < maxSpeed )
+									{
+										moteur.left++;
+									}
+									if ( moteur.right < maxSpeed )
+									{
+										moteur.right++;
+									}
+									break;
+								}
+								case KEYCODE_LEFT:
+								{
+									if ( moteur.left > -maxSpeed )
+									{
+										moteur.left--;
+									}
+									if ( moteur.right < maxSpeed )
+									{
+										moteur.right++;
+									}
+									break;
+								}
+								case KEYCODE_DOWN:
+								{
+									if ( moteur.left > -maxSpeed )
+									{
+										moteur.left--;
+									}
+									if ( moteur.right > -maxSpeed )
+									{
+										moteur.right--;
+									}
+									break;
+								}
+								case KEYCODE_RIGHT:
+								{
+									if ( moteur.left < maxSpeed )
+									{
+										moteur.left++;
+									}
+									if ( moteur.right > -maxSpeed )
+									{
+										moteur.right--;
+									}
+									break;
+								}
+								case KEYCODE_SPACE:
+								{
+									moteur.left = 0;
+									moteur.right = 0;
+									break;
+								}
+							}
+
+							// drive motor
 						}
 						while ( i );
 						
