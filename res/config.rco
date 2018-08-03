@@ -7,7 +7,8 @@ PATH_DYNA=/dev/uartx
 
 # path to robotclaw board access point
 # value max length 63 bytes
-PATH_MOTOR_BOARD=/dev/robotClaw
+PATH_MOTOR_BOARD=/dev/ttyUSB0
+PATH_MOTOR_BOARD_UART_SPEED=115200
 
 # PCA9685 address
 # default 64

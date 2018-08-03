@@ -1,6 +1,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <string.h>
 
 #include "lib/config/config_arg.h"
 #include "lib/config/config_file.h"
@@ -9,6 +11,7 @@
 #include "lib/signalHandler/signalHandler.h"
 #include "lib/termRequest/request.h"
 #include "lib/timer/timer.h"
+#include "lib/roboclaw/roboclaw.h"
 
 enum
 {
@@ -25,6 +28,11 @@ enum
 	MENU_MANUAL_exit
 };
 
+void roboClawClose ( void * arg )
+{
+	roboclaw_close ( ( struct roboclaw * )arg );
+}
+
 void proccessNormalEnd ( void * arg )
 {
 	if ( arg )
@@ -36,11 +44,16 @@ void proccessNormalEnd ( void * arg )
 
 int main ( int argc, char * argv[] )
 {
-	int i = 0;
+	uint16_t i = 0; // loop counter / loop flag / or temp var
 	void * tmp = NULL;
 
 	char dynamixelsPath[ 64 ] = { 0 };
+	
 	char motorBoadPath[ 64 ] = { 0 };
+	uint32_t motorBoardUartSpeed = 0;
+	struct roboclaw *motorBoard = NULL;
+	uint8_t address = 0x80;
+
 	uint8_t pca9685 = 0;
 	int8_t maxSpeed = 127;
 
@@ -74,7 +87,8 @@ int main ( int argc, char * argv[] )
 			help:1,     // 0x08
 			quiet:1,    // 0x10
 			debug:1,    // 0x20
-			color:1;    // 0x40
+			color:1,    // 0x40
+			noDrive:1;  // 0x80
 	}
 	flag = { 0 };
 
@@ -86,7 +100,8 @@ int main ( int argc, char * argv[] )
 		{ "--q", "-q",     0x10, cT ( bool ), &flag, "hide all trace point" },
 		{ "--debug", "-d", 0x20, cT ( bool ), &flag, "display many trace point" },
 		{ "--color", "-c", 0x40, cT ( bool ), &flag, "add color to debug traces" },
-		{ "--MaxSpeed", "-Ms", 1, cT ( int8_t ), &maxSpeed, "set max speed [ 0 ; 127 ]" },
+		{ "--MaxSpeed", "-Ms", 1, cT ( int8_t ), &maxSpeed, "set max speed [ 0 ; 100 ]" },
+		{ "--noDrive", "-nD", 0x80, cT ( bool ), &flag, "use it to disable drive power" },
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
 
@@ -94,23 +109,99 @@ int main ( int argc, char * argv[] )
 	{
 		{ "PATH_DYNA", cT ( str ), dynamixelsPath, "PATH to access to dynamixels"},
 		{ "PATH_MOTOR_BOARD", cT ( str ), motorBoadPath, "PATH to access to dynamixels"},
+		{ "PATH_MOTOR_BOARD_UART_SPEED", cT ( uint32_t ), &motorBoardUartSpeed, "UART speed for robocloaw board" },
 		{ "PCA9695_ADDR", cT ( uint8_t ), &pca9685, "pca9685 board i2c addr"},
 		{ NULL, 0, NULL, NULL }
 	};
 
-	if ( maxSpeed > 127 )
+	// manage ending signals
+	signalHandling signal = {
+		.flag = {
+			.Int = 1, //ctrl+C
+			.Term = 1, // kill
+		},
+		.Int = {
+			.func = proccessNormalEnd,
+			.arg = "Ctrl+C requested"
+		},
+		.Term = {
+			.func = proccessNormalEnd,
+			.arg = "Kill requested"
+		}
+	};
+
+	signalHandlerInit ( &signal );
+
+	// init memory free on exit
+	if ( initFreeOnExit ( ) )
 	{
-		maxSpeed = 127;
+		logVerbose ( "init free_on_exit's subroutine failed\n" );
+		return ( __LINE__ );
 	}
-	else if ( maxSpeed < 0 )
+
+	tmp = NULL;
+	if ( getTermSatatus ( &tmp ) )
 	{
-		maxSpeed = 127;
+		printf ( "terminal init failed\n" );
+		return ( __LINE__ );
 	}
+	else if ( setExecAfterAllOnExit ( (void(*)(void*))setTermSatatus, tmp ) )
+	{
+		printf ( "terminal init failed\n" );
+		return ( __LINE__ );
+	}
+
 
 	if ( readParamArgs ( argc, argv, paramList ) ||
 		readConfigFile ( "res/config.rco", configList ) )
 	{
 		return ( __LINE__ );
+	}
+
+	if ( flag.help )
+	{
+		printf ( "build date: %s\n\n", DATE_BUILD );
+		helpParamArgs ( paramList );
+		return ( 0 );
+	}
+
+	logSetQuiet ( flag.quiet );
+	logSetColor ( flag.color );
+	logSetDebug ( flag.debug );
+
+
+	// verify max value
+	if ( maxSpeed > 100 )
+	{
+		maxSpeed = 100;
+	}
+	else if ( maxSpeed < -100 )
+	{
+		maxSpeed = -100;
+	}
+
+
+	if ( !flag.noDrive )
+	{ // if engine wasn't disabled
+		// init motor
+		motorBoard = roboclaw_init ( motorBoadPath, motorBoardUartSpeed);
+		if ( !motorBoard )
+		{
+			logVerbose ( "can't open robo claw bus at %s\n", motorBoadPath );
+			logVerbose ( "%s\n", strerror ( errno ) );
+			return ( __LINE__ );
+		}
+		setExecAfterAllOnExit ( roboClawClose, ( void * )motorBoard );
+
+		if ( !roboclaw_main_battery_voltage ( motorBoard, address, &i ) )
+		{
+			logVerbose ( "error on reading battery voltage\n" );
+			return ( __LINE__ );
+		}
+		else
+		{
+			printf("battery voltage is : %f V\n", (float)i/10.0f);
+		}
 	}
 	
 	while ( !( flag.red ^ flag.green ) )
@@ -130,7 +221,7 @@ int main ( int argc, char * argv[] )
 				break;
 			}
 			case MENU_manual:
-			{
+			{ // manual drive of robot zqsd / wasd / UP/LEFT/DOWN/RIGHT
 				switch ( menu ( 0, manualMenuItems, "  >", "   ", NULL ) )
 				{
 					case MENU_MANUAL_controller:
@@ -145,6 +236,12 @@ int main ( int argc, char * argv[] )
 						do
 						{
 							printf ( "%4d %4d\r", moteur.left, moteur.right );
+							if ( motorBoard )
+							{
+								roboclaw_duty_m1m2 ( motorBoard, address, 
+									moteur.left * 32767 / 100, 
+									moteur.right * 32767 / 100 );
+							}
 
 							switch ( getMovePad ( false ) )
 							{
@@ -233,42 +330,6 @@ int main ( int argc, char * argv[] )
 				return ( __LINE__ );
 			}
 		}
-	}
-
-	if ( flag.help )
-	{
-		printf ( "build date: %s\n\n", DATE_BUILD );
-		helpParamArgs ( paramList );
-		return ( 0 );
-	}
-
-	// manage ending signals
-	signalHandling signal = {
-		.flag = {
-			.Int = 1, //ctrl+C
-			.Term = 1, // kill
-		},
-		.Int = {
-			.func = proccessNormalEnd,
-			.arg = "Ctrl+C requested"
-		},
-		.Term = {
-			.func = proccessNormalEnd,
-			.arg = "Kill requested"
-		}
-	};
-
-	signalHandlerInit ( &signal );
-
-	logSetQuiet ( flag.quiet );
-	logSetColor ( flag.color );
-	logSetDebug ( flag.debug );
-
-	// init memory free on exit
-	if ( initFreeOnExit ( ) )
-	{
-		logVerbose ( "init free_on_exit's subroutine failed\n" );
-		return ( __LINE__ );
 	}
 
 	printf ( "run %s\n", ( flag.red )? "\e[1;31mred\e[0m" : "\e[1;32mgreen\e[0m" );
