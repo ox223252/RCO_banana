@@ -14,7 +14,15 @@ enum
 {
 	MENU_red,
 	MENU_green,
+	MENU_manual,
 	MENU_exit
+};
+
+enum
+{
+	MENU_MANUAL_controller,
+	MENU_MANUAL_keyboard,
+	MENU_MANUAL_exit
 };
 
 void proccessNormalEnd ( void * arg )
@@ -29,15 +37,31 @@ void proccessNormalEnd ( void * arg )
 int main ( int argc, char * argv[] )
 {
 	int i = 0;
+	void * tmp = NULL;
 
 	char dynamixelsPath[ 64 ] = { 0 };
 	char motorBoadPath[ 64 ] = { 0 };
 	uint8_t pca9685 = 0;
+	int8_t maxSpeed = 127;
+
+	struct
+	{
+		int8_t left;
+		int8_t right;
+	}
+	moteur = { 0 };
 
 	char *menuItems[] = {
 		"run \e[1;31mRED\e[0m",
 		"run \e[1;32mGREEN\e[0m",
-		"continue",
+		"manual mode",
+		"exit",
+		NULL
+	};
+
+	char *manualMenuItems[] = {
+		"controller",
+		"keyboard",
 		"exit",
 		NULL
 	};
@@ -62,6 +86,7 @@ int main ( int argc, char * argv[] )
 		{ "--q", "-q",     0x10, cT ( bool ), &flag, "hide all trace point" },
 		{ "--debug", "-d", 0x20, cT ( bool ), &flag, "display many trace point" },
 		{ "--color", "-c", 0x40, cT ( bool ), &flag, "add color to debug traces" },
+		{ "--MaxSpeed", "-Ms", 1, cT ( int8_t ), &maxSpeed, "set max speed [ 0 ; 127 ]" },
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
 
@@ -73,13 +98,22 @@ int main ( int argc, char * argv[] )
 		{ NULL, 0, NULL, NULL }
 	};
 
+	if ( maxSpeed > 127 )
+	{
+		maxSpeed = 127;
+	}
+	else if ( maxSpeed < 0 )
+	{
+		maxSpeed = 127;
+	}
+
 	if ( readParamArgs ( argc, argv, paramList ) ||
 		readConfigFile ( "res/config.rco", configList ) )
 	{
 		return ( __LINE__ );
 	}
 	
-	if ( !( flag.red ^ flag.green ) )
+	while ( !( flag.red ^ flag.green ) )
 	{ // if no color or both colors set
 		switch ( menu ( 0, menuItems, NULL ) )
 		{
@@ -95,7 +129,105 @@ int main ( int argc, char * argv[] )
 				flag.red = 0;
 				break;
 			}
-			case MENU_exit :
+			case MENU_manual:
+			{
+				switch ( menu ( 0, manualMenuItems, "  >", "   ", NULL ) )
+				{
+					case MENU_MANUAL_controller:
+					{
+						break;
+					}
+					case MENU_MANUAL_keyboard:
+					{
+						setBlockMode ( &tmp, true );
+
+						i = 1;
+						do
+						{
+							printf ( "%4d %4d\r", moteur.left, moteur.right );
+
+							switch ( getMovePad ( false ) )
+							{
+								case 	KEYCODE_ESCAPE:
+								{
+									moteur.left = 0;
+									moteur.right = 0;
+									i = 0;
+									break;
+								}
+								case KEYCODE_UP:
+								{
+									if ( moteur.left < maxSpeed )
+									{
+										moteur.left++;
+									}
+									if ( moteur.right < maxSpeed )
+									{
+										moteur.right++;
+									}
+									break;
+								}
+								case KEYCODE_LEFT:
+								{
+									if ( moteur.left > -maxSpeed )
+									{
+										moteur.left--;
+									}
+									if ( moteur.right < maxSpeed )
+									{
+										moteur.right++;
+									}
+									break;
+								}
+								case KEYCODE_DOWN:
+								{
+									if ( moteur.left > -maxSpeed )
+									{
+										moteur.left--;
+									}
+									if ( moteur.right > -maxSpeed )
+									{
+										moteur.right--;
+									}
+									break;
+								}
+								case KEYCODE_RIGHT:
+								{
+									if ( moteur.left < maxSpeed )
+									{
+										moteur.left++;
+									}
+									if ( moteur.right > -maxSpeed )
+									{
+										moteur.right--;
+									}
+									break;
+								}
+								case KEYCODE_SPACE:
+								{
+									moteur.left = 0;
+									moteur.right = 0;
+									break;
+								}
+							}
+
+							// drive motor
+						}
+						while ( i );
+						
+						resetBlockMode ( tmp );
+						
+						break;
+					}
+					default:
+					case MENU_MANUAL_exit:
+					{
+						break;
+					}
+				}
+				break;
+			}
+			case MENU_exit:
 			default:
 			{
 				return ( __LINE__ );
