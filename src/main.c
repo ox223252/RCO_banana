@@ -28,6 +28,8 @@ enum
 	MENU_MANUAL_exit
 };
 
+const uint8_t speedStep = 10;
+
 void roboClawClose ( void * arg )
 {
 	roboclaw_close ( ( struct roboclaw * )arg );
@@ -47,15 +49,15 @@ int main ( int argc, char * argv[] )
 	uint16_t i = 0; // loop counter / loop flag / or temp var
 	void * tmp = NULL;
 
-	char dynamixelsPath[ 64 ] = { 0 };
+	char dynamixelsPath[ 64 ] = { 0 }; // dynamixel acces point /dev/dyna
+	char motorBoadPath[ 64 ] = { 0 }; // roboclaw access point /dev/roboclaw
 	
-	char motorBoadPath[ 64 ] = { 0 };
-	uint32_t motorBoardUartSpeed = 0;
+	uint32_t motorBoardUartSpeed = 115200; // uart speed
 	struct roboclaw *motorBoard = NULL;
 	uint8_t address = 0x80;
+	int16_t maxSpeed = 32767; // motor max speed, ti neved should cross this limit
 
-	uint8_t pca9685 = 0;
-	int8_t maxSpeed = 127;
+	uint8_t pca9685 = 0; // servo driver handler (i2c)
 
 	struct
 	{
@@ -100,7 +102,7 @@ int main ( int argc, char * argv[] )
 		{ "--q", "-q",     0x10, cT ( bool ), &flag, "hide all trace point" },
 		{ "--debug", "-d", 0x20, cT ( bool ), &flag, "display many trace point" },
 		{ "--color", "-c", 0x40, cT ( bool ), &flag, "add color to debug traces" },
-		{ "--MaxSpeed", "-Ms", 1, cT ( int8_t ), &maxSpeed, "set max speed [ 0 ; 100 ]" },
+		{ "--MaxSpeed", "-Ms", 1, cT ( int16_t ), &maxSpeed, "set max speed [ 0 ; 32767 ]" },
 		{ "--noDrive", "-nD", 0x80, cT ( bool ), &flag, "use it to disable drive power" },
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
@@ -170,17 +172,6 @@ int main ( int argc, char * argv[] )
 	logSetDebug ( flag.debug );
 
 
-	// verify max value
-	if ( maxSpeed > 100 )
-	{
-		maxSpeed = 100;
-	}
-	else if ( maxSpeed < -100 )
-	{
-		maxSpeed = -100;
-	}
-
-
 	if ( !flag.noDrive )
 	{ // if engine wasn't disabled
 		// init motor
@@ -239,8 +230,8 @@ int main ( int argc, char * argv[] )
 							if ( motorBoard )
 							{
 								roboclaw_duty_m1m2 ( motorBoard, address, 
-									moteur.left * 32767 / 100, 
-									moteur.right * 32767 / 100 );
+									moteur.left, 
+									moteur.right );
 							}
 
 							switch ( getMovePad ( false ) )
@@ -256,11 +247,11 @@ int main ( int argc, char * argv[] )
 								{
 									if ( moteur.left < maxSpeed )
 									{
-										moteur.left++;
+										moteur.left += speedStep;
 									}
 									if ( moteur.right < maxSpeed )
 									{
-										moteur.right++;
+										moteur.right += speedStep;
 									}
 									break;
 								}
@@ -268,11 +259,11 @@ int main ( int argc, char * argv[] )
 								{
 									if ( moteur.left > -maxSpeed )
 									{
-										moteur.left--;
+										moteur.left -= speedStep;
 									}
 									if ( moteur.right < maxSpeed )
 									{
-										moteur.right++;
+										moteur.right += speedStep;
 									}
 									break;
 								}
@@ -280,11 +271,11 @@ int main ( int argc, char * argv[] )
 								{
 									if ( moteur.left > -maxSpeed )
 									{
-										moteur.left--;
+										moteur.left -= speedStep;
 									}
 									if ( moteur.right > -maxSpeed )
 									{
-										moteur.right--;
+										moteur.right -= speedStep;
 									}
 									break;
 								}
@@ -292,11 +283,11 @@ int main ( int argc, char * argv[] )
 								{
 									if ( moteur.left < maxSpeed )
 									{
-										moteur.left++;
+										moteur.left += speedStep;
 									}
 									if ( moteur.right > -maxSpeed )
 									{
-										moteur.right--;
+										moteur.right -= speedStep;
 									}
 									break;
 								}
