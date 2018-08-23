@@ -83,29 +83,32 @@ int main ( int argc, char * argv[] )
 
 	struct
 	{
-		uint8_t green:1,// 0x01
-			red:1,      // 0x02
-			un2:1,      // 0x04
-			help:1,     // 0x08
-			quiet:1,    // 0x10
-			debug:1,    // 0x20
-			color:1,    // 0x40
-			noDrive:1;  // 0x80
+		uint8_t green:1,    // 0x01
+			red:1,          // 0x02
+			un2:1,          // 0x04
+			help:1,         // 0x08
+			quiet:1,        // 0x10
+			debug:1,        // 0x20
+			color:1,        // 0x40
+			noDrive:1;      // 0x80
+		uint8_t noArm:1;	// 0x01
 	}
 	flag = { 0 };
 
 	param_el paramList[] = 
 	{
-		{ "--help", "-h",  0x08, cT ( bool ), &flag, "this window" },
-		{ "--green", "-g", 0x01, cT ( bool ), &flag, "launch the green prog" },
-		{ "--red", "-r",   0x02, cT ( bool ), &flag, "launch the red prog" },
-		{ "--q", "-q",     0x10, cT ( bool ), &flag, "hide all trace point" },
-		{ "--debug", "-d", 0x20, cT ( bool ), &flag, "display many trace point" },
-		{ "--color", "-c", 0x40, cT ( bool ), &flag, "add color to debug traces" },
+		{ "--help", "-h",     0x08, cT ( bool ), ((uint8_t * )&flag), "this window" },
+		{ "--green", "-g",    0x01, cT ( bool ), ((uint8_t * )&flag), "launch the green prog" },
+		{ "--red", "-r",      0x02, cT ( bool ), ((uint8_t * )&flag), "launch the red prog" },
+		{ "--q", "-q",        0x10, cT ( bool ), ((uint8_t * )&flag), "hide all trace point" },
+		{ "--debug", "-d",    0x20, cT ( bool ), ((uint8_t * )&flag), "display many trace point" },
+		{ "--color", "-c",    0x40, cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
+		{ "--noDrive", "-nD", 0x80, cT ( bool ), ((uint8_t * )&flag), "use it to disable drive power" },
+		{ "--noArm", "-nA",   0x01, cT ( bool ), ((uint8_t * )&flag) + 1, "use it to disable servo motor" },
 		{ "--MaxSpeed", "-Ms", 1, cT ( int16_t ), &maxSpeed, "set max speed [ 0 ; 32767 ]" },
-		{ "--noDrive", "-nD", 0x80, cT ( bool ), &flag, "use it to disable drive power" },
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
+
 
 	config_el configList[] =
 	{
@@ -324,9 +327,26 @@ int main ( int argc, char * argv[] )
 	}
 
 	printf ( "run %s\n", ( flag.red )? "\e[1;31mred\e[0m" : "\e[1;32mgreen\e[0m" );
-	logVerbose ( " - dyna : %s\n", dynamixelsPath );
-	logVerbose ( " - robot clow : %s\n", motorBoadPath );
-	logVerbose ( " - pca9685 : %d\n", pca9685 );
+
+	if ( !flag.noArm )
+	{ // arm enabled
+		logVerbose ( " - dyna : %s\n", dynamixelsPath );
+		logVerbose ( " - pca9685 : %d\n", pca9685 );
+	}
+	else
+	{ // arm disabled
+		logVerbose ( " - dyna : \e[31m%s\e[0m\n", dynamixelsPath );
+		logVerbose ( " - pca9685 : \e[31m%d\e[0m\n", pca9685 );
+	}
+
+	if ( !flag.noDrive )
+	{ // engine enabled
+		logVerbose ( " - robot clow : %s\n", motorBoadPath );
+	}
+	else
+	{ // engne disabled
+		logVerbose ( " - robot clow : \e[31m%s\e[0m\n", motorBoadPath );
+	}
 
 	i = 0;
 	printf ( "\e[2K\r%6d\n", i );
