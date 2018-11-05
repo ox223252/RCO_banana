@@ -21,4 +21,4 @@
 	url = https://github.com/ox223252/timer.git
 [submodule "src/lib/roboclaw"]
 	path = src/lib/roboclaw
-	url = https://github.com/bmegli/roboclaw.git
+	url = https://github.com/ox223252/roboclaw.git
