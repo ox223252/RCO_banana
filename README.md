@@ -1,5 +1,5 @@
 
-# ![flag](res/fr.jpg) RCO_banana
+# ![flag](res/imgs/fr.jpg) RCO_banana
 Le programme de RCO pour nos robots
 
 RCO est une équipe de robotique et de bidouilleurs qui à pour vocation de concourir à la coupe de France de robotique
@@ -32,7 +32,7 @@ Par défaut la compilation est faite pour arm-Linux (pour raspberry), si vous vo
 
 
 
-# ![flag](res/en.jpg) RCO_banana
+# ![flag](res/imgs/en.jpg) RCO_banana
 RCO's programme for our robots
 
 RCO is a team of robotics and hackers who participate in the French Robotics Cup.
