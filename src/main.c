@@ -13,6 +13,12 @@
 #include "lib/timer/timer.h"
 #include "lib/roboclaw/roboclaw.h"
 
+#include "lib/parserXML/loadXML.h"
+// #include "deplacement/odometrie.h"
+#include "struct/structRobot.h"
+#include "struct/structAction.h"
+
+
 enum
 {
 	MENU_red,
@@ -49,15 +55,19 @@ int main ( int argc, char * argv[] )
 	uint16_t i = 0; // loop counter / loop flag / or temp var
 	void * tmp = NULL;
 
-	char dynamixelsPath[ 64 ] = { 0 }; // dynamixel acces point /dev/dyna
-	char motorBoadPath[ 64 ] = { 0 }; // roboclaw access point /dev/roboclaw
+	char dynamixelsPath[ 128 ] = { 0 }; // dynamixel acces point /dev/dyna
+	char motorBoadPath[ 128 ] = { 0 }; // roboclaw access point /dev/roboclaw
 	
 	uint32_t motorBoardUartSpeed = 115200; // uart speed
 	struct roboclaw *motorBoard = NULL;
 	uint8_t address = 0x80;
 	int16_t maxSpeed = 32767; // motor max speed, ti neved should cross this limit
+	char xmlPath[ 128 ] = { 0 };
 
 	uint8_t pca9685 = 0; // servo driver handler (i2c)
+
+	Action* tabActionTotal = NULL;
+	int nbAction = 0;
 
 	struct
 	{
@@ -106,6 +116,7 @@ int main ( int argc, char * argv[] )
 		{ "--noDrive", "-nD", 0x80, cT ( bool ), ((uint8_t * )&flag), "use it to disable drive power" },
 		{ "--noArm", "-nA",   0x01, cT ( bool ), ((uint8_t * )&flag) + 1, "use it to disable servo motor" },
 		{ "--MaxSpeed", "-Ms", 1, cT ( int16_t ), &maxSpeed, "set max speed [ 0 ; 32767 ]" },
+		{ "--xml", "-x", 1, cT ( str ), xmlPath, "xml file path" },
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
 
@@ -116,6 +127,7 @@ int main ( int argc, char * argv[] )
 		{ "PATH_MOTOR_BOARD", cT ( str ), motorBoadPath, "PATH to access to dynamixels"},
 		{ "PATH_MOTOR_BOARD_UART_SPEED", cT ( uint32_t ), &motorBoardUartSpeed, "UART speed for robocloaw board" },
 		{ "PCA9695_ADDR", cT ( uint8_t ), &pca9685, "pca9685 board i2c addr"},
+		{ "XML_PATH", cT ( str ), &xmlPath, "xml file path"},
 		{ NULL, 0, NULL, NULL }
 	};
 
@@ -187,7 +199,7 @@ int main ( int argc, char * argv[] )
 		}
 		setExecAfterAllOnExit ( roboClawClose, ( void * )motorBoard );
 
-		if ( !roboclaw_main_battery_voltage ( motorBoard, address, &i ) )
+		if ( !roboclaw_main_battery_voltage ( motorBoard, address, ( int16_t * )&i ) )
 		{
 			logVerbose ( "error on reading battery voltage\n" );
 			return ( __LINE__ );
@@ -300,6 +312,10 @@ int main ( int argc, char * argv[] )
 									moteur.right = 0;
 									break;
 								}
+								default:
+								{
+									break;
+								}
 							}
 
 							// drive motor
@@ -341,18 +357,25 @@ int main ( int argc, char * argv[] )
 
 	if ( !flag.noDrive )
 	{ // engine enabled
-		logVerbose ( " - robot clow : %s\n", motorBoadPath );
+		logVerbose ( " - robotclaw : %s\n", motorBoadPath );
 	}
 	else
 	{ // engne disabled
-		logVerbose ( " - robot clow : \e[31m%s\e[0m\n", motorBoadPath );
+		logVerbose ( " - robotclaw : \e[31m%s\e[0m\n", motorBoadPath );
 	}
+
+	tabActionTotal = ouvrirXML ( &nbAction, xmlPath );
+	if ( !tabActionTotal )
+	{
+		logVerbose ( "xml loading failed: %s\n", strerror ( errno ) );
+		return ( __LINE__ );
+	}
+	setFreeOnExit ( tabActionTotal );
+
+	timer ( 5*1000000, proccessNormalEnd, "stop request by timer", true );
 
 	i = 0;
 	printf ( "\e[2K\r%6d\n", i );
-
-	timer ( 9000000, proccessNormalEnd, "stop request by timer", true );
-
 	while ( 1 )
 	{
 		sleep ( 1 );

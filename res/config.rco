@@ -13,3 +13,7 @@ PATH_MOTOR_BOARD_UART_SPEED=115200
 # PCA9685 address
 # default 64
 PCA9695_ADDR=64
+
+# XML file path
+# xml file used to define strategy
+XML_PATH=res/temp.xml

@@ -1,5 +1,5 @@
 # flags for alls targets
-FLAGS+= -D'BY_LINUX_MAKEFILE' -DFOE_WITH_THREAD -g -DTIMER_WITH_FOE
+FLAGS+= -D'BY_LINUX_MAKEFILE' -DFOE_WITH_THREAD -g -DTIMER_WITH_FOE -lm
 
 # tools / flags / libs only for native target
 CC=gcc
