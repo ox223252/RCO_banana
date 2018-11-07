@@ -413,7 +413,8 @@ int main ( int argc, char * argv[] )
 	{
 		logVerbose ( "xml loading failed: -%s-\n %s\n", xmlInitPath, strerror ( errno ) );
 		return ( __LINE__ );
-	}else
+	}
+	else
 	{
 		gettimeofday(&start, NULL);
 	 	tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
@@ -422,7 +423,7 @@ int main ( int argc, char * argv[] )
 	setFreeOnExit ( tabActionTotal );
 
 
-	while ( 1 )
+	while ( 0 )
 	{ // initialisation
 
 		if ( !flag.noArm )
