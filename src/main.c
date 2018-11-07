@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include "lib/config/config_arg.h"
 #include "lib/config/config_file.h"
@@ -12,13 +14,15 @@
 #include "lib/termRequest/request.h"
 #include "lib/timer/timer.h"
 #include "lib/roboclaw/roboclaw.h"
-
+#include "lib/parserXML/loadXML.h"
 #include "lib/dynamixel_sdk/dynamixel_sdk.h"
 
-#include "lib/parserXML/loadXML.h"
-// #include "deplacement/odometrie.h"
 #include "struct/structRobot.h"
 #include "struct/structAction.h"
+
+#include "gestionAction/management.h"
+// #include "deplacement/odometrie.h"
+
 
 
 enum
@@ -62,11 +66,13 @@ int main ( int argc, char * argv[] )
 	uint16_t i = 0; // loop counter / loop flag / or temp var
 	void * tmp = NULL;
 
+	struct timeval start;
+
 	char dynamixelsPath[ 128 ] = { 0 }; // dynamixel acces point /dev/dyna
 	uint32_t dynamixelUartSpeed = 115200; // uart speed
 	long int dynaPortNum = 0;
 	char motorBoadPath[ 128 ] = { 0 }; // roboclaw access point /dev/roboclaw
-	
+
 	uint32_t motorBoardUartSpeed = 115200; // uart speed
 	struct roboclaw *motorBoard = NULL;
 	uint8_t address = 0x80;
@@ -116,7 +122,7 @@ int main ( int argc, char * argv[] )
 	}
 	flag = { 0 };
 
-	param_el paramList[] = 
+	param_el paramList[] =
 	{
 		{ "--help", "-h",     0x08, cT ( bool ), ((uint8_t * )&flag), "this window" },
 		{ "--green", "-g",    0x01, cT ( bool ), ((uint8_t * )&flag), "launch the green prog" },
@@ -224,7 +230,7 @@ int main ( int argc, char * argv[] )
 			printf("battery voltage is : %f V\n", (float)i/10.0f);
 		}
 	}
-	
+
 	while ( !( flag.red ^ flag.green ) )
 	{ // if no color or both colors set
 		switch ( menu ( 0, menuItems, NULL ) )
@@ -259,8 +265,8 @@ int main ( int argc, char * argv[] )
 							printf ( "%4d %4d\r", moteur.left, moteur.right );
 							if ( motorBoard )
 							{
-								roboclaw_duty_m1m2 ( motorBoard, address, 
-									moteur.left, 
+								roboclaw_duty_m1m2 ( motorBoard, address,
+									moteur.left,
 									moteur.right );
 							}
 
@@ -336,9 +342,9 @@ int main ( int argc, char * argv[] )
 							// drive motor
 						}
 						while ( i );
-						
+
 						resetBlockMode ( tmp );
-						
+
 						break;
 					}
 					default:
@@ -407,7 +413,12 @@ int main ( int argc, char * argv[] )
 	{
 		logVerbose ( "xml loading failed: -%s-\n %s\n", xmlInitPath, strerror ( errno ) );
 		return ( __LINE__ );
+	}else
+	{
+		gettimeofday(&start, NULL);
+	 	tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
 	}
+	updateActionEnCours(tabActionTotal, nbAction);
 	setFreeOnExit ( tabActionTotal );
 
 
