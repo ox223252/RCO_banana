@@ -408,7 +408,7 @@ int main ( int argc, char * argv[] )
 		logVerbose ( " - robotclaw : \e[31m%s\e[0m\n", motorBoadPath );
 	}
 
-	tabActionTotal = ouvrirXML ( &nbAction, xmlInitPath );
+	//printf("%s \n\n",tabActionTotal[29].params[1]);
 	if ( !tabActionTotal )
 	{
 		logVerbose ( "xml loading failed: -%s-\n %s\n", xmlInitPath, strerror ( errno ) );

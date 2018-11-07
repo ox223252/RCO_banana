@@ -20,7 +20,6 @@ void updateActionEnCours(Action* listAction, int nbAction)
   // delimiters present in str[].
   while (token != NULL)
   {
-
     printf("type : %d numero : %d : listFils : %s\n", listAction[atoi(token)].type, listAction[atoi(token)].numero, listAction[atoi(token)].listFils);
     token = strtok(NULL, ",");
   }

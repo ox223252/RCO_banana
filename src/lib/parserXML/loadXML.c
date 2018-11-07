@@ -70,16 +70,37 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 
 				const char* type = mxmlElementGetAttr ( node, "type" );
 				nodeBis = mxmlFindElement ( node, node,"fils",NULL, NULL,MXML_DESCEND );
-				tabActionTotal[ indiceActionEnCours ].listFils = ( char* ) mxmlElementGetAttr ( nodeBis, "liste" );
+				if ( nodeBis!=NULL )
+				{
+					tabActionTotal[ indiceActionEnCours ].listFils = (char*)malloc(sizeof(char)*strlen(mxmlElementGetAttr ( nodeBis, "liste" )));
+					strcpy(tabActionTotal[ indiceActionEnCours ].listFils, ( char* ) mxmlElementGetAttr ( nodeBis, "liste" ));
+				}else
+				{
+					tabActionTotal[ indiceActionEnCours ].listFils = (char*)malloc(sizeof(char)*1);
+					strcpy(tabActionTotal[ indiceActionEnCours ].listFils, "-1");
+				}
+				//tabActionTotal[ indiceActionEnCours ].listFils = ( char* ) mxmlElementGetAttr ( nodeBis, "liste" );
 				nodeBis = mxmlFindElement ( node, node,"pere",NULL, NULL,MXML_DESCEND );
-				tabActionTotal[ indiceActionEnCours ].listPere = ( char* ) mxmlElementGetAttr ( nodeBis, "liste" );
+				if ( nodeBis!=NULL )
+				{
+					tabActionTotal[ indiceActionEnCours ].listPere = (char*)malloc(sizeof(char)*strlen(mxmlElementGetAttr ( nodeBis, "liste" )));
+					strcpy(tabActionTotal[ indiceActionEnCours ].listPere, ( char* ) mxmlElementGetAttr ( nodeBis, "liste" ));
+				}else
+				{
+					tabActionTotal[ indiceActionEnCours ].listPere = (char*)malloc(sizeof(char)*1);
+					strcpy(tabActionTotal[ indiceActionEnCours ].listPere, "-1");
+				}
+				//	tabActionTotal[ indiceActionEnCours ].listPere = ( char* ) mxmlElementGetAttr ( nodeBis, "liste" );
 				nodeBis = mxmlFindElement ( node, node,"timeout",NULL, NULL,MXML_DESCEND );
 				if ( nodeBis!=NULL )
 				{
 					tabActionTotal[ indiceActionEnCours ].listTimeOut = ( char* ) mxmlElementGetAttr ( nodeBis, "liste" );
 				}
 				nodeBis = mxmlFindElement ( node, node,"parametres",NULL, NULL,MXML_DESCEND );
-				logDebug ( "Type : %s numero %d fils : %s pere %s\n",type,tabActionTotal[ indiceActionEnCours ].numero,tabActionTotal[ indiceActionEnCours ].listFils,tabActionTotal[ indiceActionEnCours ].listPere );
+				if(tabActionTotal[ indiceActionEnCours ].listFils != NULL && tabActionTotal[ indiceActionEnCours ].listPere != NULL)
+				{
+					logDebug ( "Type : %s numero %d fils : %s pere %s\n",type,tabActionTotal[ indiceActionEnCours ].numero,tabActionTotal[ indiceActionEnCours ].listFils,tabActionTotal[ indiceActionEnCours ].listPere );
+				}
 
 				if ( strcmp ( type,"actionServo" ) == 0 )
 				{
