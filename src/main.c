@@ -13,6 +13,8 @@
 #include "lib/timer/timer.h"
 #include "lib/roboclaw/roboclaw.h"
 
+#include "lib/dynamixel_sdk/dynamixel_sdk.h"
+
 #include "lib/parserXML/loadXML.h"
 // #include "deplacement/odometrie.h"
 #include "struct/structRobot.h"
@@ -36,6 +38,11 @@ enum
 
 const uint8_t speedStep = 10;
 
+void dynamixelClose ( void * arg )
+{
+	closePort ( ( long ) arg );
+}
+
 void roboClawClose ( void * arg )
 {
 	roboclaw_close ( ( struct roboclaw * )arg );
@@ -56,13 +63,17 @@ int main ( int argc, char * argv[] )
 	void * tmp = NULL;
 
 	char dynamixelsPath[ 128 ] = { 0 }; // dynamixel acces point /dev/dyna
+	uint32_t dynamixelUartSpeed = 115200; // uart speed
+	long int dynaPortNum = 0;
 	char motorBoadPath[ 128 ] = { 0 }; // roboclaw access point /dev/roboclaw
 	
 	uint32_t motorBoardUartSpeed = 115200; // uart speed
 	struct roboclaw *motorBoard = NULL;
 	uint8_t address = 0x80;
 	int16_t maxSpeed = 32767; // motor max speed, ti neved should cross this limit
-	char xmlPath[ 128 ] = { 0 };
+	uint32_t globalTime = 0; // global game time
+	char xmlInitPath[ 128 ] = { 0 };
+	char xmlActionPath[ 128 ] = { 0 };
 
 	uint8_t pca9685 = 0; // servo driver handler (i2c)
 
@@ -116,7 +127,9 @@ int main ( int argc, char * argv[] )
 		{ "--noDrive", "-nD", 0x80, cT ( bool ), ((uint8_t * )&flag), "use it to disable drive power" },
 		{ "--noArm", "-nA",   0x01, cT ( bool ), ((uint8_t * )&flag) + 1, "use it to disable servo motor" },
 		{ "--MaxSpeed", "-Ms", 1, cT ( int16_t ), &maxSpeed, "set max speed [ 0 ; 32767 ]" },
-		{ "--xml", "-x", 1, cT ( str ), xmlPath, "xml file path" },
+		{ "--ini", "-i", 1, cT ( str ), xmlInitPath, "xml initialisation file path" },
+		{ "--xml", "-x", 1, cT ( str ), xmlActionPath, "xml action file path" },
+		{ "--time", "-t", 1, cT ( uint32_t ), &globalTime, "game duration in seconds" },
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
 
@@ -127,7 +140,9 @@ int main ( int argc, char * argv[] )
 		{ "PATH_MOTOR_BOARD", cT ( str ), motorBoadPath, "PATH to access to dynamixels"},
 		{ "PATH_MOTOR_BOARD_UART_SPEED", cT ( uint32_t ), &motorBoardUartSpeed, "UART speed for robocloaw board" },
 		{ "PCA9695_ADDR", cT ( uint8_t ), &pca9685, "pca9685 board i2c addr"},
-		{ "XML_PATH", cT ( str ), &xmlPath, "xml file path"},
+		{ "XML_ACTION_PATH", cT ( str ), xmlInitPath, "xml initialisation file path"},
+		{ "XML_INIT_PATH", cT ( str ), xmlActionPath, "xml action file path"},
+		{ "GLOBAL_TIME", cT ( uint32_t ), &globalTime, "game duration in seconds"},
 		{ NULL, 0, NULL, NULL }
 	};
 
@@ -346,7 +361,29 @@ int main ( int argc, char * argv[] )
 
 	if ( !flag.noArm )
 	{ // arm enabled
-		logVerbose ( " - dyna : %s\n", dynamixelsPath );
+		
+		dynaPortNum = portHandler ( dynamixelsPath );
+		if ( !openPort ( dynaPortNum ) )
+		{ // can't open port
+			flag.noArm = 0;
+			logVerbose ( " - dyna : \e[31m%s\e[0m (open failure)\n", dynamixelsPath );
+		}
+		else
+		{
+			logVerbose ( " - dyna : %s\n", dynamixelsPath );
+			logVerbose ( "   - Device Name : %s\n", dynamixelsPath );
+
+			packetHandler ( );
+
+			if ( setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
+			{
+				logVerbose ( "   - Baudratesetting failed, stay with last value\n" );
+			}
+			logVerbose ( "   - Baudrate    : %d\n", getBaudRate ( dynaPortNum ) );
+
+			setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
+		}
+
 		logVerbose ( " - pca9685 : %d\n", pca9685 );
 	}
 	else
@@ -355,6 +392,7 @@ int main ( int argc, char * argv[] )
 		logVerbose ( " - pca9685 : \e[31m%d\e[0m\n", pca9685 );
 	}
 
+	// only for display
 	if ( !flag.noDrive )
 	{ // engine enabled
 		logVerbose ( " - robotclaw : %s\n", motorBoadPath );
@@ -364,18 +402,59 @@ int main ( int argc, char * argv[] )
 		logVerbose ( " - robotclaw : \e[31m%s\e[0m\n", motorBoadPath );
 	}
 
-	tabActionTotal = ouvrirXML ( &nbAction, xmlPath );
+	tabActionTotal = ouvrirXML ( &nbAction, xmlInitPath );
 	if ( !tabActionTotal )
 	{
-		logVerbose ( "xml loading failed: %s\n", strerror ( errno ) );
+		logVerbose ( "xml loading failed: -%s-\n %s\n", xmlInitPath, strerror ( errno ) );
 		return ( __LINE__ );
 	}
 	setFreeOnExit ( tabActionTotal );
 
-	timer ( 5*1000000, proccessNormalEnd, "stop request by timer", true );
+
+	while ( 1 )
+	{ // initialisation
+
+		if ( !flag.noArm )
+		{ // dynamixel
+			// write1ByteTxRx(port_num, PROTOCOL_VERSION2, DXL2_ID, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE);
+			// if ((dxl_comm_result = getLastTxRxResult(port_num, PROTOCOL_VERSION2)) != COMM_SUCCESS)
+			// {
+			// 	printf("%s\n", getTxRxResult(PROTOCOL_VERSION2, dxl_comm_result));
+			// }
+			// else if ((dxl_error = getLastRxPacketError(port_num, PROTOCOL_VERSION2)) != 0)
+			// {
+			// 	printf("%s\n", getRxPacketError(PROTOCOL_VERSION2, dxl_error));
+			// }
+			// else
+			// {
+			// 	printf("Dynamixel#%d has been successfully connected \n", DXL2_ID);
+			// }
+		}
+
+		if ( !flag.noDrive )
+		{ // engine roboclaw
+
+		}
+	}
+	free ( tabActionTotal );
+	unsetFreeOnExit ( tabActionTotal );
+	tabActionTotal = NULL;
+
+
+	tabActionTotal = ouvrirXML ( &nbAction, xmlInitPath );
+	if ( !tabActionTotal )
+	{
+		logVerbose ( "xml loading failed: -%s-\n %s\n", xmlInitPath, strerror ( errno ) );
+		return ( __LINE__ );
+	}
+	setFreeOnExit ( tabActionTotal );
+
+
+	timer ( globalTime * 1000000, proccessNormalEnd, "stop request by timer", true );
 
 	i = 0;
 	printf ( "\e[2K\r%6d\n", i );
+
 	while ( 1 )
 	{
 		sleep ( 1 );

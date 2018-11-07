@@ -1,1 +1,1 @@
-HARD_ARCH=arm
+HARD_ARCH=arm-Linux

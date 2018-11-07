@@ -16,4 +16,9 @@ PCA9695_ADDR=64
 
 # XML file path
 # xml file used to define strategy
-XML_PATH=res/temp.xml
+XML_INIT_PATH=res/temp.xml
+XML_ACTION_PATH=res/temp.xml
+
+# game duration
+# default 99 (max - 1)
+GLOBAL_TIME=5
