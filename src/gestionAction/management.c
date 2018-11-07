@@ -1,87 +1,127 @@
 #include "management.h"
+#include "../lib/log/log.h"
+#include "../lib/freeOnExit/freeOnExit.h"
 
-char* listActionEnCours = "0;";
+static char* listActionEnCours = NULL;
 int nbActionEnCours = 1;
+
 void gestionAction(Action* listAction, Robot* robot)
 {
 
 }
 
-void updateActionEnCours(Action* listAction, int nbAction)
+int initAction ( void )
 {
-  // Returns first token
-  char* src;
-  char* listCOPY;
-  char* listFilsCOPY;
-  char copyNumber[10];
-  int nbBuffer;
+	if ( !listActionEnCours )
+	{
+		listActionEnCours = malloc ( 256 );
+		if ( !listActionEnCours )
+		{
+			return ( __LINE__ );
+		}
 
-  src = (char*)malloc((strlen(listActionEnCours)+1)*sizeof(char));
-  listCOPY = (char*)malloc((strlen(listActionEnCours)+1)*sizeof(char));
-  int indiceToken = 0;
-  strcpy(src,listActionEnCours);
-  strcpy(listCOPY,listActionEnCours);
-  char *token = strtok(src, ";");
+		setFreeOnExit ( listActionEnCours );
 
-  // Keep printing tokens while one of the
-  // delimiters present in str[].
-  while (token != NULL)
-  {
-    if(isDone(&(listAction[atoi(token)]))==1)
-    {
-      printf("Avant %s \n",listCOPY);
-      listFilsCOPY = (char*)malloc((strlen(listAction[atoi(token)].listFils)+1)*sizeof(char));
-      strcpy(listFilsCOPY,listAction[atoi(token)].listFils);
+		sprintf ( listActionEnCours, "0;" );
 
-      char *tokenBis = strtok(listFilsCOPY, ";");
-      while (tokenBis != NULL)
-      {
+		return ( 0 );
+	}
+	else
+	{
+		free ( listActionEnCours );
+		unsetFreeOnExit ( listActionEnCours );
+		listActionEnCours = NULL;
 
-        listCOPY = (char *) realloc(listCOPY, strlen(listCOPY)+1);
-        sscanf(tokenBis, "%d", &nbBuffer);
+		return ( initAction ( ) );
+	}
+}
 
-        printf("Token bis : %s %d \n",tokenBis, getIndiceActionByIndice(listAction, nbBuffer,nbAction));
-        sprintf(copyNumber, "%d", getIndiceActionByIndice(listAction, nbBuffer,nbAction));
+int updateActionEnCours ( Action* listAction, int nbAction )
+{
+	// Returns first token
+	char* listCOPY = NULL;
+	char buffer[10] = { 0 };
+	char newList[ 256 ] = { 0 };
+	char *token = NULL;
+	int j = 0;
+	int numAction = 0;
+	int newAction = 0;
 
-
-        strcat(listCOPY, copyNumber);
-        strcat(listCOPY, ";");
-        nbActionEnCours++;
-        tokenBis = strtok(NULL, ";");
-      }
-
-      listCOPY = (char *) realloc(listCOPY, strlen(listCOPY)+strlen(listAction[atoi(token)].listFils));
-      strcat(listCOPY, listAction[atoi(token)].listFils);
-
-      for(int i=2*indiceToken+1;i<strlen(listCOPY)-2;i++)
-      {
-        listCOPY[i]=listCOPY[i+1];
-      }
-
-      indiceToken--;
-      nbActionEnCours--;
-
-      printf("Apres %s %d\n",listCOPY,nbActionEnCours);
-    }
-    indiceToken++;
-    token = strtok(NULL, ";");
-  }
-  printf("\n\n\n\n");
+	int actionRemaining = 0;
 
 
-  free(listCOPY);
-  free(src);
-  free(listFilsCOPY);
+	struct timeval now;
+
+
+	if ( !listActionEnCours )
+	{
+		return;
+	}
+
+	listCOPY = malloc ( strlen ( listActionEnCours ) + 1 );
+	strcpy ( listCOPY, listActionEnCours );
+
+	token = strtok ( listCOPY, ";" );
+
+	// Keep printing tokens while one of the
+	// delimiters present in str[].
+	gettimeofday ( &now, NULL );
+	do
+	{
+		numAction = atoi ( token );
+		logDebug ( "en cours : %s\n", token );
+		logDebug ( " - start time : %ld\n", listAction[ numAction ].heureCreation / 1000000 );
+		logDebug ( " - fils       : %s\n", listAction[ numAction ].listFils );
+
+		if ( isDone ( &(listAction[ numAction ] ) ) == 1 )
+		{ // normal termination
+			j = 0;
+			while ( sscanf ( listAction[ numAction ].listFils + j, "%[^;]", buffer) )
+			{ // get actions
+				if ( listAction[ numAction ].listFils[ j ] == 0 )
+				{
+					break;
+				}
+				newAction = getIndiceActionByIndice ( listAction, atoi ( buffer ), nbAction );
+				listAction[ newAction ].heureCreation = now.tv_sec * 1000000 + now.tv_usec;
+				sprintf ( newList, "%s%d;", newList, newAction );
+
+				actionRemaining++;
+
+				j += (int)( strlen ( buffer ) + 1 );
+				logDebug ( " - new action : %s\n", buffer );
+			}
+		}
+		else if ( ( listAction[ numAction ].timeout > 0 ) && 
+			( ( now.tv_sec * 1000000 + now.tv_usec - listAction[ numAction ].heureCreation ) < ( listAction[ numAction ].timeout * 1000 ) ) )
+		{ // end by timeout
+			
+		}
+		else
+		{ // not done
+			sprintf ( newList, "%s%s;", newList, token );
+			actionRemaining++;
+		}
+
+		token = strtok(NULL, ";");
+	}
+	while ( token != NULL );
+
+	sprintf ( listActionEnCours, "%s", newList );
+	logDebug ( " - new list  : %s\n", listActionEnCours );
+
+	free ( listCOPY );
+	return ( actionRemaining );
 }
 
 int getIndiceActionByIndice(Action* listAction, int indiceAction, int nbAction)
 {
-  for(int i=0;i<nbAction;i++)
-  {
-    if(listAction[i].numero == indiceAction)
-    {
-      return i;
-    }
-  }
-  return -1;
+	for(int i=0;i<nbAction;i++)
+	{
+		if(listAction[i].numero == indiceAction)
+		{
+			return i;
+		}
+	}
+	return -1;
 }

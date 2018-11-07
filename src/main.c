@@ -178,13 +178,20 @@ int main ( int argc, char * argv[] )
 	}
 
 	tmp = NULL;
-	if ( getTermSatatus ( &tmp ) )
+	if ( getTermStatus ( &tmp ) )
 	{
 		printf ( "terminal init failed\n" );
 		return ( __LINE__ );
 	}
-	else if ( setExecAfterAllOnExit ( (void(*)(void*))setTermSatatus, tmp ) )
+	else if ( setExecBeforeAllOnExit ( (void(*)(void*))setTermStatus, tmp ) )
 	{
+		setTermStatus ( tmp );
+		printf ( "terminal init failed\n" );
+		return ( __LINE__ );
+	}
+	else if ( setFreeOnExit ( tmp ) )
+	{
+		free ( tmp );
 		printf ( "terminal init failed\n" );
 		return ( __LINE__ );
 	}
@@ -408,14 +415,18 @@ int main ( int argc, char * argv[] )
 		logVerbose ( " - robotclaw : \e[31m%s\e[0m\n", motorBoadPath );
 	}
 
+	// open initialisation xml
 	tabActionTotal = ouvrirXML ( &nbAction, xmlInitPath );
-
-		setFreeOnExit ( tabActionTotal );
-
-
+	if ( !tabActionTotal )
+	{
+		logVerbose ( "xml loading failed: -%s- %s\n", xmlInitPath, strerror ( errno ) );
+		return ( __LINE__ );
+	}
+	setFreeOnExit ( tabActionTotal );
+	initAction ( );
+	
 	while ( 0 )
 	{ // initialisation
-
 		if ( !flag.noArm )
 		{ // dynamixel
 			// write1ByteTxRx(port_num, PROTOCOL_VERSION2, DXL2_ID, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE);
@@ -438,38 +449,38 @@ int main ( int argc, char * argv[] )
 
 		}
 	}
+
+	// free xml data
 	free ( tabActionTotal );
 	unsetFreeOnExit ( tabActionTotal );
 	tabActionTotal = NULL;
 
-
-	tabActionTotal = ouvrirXML ( &nbAction, xmlInitPath );
+	// open actions xml
+	tabActionTotal = ouvrirXML ( &nbAction, xmlActionPath );
 	if ( !tabActionTotal )
 	{
-		logVerbose ( "xml loading failed: -%s-\n %s\n", xmlInitPath, strerror ( errno ) );
-		return ( __LINE__ );
-	}
-	else
-	{
-		gettimeofday(&start, NULL);
-		tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
-	}
-	updateActionEnCours(tabActionTotal, nbAction);
-	if ( !tabActionTotal )
-	{
-		logVerbose ( "xml loading failed: -%s-\n %s\n", xmlInitPath, strerror ( errno ) );
+		logVerbose ( "xml loading failed: -%s-\n %s\n", xmlActionPath, strerror ( errno ) );
 		return ( __LINE__ );
 	}
 	setFreeOnExit ( tabActionTotal );
+	initAction ( );
 
+	gettimeofday ( &start, NULL );
+	tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
 
-	timer ( globalTime * 1000000, proccessNormalEnd, "stop request by timer", true );
-
+	
 	i = 0;
 	printf ( "\e[2K\r%6d\n", i );
+	timer ( globalTime * 1000000, proccessNormalEnd, "stop request by timer", true );
 
 	while ( 1 )
 	{
+		if ( !updateActionEnCours ( tabActionTotal, nbAction ) )
+		{
+			logVerbose ( "no more action remaining\n" );
+			break;
+		}
+		logDebug ( "\n" );
 		sleep ( 1 );
 		printf ( "\e[A\e[2K\r%6d\n", ++i );
 	}

@@ -10,7 +10,8 @@
 #include <string.h>
 #include <assert.h>
 
+int initAction ( void );
 void gestionAction(Action* listAction, Robot* robot);
-void updateActionEnCours(Action* listAction, int nbAction);
+int updateActionEnCours ( Action* listAction, int nbAction );
 
 #endif //MANAGEMENT_H

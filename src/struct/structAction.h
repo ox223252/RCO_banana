@@ -44,6 +44,6 @@ typedef struct
   char* listTimeOut;
 
   char** params;
-  double heureCreation;
+  uint64_t heureCreation;
 }Action;
 #endif //STRUCTACTION_H
