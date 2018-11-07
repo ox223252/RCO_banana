@@ -367,7 +367,7 @@ int main ( int argc, char * argv[] )
 
 	if ( !flag.noArm )
 	{ // arm enabled
-		
+
 		dynaPortNum = portHandler ( dynamixelsPath );
 		if ( !openPort ( dynaPortNum ) )
 		{ // can't open port
@@ -408,19 +408,9 @@ int main ( int argc, char * argv[] )
 		logVerbose ( " - robotclaw : \e[31m%s\e[0m\n", motorBoadPath );
 	}
 
-	//printf("%s \n\n",tabActionTotal[29].params[1]);
-	if ( !tabActionTotal )
-	{
-		logVerbose ( "xml loading failed: -%s-\n %s\n", xmlInitPath, strerror ( errno ) );
-		return ( __LINE__ );
-	}
-	else
-	{
-		gettimeofday(&start, NULL);
-	 	tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
-	}
-	updateActionEnCours(tabActionTotal, nbAction);
-	setFreeOnExit ( tabActionTotal );
+	tabActionTotal = ouvrirXML ( &nbAction, xmlInitPath );
+
+		setFreeOnExit ( tabActionTotal );
 
 
 	while ( 0 )
@@ -454,6 +444,17 @@ int main ( int argc, char * argv[] )
 
 
 	tabActionTotal = ouvrirXML ( &nbAction, xmlInitPath );
+	if ( !tabActionTotal )
+	{
+		logVerbose ( "xml loading failed: -%s-\n %s\n", xmlInitPath, strerror ( errno ) );
+		return ( __LINE__ );
+	}
+	else
+	{
+		gettimeofday(&start, NULL);
+		tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
+	}
+	updateActionEnCours(tabActionTotal, nbAction);
 	if ( !tabActionTotal )
 	{
 		logVerbose ( "xml loading failed: -%s-\n %s\n", xmlInitPath, strerror ( errno ) );
