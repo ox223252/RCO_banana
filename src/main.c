@@ -378,7 +378,7 @@ int main ( int argc, char * argv[] )
 		gettimeofday(&start, NULL);
 	 	tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
 	}
-	updateActionEnCours(tabActionTotal);
+	updateActionEnCours(tabActionTotal, nbAction);
 	setFreeOnExit ( tabActionTotal );
 
 	timer ( 5*1000000, proccessNormalEnd, "stop request by timer", true );
