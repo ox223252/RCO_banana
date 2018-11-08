@@ -117,11 +117,11 @@ int main ( int argc, char * argv[] )
 			help:1,         // 0x08
 			quiet:1,        // 0x10
 			debug:1,        // 0x20
-			color:1,        // 0x40
-			noDrive:1;      // 0x80
-		uint8_t noArm:1;	// 0x01
+			color:1;        // 0x40
 	}
 	flag = { 0 };
+
+	ActionFlag flagAction = { 0 };
 
 	param_el paramList[] =
 	{
@@ -131,8 +131,14 @@ int main ( int argc, char * argv[] )
 		{ "--q", "-q",        0x10, cT ( bool ), ((uint8_t * )&flag), "hide all trace point" },
 		{ "--debug", "-d",    0x20, cT ( bool ), ((uint8_t * )&flag), "display many trace point" },
 		{ "--color", "-c",    0x40, cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
-		{ "--noDrive", "-nD", 0x80, cT ( bool ), ((uint8_t * )&flag), "use it to disable drive power" },
-		{ "--noArm", "-nA",   0x01, cT ( bool ), ((uint8_t * )&flag) + 1, "use it to disable servo motor" },
+		{ "--noArm", "-nA",   0x01, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable servo motor" },
+		{ "--armWait", NULL, 0x02, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
+		{ "--armScan", NULL, 0x04, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
+		{ "--armDone", NULL, 0x08, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
+		{ "--noDrive", "-nD", 0x10, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
+		{ "--driveWait", NULL, 0x20, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
+		{ "--driveScan", NULL, 0x40, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
+		{ "--driveDone", NULL, 0x80, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
 		{ "--MaxSpeed", "-Ms", 1, cT ( int16_t ), &maxSpeed, "set max speed [ 0 ; 32767 ]" },
 		{ "--ini", "-i", 1, cT ( str ), xmlInitPath, "xml initialisation file path" },
 		{ "--xml", "-x", 1, cT ( str ), xmlActionPath, "xml action file path" },
@@ -215,8 +221,11 @@ int main ( int argc, char * argv[] )
 	logSetColor ( flag.color );
 	logSetDebug ( flag.debug );
 
+	void * mask = NULL;
+	struct timeval tv = { 0 };
+	fd_set rfds;
 
-	if ( !flag.noDrive )
+	if ( !flagAction.noDrive )
 	{ // if engine wasn't disabled
 		// init motor
 		motorBoard = roboclaw_init ( motorBoadPath, motorBoardUartSpeed);
@@ -373,13 +382,13 @@ int main ( int argc, char * argv[] )
 
 	printf ( "run %s\n", ( flag.red )? "\e[1;31mred\e[0m" : "\e[1;32mgreen\e[0m" );
 
-	if ( !flag.noArm )
+	if ( !flagAction.noArm )
 	{ // arm enabled
 
 		dynaPortNum = portHandler ( dynamixelsPath );
 		if ( !openPort ( dynaPortNum ) )
 		{ // can't open port
-			flag.noArm = 0;
+			flagAction.noArm = 0;
 			logVerbose ( " - dyna : \e[31m%s\e[0m (open failure)\n", dynamixelsPath );
 		}
 		else
@@ -407,7 +416,7 @@ int main ( int argc, char * argv[] )
 	}
 
 	// only for display
-	if ( !flag.noDrive )
+	if ( !flagAction.noDrive )
 	{ // engine enabled
 		logVerbose ( " - robotclaw : %s\n", motorBoadPath );
 	}
@@ -424,11 +433,11 @@ int main ( int argc, char * argv[] )
 		return ( __LINE__ );
 	}
 	setFreeOnExit ( tabActionTotal );
-	initAction ( );
+	initAction ( &flagAction );
 
 	while ( 0 )
 	{ // initialisation
-		if ( !flag.noArm )
+		if ( !flagAction.noArm )
 		{ // dynamixel
 			// write1ByteTxRx(port_num, PROTOCOL_VERSION2, DXL2_ID, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE);
 			// if ((dxl_comm_result = getLastTxRxResult(port_num, PROTOCOL_VERSION2)) != COMM_SUCCESS)
@@ -445,7 +454,7 @@ int main ( int argc, char * argv[] )
 			// }
 		}
 
-		if ( !flag.noDrive )
+		if ( !flagAction.noDrive )
 		{ // engine roboclaw
 
 		}
@@ -464,7 +473,7 @@ int main ( int argc, char * argv[] )
 		return ( __LINE__ );
 	}
 	setFreeOnExit ( tabActionTotal );
-	initAction ( );
+	initAction ( &flagAction );
 
 	gettimeofday ( &start, NULL );
 	if(nbAction>0)

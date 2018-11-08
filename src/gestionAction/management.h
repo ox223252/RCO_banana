@@ -3,15 +3,10 @@
 
 #include "action.h"
 #include "../struct/structAction.h"
-#include <sys/time.h>
-#include <time.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
+#include "../struct/structRobot.h"
 
-int initAction ( void );
-void gestionAction(Action* listAction, Robot* robot, int indiceAction);
+int initAction ( ActionFlag *flag );
+void gestionAction ( Action* listAction, Robot* robot, int indiceAction );
 int updateActionEnCours ( Action* listAction, int nbAction, Robot* robot );
 
 #endif //MANAGEMENT_H
