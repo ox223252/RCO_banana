@@ -132,13 +132,13 @@ int main ( int argc, char * argv[] )
 		{ "--debug", "-d",    0x20, cT ( bool ), ((uint8_t * )&flag), "display many trace point" },
 		{ "--color", "-c",    0x40, cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
 		{ "--noArm", "-nA",   0x01, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable servo motor" },
-		{ "--armWait", NULL, 0x02, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
-		{ "--armScan", NULL, 0x04, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
-		{ "--armDone", NULL, 0x08, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
+		{ "--armWait", NULL,  0x02, cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
+		{ "--armScan", NULL,  0x04, cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
+		{ "--armDone", NULL,  0x08, cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
 		{ "--noDrive", "-nD", 0x10, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
-		{ "--driveWait", NULL, 0x20, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
-		{ "--driveScan", NULL, 0x40, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
-		{ "--driveDone", NULL, 0x80, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
+		{ "--driveWait", NULL, 0x20, cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
+		{ "--driveScan", NULL, 0x40, cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
+		{ "--driveDone", NULL, 0x80, cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
 		{ "--MaxSpeed", "-Ms", 1, cT ( int16_t ), &maxSpeed, "set max speed [ 0 ; 32767 ]" },
 		{ "--ini", "-i", 1, cT ( str ), xmlInitPath, "xml initialisation file path" },
 		{ "--xml", "-x", 1, cT ( str ), xmlActionPath, "xml action file path" },
@@ -204,16 +204,19 @@ int main ( int argc, char * argv[] )
 	}
 
 
-	if ( readParamArgs ( argc, argv, paramList ) ||
-		readConfigFile ( "res/config.rco", configList ) )
+	if ( readConfigFile ( "res/config.rco", configList ) ||
+		readParamArgs ( argc, argv, paramList ) )
 	{
 		return ( __LINE__ );
 	}
 
 	if ( flag.help )
 	{
-		printf ( "build date: %s\n\n", DATE_BUILD );
+		printf ( "build date: %s\n", DATE_BUILD );
+		printf ( "\n\e[4mparameter available for cmd line:\e[0m\n" );
 		helpParamArgs ( paramList );
+		printf ( "\n\e[4mparameter available in res/config.rco file:\e[0m\n" );
+		helpConfigArgs ( configList );
 		return ( 0 );
 	}
 
