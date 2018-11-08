@@ -4,7 +4,7 @@
     <version>3.1</version>
     <Action type="actionDepart" numero="0">
         <bloc x="50" y="10250" />
-        <fils liste="1013;" />
+        <fils liste="1;" />
         <parametres lets="go" />
     </Action>
     <Action type="actionDyna" numero="1">

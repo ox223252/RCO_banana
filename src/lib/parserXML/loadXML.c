@@ -114,8 +114,14 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 					tabActionTotal[ indiceActionEnCours ].type = TYPE_SERVO;
 					tabActionTotal[ indiceActionEnCours ].params = malloc ( 2 * sizeof ( char* ) );
 					setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
-					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "id" );
-					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "angle" );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "id" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 0 ], ( char* ) mxmlElementGetAttr ( nodeBis, "id" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "angle" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 1 ], ( char* ) mxmlElementGetAttr ( nodeBis, "angle" ) );
+
+
 					logDebug ( "Servo %s %s\n",tabActionTotal[ indiceActionEnCours ].params[ 0 ],tabActionTotal[ indiceActionEnCours ].params[ 1 ] );
 				}
 				else if ( strcmp ( type,"actionDyna" ) == 0 )
@@ -123,9 +129,16 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 					tabActionTotal[ indiceActionEnCours ].type = TYPE_DYNA;
 					tabActionTotal[ indiceActionEnCours ].params = malloc ( 3 * sizeof ( char* ) );
 					setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
-					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "id" );
-					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "angle" );
-					tabActionTotal[ indiceActionEnCours ].params[ 2 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "vitesse" );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "id" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 0 ], ( char* ) mxmlElementGetAttr ( nodeBis, "id" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "angle" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 1 ], ( char* ) mxmlElementGetAttr ( nodeBis, "angle" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 2 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "vitesse" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 2 ], ( char* ) mxmlElementGetAttr ( nodeBis, "vitesse" ) );
+
 					logDebug ( "Dyna %s %s %s\n",tabActionTotal[ indiceActionEnCours ].params[ 0 ],tabActionTotal[ indiceActionEnCours ].params[ 1 ],tabActionTotal[ indiceActionEnCours ].params[ 2 ] );
 				}
 				else if ( strcmp ( type,"actionRetourDyna" ) == 0 )
@@ -133,8 +146,14 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 					tabActionTotal[ indiceActionEnCours ].type = TYPE_ATTENTE_DYNA;
 					tabActionTotal[ indiceActionEnCours ].params = malloc ( 2 * sizeof ( char* ) );
 					setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
-					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "id" );
-					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "angle" );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "id" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 0 ], ( char* ) mxmlElementGetAttr ( nodeBis, "id" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "angle" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 1 ], ( char* ) mxmlElementGetAttr ( nodeBis, "angle" ) );
+
+
 					logDebug ( "Retour Dyna %s %s \n",tabActionTotal[ indiceActionEnCours ].params[ 0 ],tabActionTotal[ indiceActionEnCours ].params[ 1 ] );
 				}
 				else if ( strcmp ( type,"actionPosition" ) == 0 )
@@ -142,13 +161,28 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 					tabActionTotal[ indiceActionEnCours ].type = TYPE_POSITION;
 					tabActionTotal[ indiceActionEnCours ].params = malloc ( 7 * sizeof ( char* ) );
 					setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
-					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "x" );
-					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "y" );
-					tabActionTotal[ indiceActionEnCours ].params[ 2 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "vitesse" );
-					tabActionTotal[ indiceActionEnCours ].params[ 3 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "acc" );
-					tabActionTotal[ indiceActionEnCours ].params[ 4 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "dec" );
-					tabActionTotal[ indiceActionEnCours ].params[ 5 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "sens" );
-					tabActionTotal[ indiceActionEnCours ].params[ 6 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "precision" );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "x" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 0 ], ( char* ) mxmlElementGetAttr ( nodeBis, "x" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "y" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 1 ], ( char* ) mxmlElementGetAttr ( nodeBis, "y" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 2 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "vitesse" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 2 ], ( char* ) mxmlElementGetAttr ( nodeBis, "vitesse" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 3 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "acc" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 3 ], ( char* ) mxmlElementGetAttr ( nodeBis, "acc" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 4 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "dec" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 4 ], ( char* ) mxmlElementGetAttr ( nodeBis, "dec" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 5 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "sens" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 5 ], ( char* ) mxmlElementGetAttr ( nodeBis, "sens" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 6 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "precision" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 6 ], ( char* ) mxmlElementGetAttr ( nodeBis, "precision" ) );
+
 					logDebug ( "Position x: %s y: %s vitesse: %s acc: %s dec: %s sens: %s preci: %s\n",tabActionTotal[ indiceActionEnCours ].params[ 0 ],tabActionTotal[ indiceActionEnCours ].params[ 1 ],tabActionTotal[ indiceActionEnCours ].params[ 2 ],tabActionTotal[ indiceActionEnCours ].params[ 3 ],tabActionTotal[ indiceActionEnCours ].params[ 4 ],tabActionTotal[ indiceActionEnCours ].params[ 5 ],tabActionTotal[ indiceActionEnCours ].params[ 6 ] );
 				}
 				else if ( strcmp ( type,"actionRotation" ) == 0 )
@@ -156,9 +190,17 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 					tabActionTotal[ indiceActionEnCours ].type = TYPE_ORIENTATION;
 					tabActionTotal[ indiceActionEnCours ].params = ( char** ) malloc ( 3*sizeof ( char* ) );
 					setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
-					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "angle" );
-					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "vitesse" );
-					tabActionTotal[ indiceActionEnCours ].params[ 2 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "precision" );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "angle" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 0 ], ( char* ) mxmlElementGetAttr ( nodeBis, "angle" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "vitesse" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 1 ], ( char* ) mxmlElementGetAttr ( nodeBis, "vitesse" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 2 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "precision" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 2 ], ( char* ) mxmlElementGetAttr ( nodeBis, "precision" ) );
+
+
 					logDebug ( "Orientation angle : %s, vitesse %s, preci %s\n",tabActionTotal[ indiceActionEnCours ].params[ 0 ],tabActionTotal[ indiceActionEnCours ].params[ 1 ],tabActionTotal[ indiceActionEnCours ].params[ 2 ] );
 				}
 				else if ( strcmp ( type,"actionDeplacement" ) == 0 )
@@ -166,9 +208,16 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 					tabActionTotal[ indiceActionEnCours ].type = TYPE_DEPLACEMENT;
 					tabActionTotal[ indiceActionEnCours ].params = ( char** ) malloc ( 3*sizeof ( char* ) );
 					setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
-					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "id" );
-					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "value" );
-					tabActionTotal[ indiceActionEnCours ].params[ 2 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "vitesse" );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "id" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 0 ], ( char* ) mxmlElementGetAttr ( nodeBis, "id" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "value" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 1 ], ( char* ) mxmlElementGetAttr ( nodeBis, "value" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 2 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "vitesse" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 2 ], ( char* ) mxmlElementGetAttr ( nodeBis, "vitesse" ) );
+
 					logDebug ( "Deplacement id : %s, value %s, vitesse %s\n",tabActionTotal[ indiceActionEnCours ].params[ 0 ],tabActionTotal[ indiceActionEnCours ].params[ 1 ],tabActionTotal[ indiceActionEnCours ].params[ 2 ] );
 				}
 				else if ( strcmp ( type,"actionValeur" ) == 0 )
@@ -176,8 +225,13 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 					tabActionTotal[ indiceActionEnCours ].type = TYPE_SET_VALEUR;
 					tabActionTotal[ indiceActionEnCours ].params = ( char** ) malloc ( 2*sizeof ( char* ) );
 					setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
-					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "id" );
-					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "value" );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "id" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 0 ], ( char* ) mxmlElementGetAttr ( nodeBis, "id" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "value" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 1 ], ( char* ) mxmlElementGetAttr ( nodeBis, "value" ) );
+
 					logDebug ( "Valeur id : %s, value %s\n",tabActionTotal[ indiceActionEnCours ].params[ 0 ],tabActionTotal[ indiceActionEnCours ].params[ 1 ] );
 				}
 				else if ( strcmp ( type,"actionRetourBlocage" ) == 0 )
@@ -185,7 +239,10 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 					tabActionTotal[ indiceActionEnCours ].type = TYPE_ATTENTE_BLOAGE;
 					tabActionTotal[ indiceActionEnCours ].params = ( char** ) malloc ( 1*sizeof ( char* ) );
 					setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
-					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "sensibilite" );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "sensibilite" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 0 ], ( char* ) mxmlElementGetAttr ( nodeBis, "sensibilite" ) );
+
 					logDebug ( "Valeur sensibilite : %s\n",tabActionTotal[ indiceActionEnCours ].params[ 0 ] );
 				}
 				else if ( strcmp ( type,"actionPause" ) == 0 )
@@ -193,7 +250,10 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 					tabActionTotal[ indiceActionEnCours ].type = TYPE_ATTENTE_TEMPS;
 					tabActionTotal[ indiceActionEnCours ].params = ( char** ) malloc ( 1*sizeof ( char* ) );
 					setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
-					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "temps" );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "temps" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 0 ], ( char* ) mxmlElementGetAttr ( nodeBis, "temps" ) );
+
 					logDebug ( "Pause temps : %s\n",tabActionTotal[ indiceActionEnCours ].params[ 0 ] );
 				}
 				else if ( strcmp ( type,"actionVar" ) == 0 )
@@ -201,9 +261,16 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 					tabActionTotal[ indiceActionEnCours ].type = TYPE_SET_VARIABLE;
 					tabActionTotal[ indiceActionEnCours ].params = ( char** ) malloc ( 3*sizeof ( char* ) );
 					setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
-					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "numero" );
-					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "cible" );
-					tabActionTotal[ indiceActionEnCours ].params[ 2 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "commande" );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "numero" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 0 ], ( char* ) mxmlElementGetAttr ( nodeBis, "numero" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "cible" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 1 ], ( char* ) mxmlElementGetAttr ( nodeBis, "cible" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 2 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "commande" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 2 ], ( char* ) mxmlElementGetAttr ( nodeBis, "commande" ) );
+
 					logDebug ( "Var numero : %s cible : %s commande %s\n",tabActionTotal[ indiceActionEnCours ].params[ 0 ],tabActionTotal[ indiceActionEnCours ].params[ 1 ],tabActionTotal[ indiceActionEnCours ].params[ 2 ] );
 				}
 				else if ( strcmp ( type,"actionRetourVar" ) == 0 )
@@ -211,10 +278,19 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 					tabActionTotal[ indiceActionEnCours ].type = TYPE_GET_VARIABLE;
 					tabActionTotal[ indiceActionEnCours ].params = ( char** ) malloc ( 4*sizeof ( char* ) );
 					setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
-					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "numero" );
-					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "cible" );
-					tabActionTotal[ indiceActionEnCours ].params[ 2 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "condition" );
-					tabActionTotal[ indiceActionEnCours ].params[ 3 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "value" );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "numero" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 0 ], ( char* ) mxmlElementGetAttr ( nodeBis, "numero" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "cible" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 1 ], ( char* ) mxmlElementGetAttr ( nodeBis, "cible" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 2 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "condition" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 2 ], ( char* ) mxmlElementGetAttr ( nodeBis, "condition" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 3 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "value" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 3 ], ( char* ) mxmlElementGetAttr ( nodeBis, "value" ) );
+
 					logDebug ( "Retour var numero : %s cible : %s condition %s value %s\n",tabActionTotal[ indiceActionEnCours ].params[ 0 ],tabActionTotal[ indiceActionEnCours ].params[ 1 ],tabActionTotal[ indiceActionEnCours ].params[ 2 ],tabActionTotal[ indiceActionEnCours ].params[ 3 ] );
 				}
 				else if ( strcmp ( type,"actionGPIO" ) == 0 )
@@ -222,8 +298,13 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 					tabActionTotal[ indiceActionEnCours ].type = TYPE_GPIO;
 					tabActionTotal[ indiceActionEnCours ].params = ( char** ) malloc ( 2*sizeof ( char* ) );
 					setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
-					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "pin" );
-					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "value" );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "pin" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 0 ], ( char* ) mxmlElementGetAttr ( nodeBis, "pin" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "value" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 1 ], ( char* ) mxmlElementGetAttr ( nodeBis, "value" ) );
+
 					logDebug ( "Valeur pin : %s, value %s\n",tabActionTotal[ indiceActionEnCours ].params[ 0 ],tabActionTotal[ indiceActionEnCours ].params[ 1 ] );
 				}
 				else if ( strcmp ( type,"actionRetourGpio" ) == 0 )
@@ -231,8 +312,13 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 					tabActionTotal[ indiceActionEnCours ].type = TYPE_RETOUR_GPIO;
 					tabActionTotal[ indiceActionEnCours ].params = ( char** ) malloc ( 2*sizeof ( char* ) );
 					setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
-					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "pin" );
-					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = ( char* ) mxmlElementGetAttr ( nodeBis, "value" );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "pin" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 0 ], ( char* ) mxmlElementGetAttr ( nodeBis, "pin" ) );
+
+					tabActionTotal[ indiceActionEnCours ].params[ 1 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "value" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 1 ], ( char* ) mxmlElementGetAttr ( nodeBis, "value" ) );
+
 					logDebug ( "Valeur pin : %s, value %s\n",tabActionTotal[ indiceActionEnCours ].params[ 0 ],tabActionTotal[ indiceActionEnCours ].params[ 1 ] );
 				}
 				else if ( strcmp ( type,"actionDepart" ) == 0 )

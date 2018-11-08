@@ -11,7 +11,7 @@
 #include <assert.h>
 
 int initAction ( void );
-void gestionAction(Action* listAction, Robot* robot);
-int updateActionEnCours ( Action* listAction, int nbAction );
+void gestionAction(Action* listAction, Robot* robot, int indiceAction);
+int updateActionEnCours ( Action* listAction, int nbAction, Robot* robot );
 
 #endif //MANAGEMENT_H

@@ -67,6 +67,7 @@ int main ( int argc, char * argv[] )
 	void * tmp = NULL;
 
 	struct timeval start;
+	Robot robot1;
 
 	char dynamixelsPath[ 128 ] = { 0 }; // dynamixel acces point /dev/dyna
 	uint32_t dynamixelUartSpeed = 115200; // uart speed
@@ -424,7 +425,7 @@ int main ( int argc, char * argv[] )
 	}
 	setFreeOnExit ( tabActionTotal );
 	initAction ( );
-	
+
 	while ( 0 )
 	{ // initialisation
 		if ( !flag.noArm )
@@ -466,22 +467,26 @@ int main ( int argc, char * argv[] )
 	initAction ( );
 
 	gettimeofday ( &start, NULL );
-	tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
+	if(nbAction>0)
+	{
+		tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
+		
+	}
 
-	
+
 	i = 0;
 	printf ( "\e[2K\r%6d\n", i );
 	timer ( globalTime * 1000000, proccessNormalEnd, "stop request by timer", true );
 
 	while ( 1 )
 	{
-		if ( !updateActionEnCours ( tabActionTotal, nbAction ) )
+		if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
 		{
 			logVerbose ( "no more action remaining\n" );
 			break;
 		}
 		logDebug ( "\n" );
-		sleep ( 1 );
+		usleep ( 1000*50 );
 		printf ( "\e[A\e[2K\r%6d\n", ++i );
 	}
 

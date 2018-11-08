@@ -43,6 +43,7 @@ typedef struct
   char* listFils;
   char* listTimeOut;
 
+  uint8_t isDone;
   char** params;
   uint64_t heureCreation;
 }Action;

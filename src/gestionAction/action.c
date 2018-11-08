@@ -2,5 +2,5 @@
 
 int isDone(Action* act)
 {
-  return 1;
+  return act->isDone;
 }
