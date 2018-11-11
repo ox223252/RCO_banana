@@ -21,6 +21,7 @@
 #include "struct/structAction.h"
 
 #include "gestionAction/management.h"
+#include "gestionAction/action.h"
 // #include "deplacement/odometrie.h"
 
 
@@ -70,7 +71,7 @@ int main ( int argc, char * argv[] )
 	Robot robot1;
 
 	char dynamixelsPath[ 128 ] = { 0 }; // dynamixel acces point /dev/dyna
-	uint32_t dynamixelUartSpeed = 115200; // uart speed
+	uint32_t dynamixelUartSpeed = 1000000; // uart speed
 	long int dynaPortNum = 0;
 	char motorBoadPath[ 128 ] = { 0 }; // roboclaw access point /dev/roboclaw
 
@@ -377,6 +378,7 @@ int main ( int argc, char * argv[] )
 	{ // arm enabled
 
 		dynaPortNum = portHandler ( dynamixelsPath );
+		packetHandler ( );
 		if ( !openPort ( dynaPortNum ) )
 		{ // can't open port
 			flag.noArm = 0;
@@ -387,13 +389,17 @@ int main ( int argc, char * argv[] )
 			logVerbose ( " - dyna : %s\n", dynamixelsPath );
 			logVerbose ( "   - Device Name : %s\n", dynamixelsPath );
 
-			packetHandler ( );
 
-			if ( setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
+			logVerbose( " Baudrate : %d \n",dynamixelUartSpeed);
+			setPortNum(dynaPortNum);
+			if ( !setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
 			{
 				logVerbose ( "   - Baudratesetting failed, stay with last value\n" );
+			}else
+			{
+				logVerbose ( "   - Baudrate    : %d\n", getBaudRate ( dynaPortNum ) );
 			}
-			logVerbose ( "   - Baudrate    : %d\n", getBaudRate ( dynaPortNum ) );
+
 
 			setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
 		}
@@ -470,7 +476,7 @@ int main ( int argc, char * argv[] )
 	if(nbAction>0)
 	{
 		tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
-		
+
 	}
 
 
