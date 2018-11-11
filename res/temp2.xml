@@ -1,22 +1,29 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<typeXml key="jeu. nov. 8 13:17:33 2018 GMT">scenario</typeXml>
+<typeXml key="sam. nov. 10 12:44:44 2018 GMT">scenario</typeXml>
 <Sequence>
     <version>3.1</version>
     <Action type="actionDepart" numero="0">
-        <bloc x="50" y="10250" />
+        <bloc x="0" y="10200" />
         <fils liste="1;" />
         <parametres lets="go" />
     </Action>
-    <Action type="actionPause" numero="1">
-        <bloc x="274" y="10247" />
+    <Action type="actionDyna" numero="1">
+        <bloc x="220" y="10200" />
         <fils liste="2;" />
         <pere liste="0;" />
-        <parametres temps="800" />
+        <parametres nom="custom" id="1" angle="0" vitesse="50" />
     </Action>
-    <Action type="actionDyna" numero="2">
-        <bloc x="479" y="10244" />
-        <fils liste="" />
+    <Action type="actionRetourDyna" numero="2" timeout="5000">
+        <bloc x="440" y="10176" />
+        <fils liste="3;" />
+        <timeout liste="" />
         <pere liste="1;" />
-        <parametres nom="Carrousel" id="1" angle="79" vitesse="20" />
+        <parametres nom="Carrousel" id="1" angle="0" />
+    </Action>
+    <Action type="actionDyna" numero="3">
+        <bloc x="660" y="10200" />
+        <fils liste="" />
+        <pere liste="2;" />
+        <parametres nom="custom" id="1" angle="25" vitesse="10" />
     </Action>
 </Sequence>

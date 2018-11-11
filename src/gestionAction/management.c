@@ -66,7 +66,6 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		}
 		case TYPE_DYNA:
 		{
-
 			if ( _management_flagAction->noArm )
 			{
 				if ( _management_flagAction->armWait )
@@ -93,6 +92,14 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 			}
 			else
 			{
+				if ( setVitesseDyna ( atoi ( listAction[ indiceAction ].params[ 0 ]), (int)(10.23*atoi(listAction[ indiceAction ].params[ 2 ]))) == -1 )
+				{
+					logVerbose ( "Erreur set vitesse dyna \n" );
+				}
+				if ( setPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ]), (int)(3.41*atoi(listAction[ indiceAction ].params[ 1 ]))) == -1 )
+				{
+					logVerbose ( "Erreur set angle dyna \n" );
+				}
 				logDebug("Dyna : id %s, angle %s, vitesse %s\n",listAction[ indiceAction ].params[ 0 ],listAction[ indiceAction ].params[ 1 ],listAction[ indiceAction ].params[ 2 ]);
 				listAction[indiceAction].isDone = 1;
 			}
@@ -120,7 +127,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 					FD_SET ( 0, &rfds );
 
 					setBlockMode ( &mask, true );
-					while ( select ( 1, &rfds, NULL, NULL, &tv) > 0 )
+					while ( select ( 1, &rfds, NULL, NULL, &tv ) > 0 )
 					{
 						printf ( "%d", getchar ( ) );
 						listAction[indiceAction].isDone = 1;
@@ -165,6 +172,11 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		}
 		case TYPE_ATTENTE_DYNA:
 		{
+			//id:param0 value:param1
+			if ( abs ( getPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ] ) ) - atoi ( listAction[ indiceAction ].params[ 0 ] ) ) < 5 )
+			{
+				listAction[indiceAction].isDone = 1;
+			}
 			break;
 		}
 		case TYPE_ATTENTE_TEMPS:
@@ -295,12 +307,13 @@ int updateActionEnCours ( Action* listAction, int nbAction, Robot* robot )
 			}
 		}
 		else if ( ( listAction[ numAction ].timeout > 0 ) &&
-		( ( now.tv_sec * 1000000 + now.tv_usec - listAction[ numAction ].heureCreation ) < ( listAction[ numAction ].timeout * 1000 ) ) )
+		( ( now.tv_sec * 1000000 + now.tv_usec - listAction[ numAction ].heureCreation ) > ( listAction[ numAction ].timeout * 1000 ) ) )
 		{ // end by timeout
-
+			logDebug("Done by timeout %d %d\n",listAction[ numAction ].timeout,  now.tv_sec * 1000000 + now.tv_usec - listAction[ numAction ].heureCreation);
 		}
 		else
 		{ // not done
+			logDebug("not done yet\n");
 			sprintf ( newList, "%s%s;", newList, token );
 			actionRemaining++;
 		}
