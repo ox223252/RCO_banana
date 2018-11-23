@@ -22,8 +22,8 @@
 
 #include "gestionAction/management.h"
 #include "gestionAction/action.h"
-// #include "deplacement/odometrie.h"
-
+#include "deplacement/odometrie.h"
+#include "deplacement/controleMoteur.h"
 
 
 enum
@@ -224,15 +224,14 @@ int main ( int argc, char * argv[] )
 	logSetQuiet ( flag.quiet );
 	logSetColor ( flag.color );
 	logSetDebug ( flag.debug );
-
-	void * mask = NULL;
-	struct timeval tv = { 0 };
-	fd_set rfds;
+	logDebug("%s %d\n",motorBoadPath, motorBoardUartSpeed);
 
 	if ( !flagAction.noDrive )
 	{ // if engine wasn't disabled
 		// init motor
+
 		motorBoard = roboclaw_init ( motorBoadPath, motorBoardUartSpeed);
+
 		if ( !motorBoard )
 		{
 			logVerbose ( "can't open robo claw bus at %s\n", motorBoadPath );
@@ -241,7 +240,7 @@ int main ( int argc, char * argv[] )
 		}
 		setExecAfterAllOnExit ( roboClawClose, ( void * )motorBoard );
 
-		if ( !roboclaw_main_battery_voltage ( motorBoard, address, ( int16_t * )&i ) )
+		if ( roboclaw_main_battery_voltage ( motorBoard, address, ( int16_t * )&i ) != ROBOCLAW_OK)
 		{
 			logVerbose ( "error on reading battery voltage\n" );
 			return ( __LINE__ );
@@ -249,6 +248,7 @@ int main ( int argc, char * argv[] )
 		else
 		{
 			printf("battery voltage is : %f V\n", (float)i/10.0f);
+			initOdometrie(motorBoard, &robot1);
 		}
 	}
 
@@ -488,21 +488,30 @@ int main ( int argc, char * argv[] )
 	if(nbAction>0)
 	{
 		tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
-
 	}
-
 
 	i = 0;
 	printf ( "\e[2K\r%6d\n", i );
-	timer ( globalTime * 1000000, proccessNormalEnd, "stop request by timer", true );
+	timer ( globalTime * 99 * 10000, proccessNormalEnd, "stop request by timer", true );
 
 	while ( 1 )
 	{
+		calculPosition (motorBoard, &robot1 );
+		/*
+
+		Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
+		Comme ça, si on a pas d'actions influant sur les moteurs, on arrête la bête.
+
+		*/
+		robot1.vitesseGaucheToSend = robot1.vitesseGaucheDefault;
+		robot1.vitesseDroiteToSend = robot1.vitesseDroiteDefault;
+
 		if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
 		{
 			logVerbose ( "no more action remaining\n" );
 			break;
 		}
+		envoiOrdreMoteur(motorBoard, &robot1);
 		logDebug ( "\n" );
 		usleep ( 1000*50 );
 		printf ( "\e[A\e[2K\r%6d\n", ++i );

@@ -3,17 +3,40 @@
 
 #include <stdint.h> //uint8_t, int16_t
 
+typedef struct
+{
+	float xCible;
+	float yCible;
+	float vitesseMax;
+	float acc;
+	float dec;
+	float sens;
+	float precision;
+
+}
+Point;
+
+
 typedef struct Robot
 {
 	int32_t codeurGauche;
 	int32_t codeurDroit;
+	Point cible;
 
 	float vitesseGauche;
 	float vitesseDroite;
 
+	float vitesseGaucheToSend;
+	float vitesseDroiteToSend;
+
+	float vitesseGaucheDefault;
+	float vitesseDroiteDefault;
+
 	float xRobot;
 	float yRobot;
 	float orientationRobot;
+
+	float orientationVisee;
 
 	float distanceParcourue;
 
@@ -23,6 +46,8 @@ typedef struct Robot
 	float coeffAngleD;
 }
 Robot;
+
+
 
 typedef struct
 {

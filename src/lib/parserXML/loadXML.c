@@ -53,8 +53,8 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 		}
 
 		for ( node = mxmlFindElement ( tree, tree, "Sequence", NULL, NULL, MXML_DESCEND );
-			node != NULL;
-			node = mxmlFindElement ( node, tree, "Action", NULL, NULL, MXML_DESCEND ) )
+		node != NULL;
+		node = mxmlFindElement ( node, tree, "Action", NULL, NULL, MXML_DESCEND ) )
 		{
 			const char *name = mxmlGetElement ( node );
 			if ( strcmp ( name, "Action" ) == 0 )
@@ -104,7 +104,7 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 
 				nodeBis = mxmlFindElement ( node, node, "parametres", NULL, NULL, MXML_DESCEND );
 				if ( ( tabActionTotal[ indiceActionEnCours ].listFils != NULL ) &&
-					( tabActionTotal[ indiceActionEnCours ].listPere != NULL ) )
+				( tabActionTotal[ indiceActionEnCours ].listPere != NULL ) )
 				{
 					logDebug ( "Type : %s numero %d fils : %s pere %s\n",type,tabActionTotal[ indiceActionEnCours ].numero,tabActionTotal[ indiceActionEnCours ].listFils,tabActionTotal[ indiceActionEnCours ].listPere );
 				}
@@ -236,7 +236,7 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 				}
 				else if ( strcmp ( type,"actionRetourBlocage" ) == 0 )
 				{
-					tabActionTotal[ indiceActionEnCours ].type = TYPE_ATTENTE_BLOAGE;
+					tabActionTotal[ indiceActionEnCours ].type = TYPE_ATTENTE_BLOCAGE;
 					tabActionTotal[ indiceActionEnCours ].params = ( char** ) malloc ( 1*sizeof ( char* ) );
 					setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
 

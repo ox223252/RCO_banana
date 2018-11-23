@@ -24,7 +24,7 @@ typedef enum
   TYPE_AND                =     18,
   TYPE_SET_VALEUR         =     19,
   TYPE_COURBE             =     20,
-  TYPE_ATTENTE_BLOAGE     =     21,
+  TYPE_ATTENTE_BLOCAGE    =     21,
   TYPE_DEPLACEMENT        =     22,
   TYPE_FIN                =     23,
   TYPE_SET_VARIABLE       =     24,

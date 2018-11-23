@@ -3,7 +3,7 @@
 
 # path to dynamixels access point
 # value max length 63 bytes
-PATH_DYNA=/dev/ttyACM0
+PATH_DYNA=/dev/ttyAMA0
 
 # path to robotclaw board access point
 # value max length 63 bytes

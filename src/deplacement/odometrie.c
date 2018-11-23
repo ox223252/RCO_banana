@@ -33,9 +33,9 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 	deltaComptD = robot->codeurDroit - codeurDroitPrecedent;
 
 	robot->orientationRobot += robot->coeffAngleD * deltaComptD - robot->coeffAngleG * deltaComptG;
-	if ( robot->orientationRobot > 180 )
+	if ( robot->orientationRobot > 180. )
 	{
-		orientationPre -= 360;
+		orientationPre -= 360.;
 		robot->orientationRobot-=360.0;
 	}
 	else if ( robot->orientationRobot < -180.0 )
@@ -46,8 +46,8 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 
 	dAngle = ( robot->orientationRobot + orientationPre ) / 2.0;
 	dDeplacement = ( robot->coeffLongD * deltaComptD + robot->coeffLongG * deltaComptG ) / 2.0;
-	dX = dDeplacement * cos ( ( double )( dAngle * ( M_PI / 180 ) ) );
-	dY = dDeplacement * sin ( ( double )( dAngle * ( M_PI / 180 ) ) );
+	dX = dDeplacement * cos ( ( double )( dAngle * ( M_PI / 180. ) ) );
+	dY = dDeplacement * sin ( ( double )( dAngle * ( M_PI / 180. ) ) );
 
 	robot->distanceParcourue+=dDeplacement;
 
@@ -59,8 +59,7 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 
 int initOdometrie ( struct roboclaw* rc, Robot* robot )
 {
-	if ( !rc ||
-		!robot )
+	if ( !rc ||	!robot )
 	{
 		errno = EINVAL;
 		return ( __LINE__ );
@@ -70,6 +69,8 @@ int initOdometrie ( struct roboclaw* rc, Robot* robot )
 	robot->coeffLongD =	0.0489296636;
 	robot->coeffAngleG = -0.0108754758;
 	robot->coeffAngleD = 0.0108584183;
+	robot->vitesseGaucheDefault = 0.;
+	robot->vitesseDroiteDefault = 0.;
 
 	if ( roboclaw_encoders ( rc, 0x80, &(robot->codeurGauche), &(robot->codeurDroit) ) != ROBOCLAW_OK )
 	{
@@ -80,6 +81,7 @@ int initOdometrie ( struct roboclaw* rc, Robot* robot )
 	codeurGauchePrecedent = robot->codeurGauche;
 	codeurDroitPrecedent = robot->codeurDroit;
 	orientationPre = robot->orientationRobot;
+	printf("Init codeurs : %f %f \n",codeurGauchePrecedent,codeurDroitPrecedent);
 
 	return ( 0 );
 }

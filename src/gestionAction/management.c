@@ -13,7 +13,8 @@
 
 static char* _management_listActionEnCours = NULL;
 static ActionFlag *_management_flagAction = NULL;
-static int _management_nbActionEnCours = 1;
+
+int getIndiceActionByIndice ( Action* listAction, int indiceAction, int nbAction );
 
 int initAction ( ActionFlag *flag )
 {
@@ -26,7 +27,6 @@ int initAction ( ActionFlag *flag )
 	if ( !_management_listActionEnCours )
 	{
 		_management_flagAction = flag;
-
 		_management_listActionEnCours = malloc ( 256 );
 		if ( !_management_listActionEnCours )
 		{
@@ -151,6 +151,15 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		}
 		case TYPE_POSITION:
 		{
+			robot->vitesseGaucheDefault = 0.;
+			robot->vitesseDroiteDefault = 0.;
+			robot->cible.xCible 				= atoi ( listAction[ indiceAction ].params[ 0 ] );
+			robot->cible.yCible 				= atoi ( listAction[ indiceAction ].params[ 1 ] );
+			robot->cible.vitesseMax 		= atoi ( listAction[ indiceAction ].params[ 2 ] );
+			robot->cible.acc 						= atoi ( listAction[ indiceAction ].params[ 3 ] );
+			robot->cible.dec 						= atoi ( listAction[ indiceAction ].params[ 4 ] );
+			robot->cible.sens 					= atoi ( listAction[ indiceAction ].params[ 5 ] );
+			robot->cible.precision 			= atoi ( listAction[ indiceAction ].params[ 6 ] );
 			break;
 		}
 		case TYPE_ORIENTATION:
@@ -191,6 +200,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		}
 		case TYPE_RETOUR_DEPLACEMENT:
 		{
+
 			break;
 		}
 		case TYPE_RETOUR_ORIENTATION:
@@ -215,13 +225,43 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		}
 		case TYPE_SET_VALEUR:
 		{
+			switch(atoi(listAction[indiceAction].params[ 0 ]))
+			{
+				case 0:
+				//xRobot
+				robot->xRobot = atoi(listAction[indiceAction].params[ 1 ]);
+				listAction[indiceAction].isDone = 1;
+				break;
+				case 1:
+				//yRobot
+				robot->yRobot = atoi(listAction[indiceAction].params[ 1 ]);
+				listAction[indiceAction].isDone = 1;
+				break;
+				case 2:
+				//Orientation Robot
+				robot->orientationRobot = atoi(listAction[indiceAction].params[ 1 ]);
+				listAction[indiceAction].isDone = 1;
+				break;
+				case 3:
+				//Vitesse Linéaire
+				robot->vitesseGaucheDefault = atoi(listAction[indiceAction].params[ 1 ]);
+				robot->vitesseDroiteDefault = atoi(listAction[indiceAction].params[ 1 ]);
+				listAction[indiceAction].isDone = 1;
+				break;
+				case 4:
+				//Vitesse Angulaire
+				robot->vitesseGaucheDefault = -1.* atoi(listAction[indiceAction].params[ 1 ]);
+				robot->vitesseDroiteDefault = atoi(listAction[indiceAction].params[ 1 ]);
+				listAction[indiceAction].isDone = 1;
+				break;
+			}
 			break;
 		}
 		case TYPE_COURBE:
 		{
 			break;
 		}
-		case TYPE_ATTENTE_BLOAGE:
+		case TYPE_ATTENTE_BLOCAGE:
 		{
 			break;
 		}
@@ -267,7 +307,7 @@ int updateActionEnCours ( Action* listAction, int nbAction, Robot* robot )
 
 	if ( !_management_listActionEnCours )
 	{
-		return;
+		return 0;
 	}
 
 	listCOPY = malloc ( strlen ( _management_listActionEnCours ) + 1 );
