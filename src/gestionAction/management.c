@@ -174,11 +174,27 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 				}
 			}
 
-
 			break;
 		}
 		case TYPE_ORIENTATION:
 		{
+			if(newDeplacement == 1)
+			{
+				newDeplacement = 0;
+				robot->vitesseGaucheDefault = 0.;
+				robot->vitesseDroiteDefault = 0.;
+				robot->orientationVisee 		= atoi ( listAction[ indiceAction ].params[ 0 ] );
+				robot->cible.vitesseMax 		= atoi ( listAction[ indiceAction ].params[ 1 ] );
+				robot->cible.precision 			= atoi ( listAction[ indiceAction ].params[ 2 ] );
+				premierAppelTenirAngle(robot);
+			}else
+			{
+				if(tenirAngle(robot)==1)
+				{
+					newDeplacement = 1;
+					listAction[indiceAction].isDone = 1;
+				}
+			}
 			break;
 		}
 		case TYPE_SEQUENCE:

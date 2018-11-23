@@ -14,7 +14,7 @@ struct timeval pre;
 
 void premierAppel(Robot* robot)
 {
-  gettimeofday ( &pre, NULL );
+  premierAppelTenirAngle(robot);
   distanceCiblePre = distance2points(robot);
   robot->orientationVisee = acos((robot->cible.xCible - robot->xRobot) /
   (sqrt((robot->cible.xCible-robot->xRobot)*(robot->cible.xCible-robot->xRobot)+
@@ -23,30 +23,28 @@ void premierAppel(Robot* robot)
   if(robot->cible.yCible < robot->yRobot){
     robot->orientationVisee = -1.*robot->orientationVisee;
   }
-  erreurAnglePre = minimumErreur2Angles(robot->orientationRobot,robot->orientationVisee);
+  premierAppelTenirAngle(robot);
 
+}
+
+void premierAppelTenirAngle(Robot* robot)
+{
+  gettimeofday ( &pre, NULL );
+  erreurAnglePre = minimumErreur2Angles(robot->orientationRobot,robot->orientationVisee);
 }
 
 int calculDeplacement(Robot* robot)
 {
   /*
-
   Le robot sait où il est, il connait la position de la cible :
   il suffit de calculer la distance de la cible et la consigne d'orientation
 
-  gettimeofday ( &now, NULL );
-  logDebug ( "attente %d type : %d\n", ( now.tv_sec * 1000000 + now.tv_usec - listAction[ indiceAction ].heureCreation ),1000* atoi(listAction[indiceAction].params[ 0 ]) );
-  if(( now.tv_sec * 1000000 + now.tv_usec - listAction[ indiceAction ].heureCreation ) >= 1000* atoi(listAction[indiceAction].params[ 0 ]))
-  {
-    listAction[indiceAction].isDone = 1;
-  }
-
   */
+
   float distanceCible;
   float vitesseLineaire;
   float vitesseAngulaire;
   float erreurAngle;
-
 
   distanceCible = distance2points(robot);
   if(distanceCible <= robot->cible.precision)
@@ -64,7 +62,7 @@ int calculDeplacement(Robot* robot)
 
   erreurAngle = minimumErreur2Angles(robot->orientationRobot,robot->orientationVisee);
 
-  if(robot->sens == 1)
+  if(robot->cible.sens == 1)
   {
     //marche arriere
     robot->vitesseGaucheToSend = -1. * distanceCible;
@@ -75,23 +73,44 @@ int calculDeplacement(Robot* robot)
     robot->vitesseDroiteToSend = 1. * distanceCible;
   }
 
-  robot->vitesseDroiteToSend += 10*.erreurAngle;
-  robot->vitesseGaucheToSend -= 10*.erreurAngle;
+  robot->vitesseDroiteToSend += 10.*erreurAngle;
+  robot->vitesseGaucheToSend -= 10.*erreurAngle;
 
   gettimeofday ( &now, NULL );
   tempsEcoule = (now.tv_sec * 1000000 + now.tv_usec) - (pre.tv_sec * 1000000 + pre.tv_usec);
 
   //1000000 sec = 1000000 acc
   //x sec
-  if(pourcentageVitesse + tempsEcoule*robot->acc < robot->vitesseMax)
+  if(pourcentageVitesse + tempsEcoule*robot->cible.acc < robot->cible.vitesseMax)
   {
-    pourcentageVitesse += tempsEcoule*robot->acc;
+    pourcentageVitesse += tempsEcoule*robot->cible.acc;
   }
   robot->vitesseGaucheToSend*=(pourcentageVitesse/100);
   robot->vitesseDroiteToSend*=(pourcentageVitesse/100);
 
   return 0;
 
+}
+
+int tenirAngle(Robot* robot)
+{
+  float erreurAngle;
+  erreurAngle = minimumErreur2Angles(robot->orientationRobot,robot->orientationVisee);
+
+  if(fabs(erreurAngle) <= robot->cible.precision)
+  {
+    return 1;
+  }
+  gettimeofday ( &now, NULL );
+  tempsEcoule = (now.tv_sec * 1000000 + now.tv_usec) - (pre.tv_sec * 1000000 + pre.tv_usec);
+
+
+  robot->vitesseDroiteToSend = 10.*erreurAngle;
+  robot->vitesseGaucheToSend = 10.*erreurAngle;
+  
+  robot->vitesseGaucheToSend*=(robot->cible.vitesseMax/100);
+  robot->vitesseDroiteToSend*=(robot->cible.vitesseMax/100);
+  return 0;
 }
 
 float distance2points(Robot* robot)
