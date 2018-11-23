@@ -58,7 +58,7 @@ typedef struct
 		noDrive:1,    // 0x10
 		driveWait:1,  // 0x20
 		driveScan:1,  // 0x40
-		driveDone:8;  // 0x80
+		driveDone:1;  // 0x80
 }
 ActionFlag;
 #endif //STRUCTROBOT_H

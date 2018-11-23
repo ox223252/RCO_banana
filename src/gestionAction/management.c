@@ -13,6 +13,7 @@
 
 static char* _management_listActionEnCours = NULL;
 static ActionFlag *_management_flagAction = NULL;
+int8_t newDeplacement = 1;
 
 int getIndiceActionByIndice ( Action* listAction, int indiceAction, int nbAction );
 
@@ -151,15 +152,29 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		}
 		case TYPE_POSITION:
 		{
-			robot->vitesseGaucheDefault = 0.;
-			robot->vitesseDroiteDefault = 0.;
-			robot->cible.xCible 				= atoi ( listAction[ indiceAction ].params[ 0 ] );
-			robot->cible.yCible 				= atoi ( listAction[ indiceAction ].params[ 1 ] );
-			robot->cible.vitesseMax 		= atoi ( listAction[ indiceAction ].params[ 2 ] );
-			robot->cible.acc 						= atoi ( listAction[ indiceAction ].params[ 3 ] );
-			robot->cible.dec 						= atoi ( listAction[ indiceAction ].params[ 4 ] );
-			robot->cible.sens 					= atoi ( listAction[ indiceAction ].params[ 5 ] );
-			robot->cible.precision 			= atoi ( listAction[ indiceAction ].params[ 6 ] );
+			if(newDeplacement == 1)
+			{
+				newDeplacement = 0;
+				robot->vitesseGaucheDefault = 0.;
+				robot->vitesseDroiteDefault = 0.;
+				robot->cible.xCible 				= atoi ( listAction[ indiceAction ].params[ 0 ] );
+				robot->cible.yCible 				= atoi ( listAction[ indiceAction ].params[ 1 ] );
+				robot->cible.vitesseMax 		= atoi ( listAction[ indiceAction ].params[ 2 ] );
+				robot->cible.acc 						= atoi ( listAction[ indiceAction ].params[ 3 ] );
+				robot->cible.dec 						= atoi ( listAction[ indiceAction ].params[ 4 ] );
+				robot->cible.sens 					= atoi ( listAction[ indiceAction ].params[ 5 ] );
+				robot->cible.precision 			= atoi ( listAction[ indiceAction ].params[ 6 ] );
+				premierAppel(robot);
+			}else
+			{
+				if(calculDeplacement(robot)==1)
+				{
+					newDeplacement = 1;
+					listAction[indiceAction].isDone = 1;
+				}
+			}
+
+
 			break;
 		}
 		case TYPE_ORIENTATION:

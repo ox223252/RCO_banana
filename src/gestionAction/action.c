@@ -17,7 +17,6 @@ int setVitesseDyna(int id, int vitesse)
   uint8_t dxl_error = 0;
   int dxl_comm_result = COMM_TX_FAIL;             // Communication result
 
-
   write2ByteTxRx(port_Num, PROTOCOL_VERSION, id, ADDR_MX_MOVING_SPEED, vitesse);
   if ((dxl_comm_result = getLastTxRxResult(port_Num, PROTOCOL_VERSION)) != COMM_SUCCESS)
   {
