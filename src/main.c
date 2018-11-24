@@ -497,6 +497,9 @@ int main ( int argc, char * argv[] )
 	while ( 1 )
 	{
 		calculPosition (motorBoard, &robot1 );
+
+		printf("Gauche : %d Droite : %d X : %f  Y : %f Angle : %f\n", robot1.codeurGauche, robot1.codeurDroit, robot1.xRobot, robot1.yRobot, robot1.orientationRobot);
+
 		/*
 
 		Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
@@ -506,12 +509,12 @@ int main ( int argc, char * argv[] )
 		robot1.vitesseGaucheToSend = robot1.vitesseGaucheDefault;
 		robot1.vitesseDroiteToSend = robot1.vitesseDroiteDefault;
 
-		if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
+		/*if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
 		{
 			logVerbose ( "no more action remaining\n" );
 			break;
-		}
-		envoiOrdreMoteur(motorBoard, &robot1);
+		}*/
+		//envoiOrdreMoteur(motorBoard, &robot1);
 		logDebug ( "\n" );
 		usleep ( 1000*50 );
 		printf ( "\e[A\e[2K\r%6d\n", ++i );
