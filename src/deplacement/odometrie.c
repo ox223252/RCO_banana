@@ -27,7 +27,9 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 	codeurGauchePrecedent = robot->codeurGauche;
 	codeurDroitPrecedent = robot->codeurDroit;
 	orientationPre = robot->orientationRobot;
-	roboclaw_encoders ( rc,	0x80, &(robot->codeurGauche), &(robot->codeurDroit) );
+
+	roboclaw_encoders (rc, 0x80, &(robot->codeurGauche), &(robot->codeurDroit));
+
 	deltaComptG = robot->codeurGauche - codeurGauchePrecedent;
 	deltaComptD = robot->codeurDroit - codeurDroitPrecedent;
 	robot->orientationRobot += robot->coeffAngleG * deltaComptG - robot->coeffAngleD * deltaComptD;
@@ -42,20 +44,15 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 		robot->orientationRobot += 360.0;
 	}
 
-	dAngle = robot->coeffAngleG * deltaComptG - robot->coeffAngleD * deltaComptD;
+	dAngle = (robot->orientationRobot + orientationPre)/2.;
 	dDeplacement = ( robot->coeffLongD * deltaComptD + robot->coeffLongG * deltaComptG ) / 2.0;
 
-	float tuMeCasseLesCouilles = cosf(45 * (double)M_PI  / 180);
-	printf("%f %f \n",tuMeCasseLesCouilles, dAngle);
-	tuMeCasseLesCouilles = sinf(45 * M_PI / 180.);
-	printf("%f %f \n",tuMeCasseLesCouilles, dAngle);
-	dX = dDeplacement * cosf ( ( dAngle * ( M_PI / 180. ) ) );
-	dY = dDeplacement * sinf ( ( dAngle * ( M_PI / 180. ) ) );
+	dX = dDeplacement * cos ( ( dAngle * ( M_PI / 180. ) ) );
+	dY = dDeplacement * sin ( ( dAngle * ( M_PI / 180. ) ) );
 	robot->distanceParcourue+=dDeplacement;
-	//printf("%f %f \n",tuMeCasseLesCouilles, dAngle);
+
 	robot->xRobot += dX;
 	robot->yRobot += dY;
-
 	return ( 0 );
 }
 

@@ -213,7 +213,7 @@ int main ( int argc, char * argv[] )
 
 	if ( flag.help )
 	{
-		printf ( "build date: %s\n", DATE_BUILD );
+		//printf ( "build date: %s\n", DATE_BUILD );
 		printf ( "\n\e[4mparameter available for cmd line:\e[0m\n" );
 		helpParamArgs ( paramList );
 		printf ( "\n\e[4mparameter available in res/config.rco file:\e[0m\n" );
@@ -497,24 +497,22 @@ int main ( int argc, char * argv[] )
 	while ( 1 )
 	{
 		calculPosition (motorBoard, &robot1 );
-
 		printf("Gauche : %d Droite : %d X : %f  Y : %f Angle : %f\n", robot1.codeurGauche, robot1.codeurDroit, robot1.xRobot, robot1.yRobot, robot1.orientationRobot);
 
 		/*
-
 		Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
 		Comme ça, si on a pas d'actions influant sur les moteurs, on arrête la bête.
-
 		*/
 		robot1.vitesseGaucheToSend = robot1.vitesseGaucheDefault;
 		robot1.vitesseDroiteToSend = robot1.vitesseDroiteDefault;
-
-		/*if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
+/*
+		if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
 		{
 			logVerbose ( "no more action remaining\n" );
 			break;
-		}*/
-		//envoiOrdreMoteur(motorBoard, &robot1);
+		}
+		envoiOrdreMoteur(motorBoard, &robot1);
+		*/
 		logDebug ( "\n" );
 		usleep ( 1000*50 );
 		printf ( "\e[A\e[2K\r%6d\n", ++i );

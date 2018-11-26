@@ -9,8 +9,8 @@ natif_LIBS=
 
 # tools / flags / libs only for arm linux target
 LABEL=arm-Linux
-arm-Linux_CROSS_CC=arm-linux-gnueabi-gcc
-arm-Linux_CROSS_CXX=arm-linux-gnueabi-g++
+arm-Linux_CROSS_CC=arm-linux-gnueabihf-gcc
+arm-Linux_CROSS_CXX=arm-linux-gnueabihf-g++
 arm-Linux_FLAGS=
 arm-Linux_LIBS=
 arm-Linux_EXEC_AFTER=
@@ -19,7 +19,7 @@ arm-Linux_EXEC_AFTER=
 LABEL=arm
 arm_CROSS_CC=arm-none-eabi-gcc
 arm_CROSS_CXX=arm-none-eabi-g++
-arm_FLAGS=-std=gnu99 -g -O2 -Wall -mlittle-endian -mthumb -mthumb-interwork -mcpu=cortex-m0 -fsingle-precision-constant -Wdouble-promotion
+arm_FLAGS=-std=gnu99 -g -O2 -Wall -mlittle-endian -mthumb -mthumb-interwork -mcpu=cortex-m0 -fsingle-precision-constant -Wdouble-promotion --enable-decimal-float=yes
 arm_LIBS=
 arm_EXEC_AFTER=arm-none-eabi-objcopy -O binary ${EXEC} ${EXEC}.bin
 
