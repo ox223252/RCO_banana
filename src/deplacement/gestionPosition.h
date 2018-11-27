@@ -7,7 +7,7 @@
 #include <time.h>
 
 void premierAppel(Robot* robot);
-void premierAppelTenirAngle(Robot* robot);
+void premierAppelTenirAngle ( Robot* robot );
 int calculDeplacement(Robot* robot);
 int tenirAngle(Robot* robot);
 

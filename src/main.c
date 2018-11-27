@@ -147,7 +147,6 @@ int main ( int argc, char * argv[] )
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
 
-
 	config_el configList[] =
 	{
 		{ "PATH_DYNA", cT ( str ), dynamixelsPath, "PATH to access to dynamixels"},
@@ -213,7 +212,7 @@ int main ( int argc, char * argv[] )
 
 	if ( flag.help )
 	{
-		//printf ( "build date: %s\n", DATE_BUILD );
+		printf ( "build date: %s\n", DATE_BUILD );
 		printf ( "\n\e[4mparameter available for cmd line:\e[0m\n" );
 		helpParamArgs ( paramList );
 		printf ( "\n\e[4mparameter available in res/config.rco file:\e[0m\n" );
@@ -221,15 +220,9 @@ int main ( int argc, char * argv[] )
 		return ( 0 );
 	}
 
-	logSetQuiet ( flag.quiet );
-	logSetColor ( flag.color );
-	logSetDebug ( flag.debug );
-	logDebug("%s %d\n",motorBoadPath, motorBoardUartSpeed);
-
 	if ( !flagAction.noDrive )
 	{ // if engine wasn't disabled
 		// init motor
-
 		motorBoard = roboclaw_init ( motorBoadPath, motorBoardUartSpeed);
 
 		if ( !motorBoard )
@@ -278,8 +271,6 @@ int main ( int argc, char * argv[] )
 					}
 					case MENU_MANUAL_keyboard:
 					{
-						setBlockMode ( &tmp, true );
-
 						i = 1;
 						do
 						{
@@ -291,7 +282,7 @@ int main ( int argc, char * argv[] )
 									moteur.right );
 							}
 
-							switch ( getMovePad ( false ) )
+							switch ( getMovePad ( true ) )
 							{
 								case 	KEYCODE_ESCAPE:
 								{
@@ -364,8 +355,6 @@ int main ( int argc, char * argv[] )
 						}
 						while ( i );
 
-						resetBlockMode ( tmp );
-
 						break;
 					}
 					default:
@@ -412,7 +401,6 @@ int main ( int argc, char * argv[] )
 				logVerbose ( "   - Baudrate    : %d\n", getBaudRate ( dynaPortNum ) );
 			}
 
-
 			setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
 		}
 
@@ -434,7 +422,9 @@ int main ( int argc, char * argv[] )
 		logVerbose ( " - robotclaw : \e[31m%s\e[0m\n", motorBoadPath );
 	}
 
+	//
 	// open initialisation xml
+	//
 	tabActionTotal = ouvrirXML ( &nbAction, xmlInitPath );
 	if ( !tabActionTotal )
 	{
@@ -474,7 +464,10 @@ int main ( int argc, char * argv[] )
 	unsetFreeOnExit ( tabActionTotal );
 	tabActionTotal = NULL;
 
+
+	//
 	// open actions xml
+	//
 	tabActionTotal = ouvrirXML ( &nbAction, xmlActionPath );
 	if ( !tabActionTotal )
 	{
@@ -485,19 +478,25 @@ int main ( int argc, char * argv[] )
 	initAction ( &flagAction );
 
 	gettimeofday ( &start, NULL );
-	if(nbAction>0)
+	if ( nbAction > 0 )
 	{
 		tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
 	}
 
-	i = 0;
-	printf ( "\e[2K\r%6d\n", i );
 	timer ( globalTime * 99 * 10000, proccessNormalEnd, "stop request by timer", true );
 
 	while ( 1 )
 	{
-		calculPosition (motorBoard, &robot1 );
-		printf("Gauche : %d Droite : %d X : %f  Y : %f Angle : %f\n", robot1.codeurGauche, robot1.codeurDroit, robot1.xRobot, robot1.yRobot, robot1.orientationRobot);
+		calculPosition ( motorBoard, &robot1 );
+
+		setPosition ( -1, 1 );
+		printf ( "Gauche : %3d Droite : %3d X : %.3f  Y : %.3f Angle : %.3f\n", 
+			robot1.codeurGauche,
+			robot1.codeurDroit,
+			robot1.xRobot,
+			robot1.yRobot,
+			robot1.orientationRobot );
+		printf ( "\e[2K\r" );
 
 		/*
 		Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
@@ -505,17 +504,37 @@ int main ( int argc, char * argv[] )
 		*/
 		robot1.vitesseGaucheToSend = robot1.vitesseGaucheDefault;
 		robot1.vitesseDroiteToSend = robot1.vitesseDroiteDefault;
-/*
+
 		if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
 		{
 			logVerbose ( "no more action remaining\n" );
 			break;
 		}
-		envoiOrdreMoteur(motorBoard, &robot1);
-		*/
-		logDebug ( "\n" );
+
+		if ( !flagAction.noDrive )
+		{ // engine enabled
+			envoiOrdreMoteur ( motorBoard, &robot1 );
+		}
+		else if ( flagAction.driveScan &&
+			_kbhit ( ) &&
+			getchar ( ) )
+		{
+			robot1.xRobot = robot1.cible.xCible;
+			robot1.yRobot = robot1.cible.yCible;
+			robot1.orientationRobot = robot1.orientationVisee;
+		}
+		else if ( flagAction.driveWait )
+		{
+			// wait itme out
+		}
+		else
+		{
+			robot1.xRobot = robot1.cible.xCible;
+			robot1.yRobot = robot1.cible.yCible;
+			robot1.orientationRobot = robot1.orientationVisee;
+		}
+		
 		usleep ( 1000*50 );
-		printf ( "\e[A\e[2K\r%6d\n", ++i );
 	}
 
 	return ( 0 );
