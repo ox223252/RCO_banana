@@ -68,7 +68,7 @@ int main ( int argc, char * argv[] )
 	void * tmp = NULL;
 
 	struct timeval start;
-	Robot robot1;
+	Robot robot1 = { 0 };
 
 	char dynamixelsPath[ 128 ] = { 0 }; // dynamixel acces point /dev/dyna
 	uint32_t dynamixelUartSpeed = 1000000; // uart speed
@@ -144,6 +144,10 @@ int main ( int argc, char * argv[] )
 		{ "--ini", "-i", 1, cT ( str ), xmlInitPath, "xml initialisation file path" },
 		{ "--xml", "-x", 1, cT ( str ), xmlActionPath, "xml action file path" },
 		{ "--time", "-t", 1, cT ( uint32_t ), &globalTime, "game duration in seconds" },
+		{ "--linear_left", "-ll", 1, cT ( float ), &robot1.coeffLongG, "linear coef for left wheel" },
+		{ "--linear_right", "-lr", 1, cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
+		{ "--angle_left", "-al", 1, cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
+		{ "--angle_right", "-ar", 1, cT ( float ), &robot1.coeffAngleD, "angular coef for right wheel" },
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
 
@@ -156,6 +160,10 @@ int main ( int argc, char * argv[] )
 		{ "XML_ACTION_PATH", cT ( str ), xmlInitPath, "xml initialisation file path"},
 		{ "XML_INIT_PATH", cT ( str ), xmlActionPath, "xml action file path"},
 		{ "GLOBAL_TIME", cT ( uint32_t ), &globalTime, "game duration in seconds"},
+		{ "COEF_LINEAR_LEFT", cT ( float ), &robot1.coeffLongG, "linear coef for left wheel" },
+		{ "COEF_LINEAR_RIGHT", cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
+		{ "COEF_ANGLE_LEFT", cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
+		{ "COEF_ANGLE_RIGHT", cT ( float ), &robot1.coeffAngleD, "angular coef for right wheel" },
 		{ NULL, 0, NULL, NULL }
 	};
 
@@ -213,6 +221,10 @@ int main ( int argc, char * argv[] )
 	if ( flag.help )
 	{
 		printf ( "build date: %s\n", DATE_BUILD );
+		printf ( "robot1.coeffLongG : %f\n", robot1.coeffLongG );
+		printf ( "robot1.coeffLongD : %f\n", robot1.coeffLongD );
+		printf ( "robot1.coeffAngleG : %f\n", robot1.coeffAngleG );
+		printf ( "robot1.coeffAngleD : %f\n", robot1.coeffAngleD );
 		printf ( "\n\e[4mparameter available for cmd line:\e[0m\n" );
 		helpParamArgs ( paramList );
 		printf ( "\n\e[4mparameter available in res/config.rco file:\e[0m\n" );
@@ -240,8 +252,8 @@ int main ( int argc, char * argv[] )
 		}
 		else
 		{
-			printf("battery voltage is : %f V\n", (float)i/10.0f);
-			initOdometrie(motorBoard, &robot1);
+			printf ( "battery voltage is : %f V\n", ( float )i / 10.0f );
+			initOdometrie ( motorBoard, &robot1 );
 		}
 	}
 

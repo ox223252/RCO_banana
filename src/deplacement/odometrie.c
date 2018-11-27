@@ -3,20 +3,25 @@
 #include <math.h>
 #include <errno.h>
 
+#include "../lib/log/log.h"
+
 #include "odometrie.h"
 
-int32_t codeurGauchePrecedent;
-int32_t codeurDroitPrecedent;
-
-float orientationPre;
-
-int32_t deltaComptG;
-int32_t deltaComptD;
-
-float dAngle, dDeplacement, dX, dY;
+static struct
+{
+	int32_t left;
+	int32_t right;
+	float angle;
+}
+_odometrie_old;
 
 int calculPosition ( struct roboclaw* rc, Robot* robot )
 {
+	static float dAngle;
+	static float dDeplacement;
+	static int32_t deltaComptG;
+	static int32_t deltaComptD;
+
 	if ( !rc ||
 		!robot )
 	{
@@ -24,35 +29,36 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 		return ( __LINE__ );
 	}
 
-	codeurGauchePrecedent = robot->codeurGauche;
-	codeurDroitPrecedent = robot->codeurDroit;
-	orientationPre = robot->orientationRobot;
+	_odometrie_old.left = robot->codeurGauche;
+	_odometrie_old.right = robot->codeurDroit;
+	_odometrie_old.angle = robot->orientationRobot;
 
-	roboclaw_encoders (rc, 0x80, &(robot->codeurGauche), &(robot->codeurDroit));
+	roboclaw_encoders ( rc, 0x80, &(robot->codeurGauche), &(robot->codeurDroit) );
 
-	deltaComptG = robot->codeurGauche - codeurGauchePrecedent;
-	deltaComptD = robot->codeurDroit - codeurDroitPrecedent;
+	deltaComptG = robot->codeurGauche - _odometrie_old.left;
+	deltaComptD = robot->codeurDroit - _odometrie_old.right;
+
 	robot->orientationRobot += robot->coeffAngleG * deltaComptG - robot->coeffAngleD * deltaComptD;
+
 	if ( robot->orientationRobot > 180. )
 	{
-		orientationPre -= 360.;
+		_odometrie_old.angle -= 360.;
 		robot->orientationRobot-=360.0;
 	}
 	else if ( robot->orientationRobot < -180.0 )
 	{
-		orientationPre += 360.0;
+		_odometrie_old.angle += 360.0;
 		robot->orientationRobot += 360.0;
 	}
 
-	dAngle = (robot->orientationRobot + orientationPre)/2.;
+	dAngle = (robot->orientationRobot + _odometrie_old.angle) / 2.;
 	dDeplacement = ( robot->coeffLongD * deltaComptD + robot->coeffLongG * deltaComptG ) / 2.0;
 
-	dX = dDeplacement * cos ( ( dAngle * ( M_PI / 180. ) ) );
-	dY = dDeplacement * sin ( ( dAngle * ( M_PI / 180. ) ) );
-	robot->distanceParcourue+=dDeplacement;
+	robot->xRobot += dDeplacement * cos ( ( dAngle * ( M_PI / 180. ) ) );
+	robot->yRobot += dDeplacement * sin ( ( dAngle * ( M_PI / 180. ) ) );
+	
+	robot->distanceParcourue += dDeplacement;
 
-	robot->xRobot += dX;
-	robot->yRobot += dY;
 	return ( 0 );
 }
 
@@ -64,10 +70,6 @@ int initOdometrie ( struct roboclaw* rc, Robot* robot )
 		return ( __LINE__ );
 	}
 
-	robot->coeffLongG =	0.0489441484;
-	robot->coeffLongD =	-0.0489296636;
-	robot->coeffAngleG = 0.0108754758;
-	robot->coeffAngleD = -0.0108584183;
 	robot->vitesseGaucheDefault = 0.;
 	robot->vitesseDroiteDefault = 0.;
 
@@ -77,10 +79,11 @@ int initOdometrie ( struct roboclaw* rc, Robot* robot )
 		return ( __LINE__ );
 	}
 
-	codeurGauchePrecedent = robot->codeurGauche;
-	codeurDroitPrecedent = robot->codeurDroit;
-	orientationPre = robot->orientationRobot;
-	printf("Init codeurs : %d %d \n",codeurGauchePrecedent,codeurDroitPrecedent);
+	_odometrie_old.left = robot->codeurGauche;
+	_odometrie_old.right = robot->codeurDroit;
+	_odometrie_old.angle = robot->orientationRobot;
+
+	logDebug ( "Init codeurs : %d %d\n", _odometrie_old.left, _odometrie_old.right );
 
 	return ( 0 );
 }
