@@ -84,11 +84,11 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 			}
 			else
 			{
-				if ( setVitesseDyna ( atoi ( listAction[ indiceAction ].params[ 0 ]), ( int )( 10.23*atoi ( listAction[ indiceAction ].params[ 2 ]))) == -1 )
+				if ( setVitesseDyna ( atoi ( listAction[ indiceAction ].params[ 0 ]), ( int )( 10.23*atoi ( listAction[ indiceAction ].params[ 2 ] ) ) ) )
 				{
 					logVerbose ( "Erreur set vitesse dyna \n" );
 				}
-				if ( setPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ]), ( int )( 3.41*atoi ( listAction[ indiceAction ].params[ 1 ]))) == -1 )
+				if ( setPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ]), ( int )( 3.41*atoi ( listAction[ indiceAction ].params[ 1 ] ) ) ) )
 				{
 					logVerbose ( "Erreur set angle dyna \n" );
 				}
@@ -330,6 +330,7 @@ int updateActionEnCours ( Action* listAction, int nbAction, Robot* robot )
 
 	if ( !_management_listActionEnCours )
 	{
+		logDebug ( "\n" );
 		return 0;
 	}
 
@@ -344,35 +345,72 @@ int updateActionEnCours ( Action* listAction, int nbAction, Robot* robot )
 	do
 	{
 		numAction = atoi ( token );
+	
 		logDebug ( "en cours : %s\n", token );
 		logDebug ( " - start time : %ld\n", listAction[ numAction ].heureCreation / 1000000 );
 		logDebug ( " - fils       : %s\n", listAction[ numAction ].listFils );
+		if ( listAction[ numAction ].timeout > 0 )
+		{
+			logDebug ( " - timeout %d\n", listAction[ numAction ].timeout );
+			logDebug ( "    - fils %s\n", listAction[ numAction ].listTimeOut );
+		}
 
 
-		gestionAction ( listAction,robot, numAction );
+		gestionAction ( listAction, robot, numAction );
 		if ( isDone ( &( listAction[ numAction ] ) ) == 1 )
 		{ // normal termination
-			j = 0;
-			while ( sscanf ( listAction[ numAction ].listFils + j, "%[^;]", buffer ) )
-			{ // get actions
-				if ( listAction[ numAction ].listFils[ j ] == 0 )
-				{
-					break;
+			if ( !listAction[ numAction ].listFils )
+			{ // no child list provided
+			}
+			else
+			{
+				j = 0;
+				while ( sscanf ( listAction[ numAction ].listFils + j, "%[^;]", buffer ) )
+				{ // get actions
+					if ( listAction[ numAction ].listFils[ j ] == 0 )
+					{
+						break;
+					}
+					newAction = getIndiceActionByIndice ( listAction, atoi ( buffer ), nbAction );
+					listAction[ newAction ].heureCreation = now.tv_sec * 1000000 + now.tv_usec;
+					sprintf ( newList, "%s%d;", newList, newAction );
+	
+					actionRemaining++;
+	
+					j += ( int )( strlen ( buffer ) + 1 );
+					logDebug ( " - new action : %s\n", buffer );
 				}
-				newAction = getIndiceActionByIndice ( listAction, atoi ( buffer ), nbAction );
-				listAction[ newAction ].heureCreation = now.tv_sec * 1000000 + now.tv_usec;
-				sprintf ( newList, "%s%d;", newList, newAction );
-
-				actionRemaining++;
-
-				j += ( int )( strlen ( buffer ) + 1 );
-				logDebug ( " - new action : %s\n", buffer );
 			}
 		}
 		else if ( ( listAction[ numAction ].timeout > 0 ) &&
 			( ( int )( now.tv_sec * 1000000 + now.tv_usec - listAction[ numAction ].heureCreation ) > ( listAction[ numAction ].timeout * 1000 ) ) )
 		{ // end by timeout
-			logDebug ("Done by timeout %d %d\n",listAction[ numAction ].timeout,  now.tv_sec * 1000000 + now.tv_usec - listAction[ numAction ].heureCreation );
+			logDebug ("Done by timeout %d %d\n", listAction[ numAction ].timeout,  now.tv_sec * 1000000 + now.tv_usec - listAction[ numAction ].heureCreation );
+
+			if ( !listAction[ numAction ].listTimeOut )
+			{ // no timeout list provided
+			}
+			else 
+			{
+				logDebug ( " - liste : %s\n", listAction[ numAction ].listTimeOut );
+				j = 0;
+				while ( sscanf ( listAction[ numAction ].listTimeOut + j, "%[^;]", buffer ) )
+				{ // get actions
+					if ( listAction[ numAction ].listTimeOut[ j ] == 0 )
+					{
+						break;
+					}
+					newAction = getIndiceActionByIndice ( listAction, atoi ( buffer ), nbAction );
+					listAction[ newAction ].heureCreation = now.tv_sec * 1000000 + now.tv_usec;
+					sprintf ( newList, "%s%d;", newList, newAction );
+	
+					actionRemaining++;
+	
+					j += ( int )( strlen ( buffer ) + 1 );
+					logDebug ( " - new action : %s\n", buffer );
+					break;
+				}
+			}
 		}
 		else
 		{ // not done
