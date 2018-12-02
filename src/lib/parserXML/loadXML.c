@@ -60,13 +60,28 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 			if ( strcmp ( name, "Action" ) == 0 )
 			{
 				tabActionTotal[ indiceActionEnCours ].numero = atoi ( mxmlElementGetAttr ( node, "numero" ) );
+
 				if ( mxmlElementGetAttr ( node, "timeout" ) != NULL )
 				{
 					tabActionTotal[ indiceActionEnCours ].timeout = atoi ( mxmlElementGetAttr ( node, "timeout" ) );
+					
+					nodeBis = mxmlFindElement ( node, node, "timeout", NULL, NULL, MXML_DESCEND );
+					if ( nodeBis != NULL )
+					{
+						tabActionTotal[ indiceActionEnCours ].listTimeOut = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "liste" ) ) + 1 );
+						setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].listTimeOut );
+						strcpy ( tabActionTotal[ indiceActionEnCours ].listTimeOut, mxmlElementGetAttr ( nodeBis, "liste" ) );
+						logDebug ( "%d %s\n", indiceActionEnCours, tabActionTotal[ indiceActionEnCours ].listTimeOut );
+					}
+					else
+					{
+						tabActionTotal[ indiceActionEnCours ].listFils = NULL;
+					}
 				}
 				else
 				{
 					tabActionTotal[indiceActionEnCours].timeout = 0;
+					tabActionTotal[ indiceActionEnCours ].listFils = NULL;
 				}
 
 				const char* type = mxmlElementGetAttr ( node, "type" );
@@ -96,15 +111,9 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 				}
 				setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].listPere );
 
-				nodeBis = mxmlFindElement ( node, node, "timeout", NULL, NULL, MXML_DESCEND );
-				if ( nodeBis!=NULL )
-				{
-					tabActionTotal[ indiceActionEnCours ].listTimeOut = ( char* ) mxmlElementGetAttr ( nodeBis, "liste" );
-				}
-
 				nodeBis = mxmlFindElement ( node, node, "parametres", NULL, NULL, MXML_DESCEND );
 				if ( ( tabActionTotal[ indiceActionEnCours ].listFils != NULL ) &&
-				( tabActionTotal[ indiceActionEnCours ].listPere != NULL ) )
+					( tabActionTotal[ indiceActionEnCours ].listPere != NULL ) )
 				{
 					logDebug ( "Type : %s numero %d fils : %s pere %s\n",type,tabActionTotal[ indiceActionEnCours ].numero,tabActionTotal[ indiceActionEnCours ].listFils,tabActionTotal[ indiceActionEnCours ].listPere );
 				}
@@ -335,6 +344,7 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 				{
 					logDebug ( "Type unknown !\n" );
 				}
+				
 				indiceActionEnCours++;
 			}
 		}

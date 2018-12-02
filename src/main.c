@@ -217,6 +217,12 @@ int main ( int argc, char * argv[] )
 	{
 		return ( __LINE__ );
 	}
+	else
+	{
+		logSetQuiet ( flag.quiet );
+		logSetColor ( flag.color );
+		logSetDebug ( flag.debug );
+	}
 
 	if ( flag.help )
 	{
@@ -422,6 +428,7 @@ int main ( int argc, char * argv[] )
 	{ // arm disabled
 		logVerbose ( " - dyna : \e[31m%s\e[0m\n", dynamixelsPath );
 		logVerbose ( " - pca9685 : \e[31m%d\e[0m\n", pca9685 );
+		setArmDesabledState ( flagAction.noArm );
 	}
 
 	// only for display
@@ -502,6 +509,7 @@ int main ( int argc, char * argv[] )
 		calculPosition ( motorBoard, &robot1 );
 
 		setPosition ( -1, 1 );
+
 		printf ( "Gauche : %3d Droite : %3d X : %.3f  Y : %.3f Angle : %.3f\n", 
 			robot1.codeurGauche,
 			robot1.codeurDroit,
@@ -509,6 +517,7 @@ int main ( int argc, char * argv[] )
 			robot1.yRobot,
 			robot1.orientationRobot );
 		printf ( "\e[2K\r" );
+		logDebug ( "\n" );
 
 		/*
 		Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
@@ -546,7 +555,7 @@ int main ( int argc, char * argv[] )
 			robot1.orientationRobot = robot1.orientationVisee;
 		}
 		
-		usleep ( 1000*50 );
+		usleep ( 1000*500 );
 	}
 
 	return ( 0 );

@@ -7,22 +7,24 @@
         <fils liste="1;" />
         <parametres lets="go" />
     </Action>
-    <Action type="actionDyna" numero="1">
+    <Action type="actionDyna" numero="1" timeout="1010">
         <bloc x="220" y="10200" />
         <fils liste="2;" />
+        <timeout liste="3;" />
         <pere liste="0;" />
         <parametres nom="custom" id="1" angle="0" vitesse="50" />
     </Action>
     <Action type="actionRetourDyna" numero="2" timeout="5000">
         <bloc x="440" y="10176" />
         <fils liste="3;" />
-        <timeout liste="" />
+        <timeout liste="1;" />
         <pere liste="1;" />
         <parametres nom="Carrousel" id="1" angle="0" />
     </Action>
-    <Action type="actionDyna" numero="3">
+    <Action type="actionDyna" numero="3" timeout="6000">
         <bloc x="660" y="10200" />
         <fils liste="" />
+        <timeout liste="2;" />
         <pere liste="2;" />
         <parametres nom="custom" id="1" angle="25" vitesse="10" />
     </Action>
