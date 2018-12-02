@@ -2,26 +2,28 @@
 #include <stdlib.h>
 #include <math.h>
 #include <errno.h>
+#include <string.h>
 #include <sys/time.h>
 #include <time.h>
+
 #include "../lib/log/log.h"
 
 #include "odometrie.h"
 
 static struct
 {
+	struct timeval date;
 	int32_t left;
 	int32_t right;
 	float angle;
 }
 _odometrie_old;
 
-static struct timeval _odometrie_now;
-static struct timeval _odometrie_pre;
-static float _odometrie_tempsEcoule;
 
 int calculPosition ( struct roboclaw* rc, Robot* robot )
 {
+	static struct timeval now;
+	static float tempsEcoule;
 	static float dAngle;
 	static float dDeplacement;
 	static int32_t deltaComptG;
@@ -34,42 +36,56 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 		return ( __LINE__ );
 	}
 
+	// save olds values
 	_odometrie_old.left = robot->codeurGauche;
 	_odometrie_old.right = robot->codeurDroit;
 	_odometrie_old.angle = robot->orientationRobot;
-	gettimeofday(&_odometrie_now, NULL);
-	roboclaw_encoders(rc, 0x80, &(robot->codeurGauche), &(robot->codeurDroit) );
 
+	// request new ones
+	roboclaw_encoders ( rc, 0x80, &( robot->codeurGauche ), &( robot->codeurDroit ) );
+
+	// get new date
+	gettimeofday ( &now, NULL );
+
+	// calc moves
 	deltaComptG = robot->codeurGauche - _odometrie_old.left;
 	deltaComptD = robot->codeurDroit - _odometrie_old.right;
 
-	_odometrie_tempsEcoule = ( _odometrie_now.tv_sec * 1000000 + _odometrie_now.tv_usec ) - ( _odometrie_pre.tv_sec * 1000000 + _odometrie_pre.tv_usec );
-	gettimeofday(&_odometrie_pre, NULL);
-	robot->vitesseGauche = deltaComptG*robot->coeffAngleG / (_odometrie_tempsEcoule/1000000.);
-	robot->vitesseDroite = deltaComptD*robot->coeffAngleD / (_odometrie_tempsEcoule/1000000.);
-
-	robot->orientationRobot += robot->coeffAngleG * deltaComptG - robot->coeffAngleD * deltaComptD;
+	// calc robot angle
+	robot->orientationRobot += ( robot->coeffAngleG * deltaComptG ) - ( robot->coeffAngleD * deltaComptD );
 
 	if ( robot->orientationRobot > 180. )
 	{
 		_odometrie_old.angle -= 360.;
-		robot->orientationRobot-=360.0;
+		robot->orientationRobot -=360.;
 	}
-	else if ( robot->orientationRobot < -180.0 )
+	else if ( robot->orientationRobot < -180. )
 	{
-		_odometrie_old.angle += 360.0;
-		robot->orientationRobot += 360.0;
+		_odometrie_old.angle += 360.;
+		robot->orientationRobot += 360.;
 	}
 
-	dAngle = (robot->orientationRobot + _odometrie_old.angle) / 2.;
-	robot->vitesseAngulaire = dAngle / (_odometrie_tempsEcoule/1000000.);
+	// calc delta angle
+	dAngle = ( robot->orientationRobot + _odometrie_old.angle ) / 2.;
 	
-	dDeplacement = ( robot->coeffLongD * deltaComptD + robot->coeffLongG * deltaComptG ) / 2.0;
+	// calc real move
+	dDeplacement = ( ( robot->coeffLongD * deltaComptD ) + robot->coeffLongG * deltaComptG ) / 2.;
+	robot->distanceParcourue += dDeplacement;
 
+	// calc X / Y
 	robot->xRobot += dDeplacement * cos ( ( dAngle * ( M_PI / 180. ) ) );
 	robot->yRobot += dDeplacement * sin ( ( dAngle * ( M_PI / 180. ) ) );
 
-	robot->distanceParcourue += dDeplacement;
+	// calc delta time
+	tempsEcoule = ( ( now.tv_sec * 1000000 + now.tv_usec ) - ( _odometrie_old.date.tv_sec * 1000000 + _odometrie_old.date.tv_usec ) ) / 1000000. ;
+
+	// save olds value
+	memcpy ( &_odometrie_old.date,  &now, sizeof ( struct timeval ) );
+
+	// calc speed
+	robot->vitesseGauche = ( deltaComptG * robot->coeffAngleG ) / tempsEcoule;
+	robot->vitesseDroite = ( deltaComptD * robot->coeffAngleD ) / tempsEcoule;
+	robot->vitesseAngulaire = dAngle / tempsEcoule;
 
 	return ( 0 );
 }
@@ -96,7 +112,8 @@ int initOdometrie ( struct roboclaw* rc, Robot* robot )
 	_odometrie_old.left = robot->codeurGauche;
 	_odometrie_old.right = robot->codeurDroit;
 	_odometrie_old.angle = robot->orientationRobot;
-	gettimeofday ( &_odometrie_pre,  NULL );
+
+	gettimeofday ( &_odometrie_old.date,  NULL );
 
 	logDebug ( "Init codeurs : %d %d\n", _odometrie_old.left, _odometrie_old.right );
 
