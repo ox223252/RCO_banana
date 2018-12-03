@@ -25,6 +25,7 @@ typedef struct Robot
 
 	float vitesseGauche;
 	float vitesseDroite;
+	float vitesseAngulaire;
 
 	float vitesseGaucheToSend;
 	float vitesseDroiteToSend;
