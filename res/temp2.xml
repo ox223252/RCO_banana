@@ -24,7 +24,6 @@
     <Action type="actionDyna" numero="3" timeout="6000">
         <bloc x="660" y="10200" />
         <fils liste="" />
-        <timeout liste="2;" />
         <pere liste="2;" />
         <parametres nom="custom" id="1" angle="25" vitesse="10" />
     </Action>

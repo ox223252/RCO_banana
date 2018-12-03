@@ -25,6 +25,8 @@
 #include "deplacement/odometrie.h"
 #include "deplacement/controleMoteur.h"
 
+static Robot robot1 = { 0 };
+static struct roboclaw *motorBoard = NULL;
 
 enum
 {
@@ -55,6 +57,9 @@ void roboClawClose ( void * arg )
 
 void proccessNormalEnd ( void * arg )
 {
+	robot1.vitesseGaucheToSend = 0.;
+	robot1.vitesseDroiteToSend = 0.;
+	envoiOrdreMoteur ( motorBoard, &robot1 );
 	if ( arg )
 	{
 		printf ( "\e[2K\r\e[1;33m%s\e[0m\n", ( char * )arg );
@@ -68,7 +73,7 @@ int main ( int argc, char * argv[] )
 	void * tmp = NULL;
 
 	struct timeval start;
-	Robot robot1 = { 0 };
+
 
 	char dynamixelsPath[ 128 ] = { 0 }; // dynamixel acces point /dev/dyna
 	uint32_t dynamixelUartSpeed = 1000000; // uart speed
@@ -76,7 +81,7 @@ int main ( int argc, char * argv[] )
 	char motorBoadPath[ 128 ] = { 0 }; // roboclaw access point /dev/roboclaw
 
 	uint32_t motorBoardUartSpeed = 115200; // uart speed
-	struct roboclaw *motorBoard = NULL;
+
 	uint8_t address = 0x80;
 	int16_t maxSpeed = 32767; // motor max speed, ti neved should cross this limit
 	uint32_t globalTime = 0; // global game time
@@ -510,12 +515,14 @@ int main ( int argc, char * argv[] )
 
 		setPosition ( -1, 1 );
 
-		printf ( "Gauche : %3d Droite : %3d X : %.3f  Y : %.3f Angle : %.3f\n", 
+		printf ( "Gauche : %3d Droite : %3d X : %.3f  Y : %.3f Angle : %.3f VGauche : %.3f VDroite : %.3f\n",
 			robot1.codeurGauche,
 			robot1.codeurDroit,
 			robot1.xRobot,
 			robot1.yRobot,
-			robot1.orientationRobot );
+			robot1.orientationRobot,
+		 	robot1.vitesseGauche,
+			robot1.vitesseDroite );
 		printf ( "\e[2K\r" );
 		logDebug ( "\n" );
 
@@ -550,12 +557,10 @@ int main ( int argc, char * argv[] )
 		}
 		else
 		{
-			robot1.xRobot = robot1.cible.xCible;
-			robot1.yRobot = robot1.cible.yCible;
-			robot1.orientationRobot = robot1.orientationVisee;
+
 		}
-		
-		usleep ( 1000*500 );
+
+		usleep ( 1000*50 );
 	}
 
 	return ( 0 );

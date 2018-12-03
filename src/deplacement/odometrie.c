@@ -34,8 +34,8 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 	{
 		errno = EINVAL;
 		return ( __LINE__ );
-	}
 
+	}
 	// save olds values
 	_odometrie_old.left = robot->codeurGauche;
 	_odometrie_old.right = robot->codeurDroit;
@@ -67,7 +67,7 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 
 	// calc delta angle
 	dAngle = ( robot->orientationRobot + _odometrie_old.angle ) / 2.;
-	
+
 	// calc real move
 	dDeplacement = ( ( robot->coeffLongD * deltaComptD ) + robot->coeffLongG * deltaComptG ) / 2.;
 	robot->distanceParcourue += dDeplacement;
@@ -83,9 +83,18 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 	memcpy ( &_odometrie_old.date,  &now, sizeof ( struct timeval ) );
 
 	// calc speed
-	robot->vitesseGauche = ( deltaComptG * robot->coeffAngleG ) / tempsEcoule;
-	robot->vitesseDroite = ( deltaComptD * robot->coeffAngleD ) / tempsEcoule;
-	robot->vitesseAngulaire = dAngle / tempsEcoule;
+	if ( tempsEcoule )
+	{
+		robot->vitesseGauche = ( deltaComptG * robot->coeffAngleG ) / tempsEcoule;
+		robot->vitesseDroite = ( deltaComptD * robot->coeffAngleD ) / tempsEcoule;
+		robot->vitesseAngulaire = dAngle / tempsEcoule;
+	}
+	else
+	{
+		robot->vitesseGauche = 0.;
+		robot->vitesseDroite = 0.;
+		robot->vitesseAngulaire = 0.;
+	}
 
 	return ( 0 );
 }
