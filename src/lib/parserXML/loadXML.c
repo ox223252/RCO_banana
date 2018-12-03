@@ -159,7 +159,7 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 				else if ( strcmp ( type,"actionPosition" ) == 0 )
 				{
 					tabActionTotal[ indiceActionEnCours ].type = TYPE_POSITION;
-					tabActionTotal[ indiceActionEnCours ].params = malloc ( 7 * sizeof ( char* ) );
+					tabActionTotal[ indiceActionEnCours ].params = malloc ( 8 * sizeof ( char* ) );
 					setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
 
 					tabActionTotal[ indiceActionEnCours ].params[ 0 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "x" ) ) + 1 );
@@ -183,7 +183,14 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 					tabActionTotal[ indiceActionEnCours ].params[ 6 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "precision" ) ) + 1 );
 					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 6 ], ( char* ) mxmlElementGetAttr ( nodeBis, "precision" ) );
 
-					logDebug ( "Position x: %s y: %s vitesse: %s acc: %s dec: %s sens: %s preci: %s\n",tabActionTotal[ indiceActionEnCours ].params[ 0 ],tabActionTotal[ indiceActionEnCours ].params[ 1 ],tabActionTotal[ indiceActionEnCours ].params[ 2 ],tabActionTotal[ indiceActionEnCours ].params[ 3 ],tabActionTotal[ indiceActionEnCours ].params[ 4 ],tabActionTotal[ indiceActionEnCours ].params[ 5 ],tabActionTotal[ indiceActionEnCours ].params[ 6 ] );
+					tabActionTotal[ indiceActionEnCours ].params[ 7 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "distanceFreinage" ) ) + 1 );
+					strcpy(tabActionTotal[ indiceActionEnCours ].params[ 7 ], ( char* ) mxmlElementGetAttr ( nodeBis, "distanceFreinage" ) );
+
+					logDebug ( "Position x: %s y: %s vitesse: %s acc: %s dec: %s sens: %s preci: %s distanceFreinage %s\n",
+					tabActionTotal[ indiceActionEnCours ].params[ 0 ],tabActionTotal[ indiceActionEnCours ].params[ 1 ],
+					tabActionTotal[ indiceActionEnCours ].params[ 2 ],tabActionTotal[ indiceActionEnCours ].params[ 3 ],
+					tabActionTotal[ indiceActionEnCours ].params[ 4 ],tabActionTotal[ indiceActionEnCours ].params[ 5 ],
+					tabActionTotal[ indiceActionEnCours ].params[ 6 ],tabActionTotal[ indiceActionEnCours ].params[ 7 ] );
 				}
 				else if ( strcmp ( type,"actionRotation" ) == 0 )
 				{

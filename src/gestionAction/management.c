@@ -26,7 +26,7 @@ int initAction ( ActionFlag *flag )
 	}
 
 	if ( !_management_listActionEnCours )
-	{ // if not set 
+	{ // if not set
 		_management_flagAction = flag;
 		_management_listActionEnCours = malloc ( 256 );
 		if ( !_management_listActionEnCours )
@@ -145,6 +145,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 				robot->cible.dec = atoi ( listAction[ indiceAction ].params[ 4 ] );
 				robot->cible.sens = atoi ( listAction[ indiceAction ].params[ 5 ] );
 				robot->cible.precision = atoi ( listAction[ indiceAction ].params[ 6 ] );
+				robot->cible.distanceFreinage = atoi ( listAction[ indiceAction ].params[ 7 ] );
 				premierAppel ( robot );
 			}
 			else

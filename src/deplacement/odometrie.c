@@ -34,8 +34,8 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 	{
 		errno = EINVAL;
 		return ( __LINE__ );
-	}
 
+	}
 	// save olds values
 	_odometrie_old.left = robot->codeurGauche;
 	_odometrie_old.right = robot->codeurDroit;
@@ -51,6 +51,17 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 	deltaComptG = robot->codeurGauche - _odometrie_old.left;
 	deltaComptD = robot->codeurDroit - _odometrie_old.right;
 
+	_odometrie_tempsEcoule = ( _odometrie_now.tv_sec * 1000000 + _odometrie_now.tv_usec ) - ( _odometrie_pre.tv_sec * 1000000 + _odometrie_pre.tv_usec );
+	gettimeofday(&_odometrie_pre, NULL);
+	if(_odometrie_tempsEcoule != 0.)
+	{
+		robot->vitesseGauche = deltaComptG*robot->coeffAngleG / (_odometrie_tempsEcoule/1000000.);
+		robot->vitesseDroite = deltaComptD*robot->coeffAngleD / (_odometrie_tempsEcoule/1000000.);
+	}else
+	{
+		robot->vitesseGauche = 0.;
+		robot->vitesseDroite = 0.;
+	}
 	// calc robot angle
 	robot->orientationRobot += ( robot->coeffAngleG * deltaComptG ) - ( robot->coeffAngleD * deltaComptD );
 
@@ -67,7 +78,7 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 
 	// calc delta angle
 	dAngle = ( robot->orientationRobot + _odometrie_old.angle ) / 2.;
-	
+
 	// calc real move
 	dDeplacement = ( ( robot->coeffLongD * deltaComptD ) + robot->coeffLongG * deltaComptG ) / 2.;
 	robot->distanceParcourue += dDeplacement;

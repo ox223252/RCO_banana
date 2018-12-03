@@ -1,6 +1,6 @@
 #include "gestionPosition.h"
 
-#define dX ( robot->cible.yCible - robot->yRobot )
+#define dX ( robot->cible.xCible - robot->xRobot )
 #define dY ( robot->cible.yCible - robot->yRobot )
 
 static float minimumErreur2Angles ( float angle1, float angle2 );
@@ -18,6 +18,7 @@ double pytagor ( double x, double y );
 
 void premierAppel ( Robot* robot )
 {
+
 	premierAppelTenirAngle ( robot );
 	_gestionPosition_distanceCiblePre = pytagor ( dX, dY );
 	robot->orientationVisee = acos ( ( robot->cible.xCible - robot->xRobot ) / _gestionPosition_distanceCiblePre ) * 360. / ( 2. * M_PI );
@@ -62,30 +63,51 @@ int calculDeplacement ( Robot* robot )
 	if ( robot->cible.sens == 1 )
 	{
 		//marche arriere
-		robot->vitesseGaucheToSend = -1. * distanceCible;
-		robot->vitesseDroiteToSend = -1. * distanceCible;
+		robot->vitesseGaucheToSend = -1. * robot->cible.vitesseMax;
+		robot->vitesseDroiteToSend = -1. * robot->cible.vitesseMax;
 	}
 	else
 	{
-		robot->vitesseGaucheToSend = 1. * distanceCible;
-		robot->vitesseDroiteToSend = 1. * distanceCible;
+		robot->vitesseGaucheToSend = 1. * robot->cible.vitesseMax;
+		robot->vitesseDroiteToSend = 1. * robot->cible.vitesseMax;
 	}
 
-	robot->vitesseDroiteToSend += 10.*erreurAngle;
-	robot->vitesseGaucheToSend -= 10.*erreurAngle;
+	robot->vitesseDroiteToSend += 1.*erreurAngle;
+	robot->vitesseGaucheToSend -= 1.*erreurAngle;
 
 	gettimeofday ( &_gestionPosition_now,  NULL );
 	_gestionPosition_tempsEcoule = ( _gestionPosition_now. tv_sec * 1000000 + _gestionPosition_now. tv_usec ) - ( _gestionPosition_pre. tv_sec * 1000000 + _gestionPosition_pre. tv_usec );
+	_gestionPosition_tempsEcoule/=1000000.;
+	gettimeofday ( &_gestionPosition_pre,  NULL );
 
-	//1000000 sec = 1000000 acc
-	//x sec
-	if ( ( _gestionPosition_pourcentageVitesse + _gestionPosition_tempsEcoule * robot->cible.acc ) < robot->cible.vitesseMax )
+	if(distanceCible < robot->cible.distanceFreinage)
 	{
-		_gestionPosition_pourcentageVitesse += _gestionPosition_tempsEcoule * robot->cible.acc;
+		if ( ( _gestionPosition_pourcentageVitesse - (_gestionPosition_tempsEcoule)* robot->cible.dec ) > 10 )
+		{
+			_gestionPosition_pourcentageVitesse -= _gestionPosition_tempsEcoule * robot->cible.dec;
+		}else
+		{
+			_gestionPosition_pourcentageVitesse = 10;
+		}
+	}else
+	{
+		if ( ( _gestionPosition_pourcentageVitesse + (_gestionPosition_tempsEcoule)* robot->cible.acc ) < 100 )
+		{
+			_gestionPosition_pourcentageVitesse += _gestionPosition_tempsEcoule * robot->cible.acc;
+		}else
+		{
+			_gestionPosition_pourcentageVitesse = 100;
+		}
 	}
 	robot->vitesseGaucheToSend *= ( _gestionPosition_pourcentageVitesse / 100 );
 	robot->vitesseDroiteToSend *= ( _gestionPosition_pourcentageVitesse / 100 );
-
+	printf("\npourcent %f temps %f distance Cible : %f erreurAngle : %f vG %f vD %f \n",
+	_gestionPosition_pourcentageVitesse,
+	_gestionPosition_tempsEcoule,
+	distanceCible,
+	erreurAngle,
+	robot->vitesseGaucheToSend,
+	robot->vitesseDroiteToSend);
 	return 0;
 }
 
@@ -101,10 +123,9 @@ int tenirAngle ( Robot* robot )
 	gettimeofday ( &_gestionPosition_now,  NULL );
 	_gestionPosition_tempsEcoule = ( _gestionPosition_now. tv_sec * 1000000 + _gestionPosition_now. tv_usec ) - ( _gestionPosition_pre. tv_sec * 1000000 + _gestionPosition_pre. tv_usec );
 
-
 	robot->vitesseDroiteToSend = 10.*erreurAngle;
 	robot->vitesseGaucheToSend = 10.*erreurAngle;
-	
+
 	robot->vitesseGaucheToSend *= ( robot->cible.vitesseMax / 100 );
 	robot->vitesseDroiteToSend *= ( robot->cible.vitesseMax / 100 );
 	return 0;
@@ -140,29 +161,29 @@ static float minimumErreur2Angles ( float angle1, float angle2 )
 	erreur4 = complementAngle1 - complementAngle2;
 
 	if ( ( fabs ( erreur1 ) <= fabs ( erreur2 ) ) &&
-		( fabs ( erreur1 ) <= fabs ( erreur3 ) ) &&
-		( fabs ( erreur1 ) <= fabs ( erreur4 ) ) )
+	( fabs ( erreur1 ) <= fabs ( erreur3 ) ) &&
+	( fabs ( erreur1 ) <= fabs ( erreur4 ) ) )
 	{
 		returnValue = erreur1;
 	}
 
 	if ( ( fabs ( erreur2 ) <= fabs ( erreur1 ) ) &&
-		( fabs ( erreur2 ) <= fabs ( erreur3 ) ) &&
-		( fabs ( erreur2 ) <= fabs ( erreur4 ) ) )
+	( fabs ( erreur2 ) <= fabs ( erreur3 ) ) &&
+	( fabs ( erreur2 ) <= fabs ( erreur4 ) ) )
 	{
 		returnValue = erreur2;
 	}
 
 	if ( ( fabs ( erreur3 ) <= fabs ( erreur1 ) ) &&
-		( fabs ( erreur3 ) <= fabs ( erreur2 ) ) &&
-		( fabs ( erreur3 ) <= fabs ( erreur4 ) ) )
+	( fabs ( erreur3 ) <= fabs ( erreur2 ) ) &&
+	( fabs ( erreur3 ) <= fabs ( erreur4 ) ) )
 	{
 		returnValue = erreur3;
 	}
 
 	if ( ( fabs ( erreur4 ) <= fabs ( erreur1 ) ) &&
-		( fabs ( erreur4 ) <= fabs ( erreur2 ) ) &&
-		( fabs ( erreur4 ) <= fabs ( erreur3 ) ) )
+	( fabs ( erreur4 ) <= fabs ( erreur2 ) ) &&
+	( fabs ( erreur4 ) <= fabs ( erreur3 ) ) )
 	{
 		returnValue = erreur4;
 	}
