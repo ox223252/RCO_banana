@@ -117,13 +117,15 @@ int main ( int argc, char * argv[] )
 
 	struct
 	{
-		uint8_t green:1,    // 0x01
-			red:1,          // 0x02
-			un2:1,          // 0x04
-			help:1,         // 0x08
-			quiet:1,        // 0x10
-			debug:1,        // 0x20
-			color:1;        // 0x40
+		uint8_t green:1,    // &flag + 0 : 0x01
+			red:1,          //             0x02
+			un2:1,          //             0x04
+			help:1,         //             0x08
+			quiet:1,        //             0x10
+			debug:1,        //             0x20
+			color:1,        //             0x40
+			logTerm:1;      //             0x80
+		uint8_t logFile:1;  // &flag + 1 : 0x10
 	}
 	flag = { 0 };
 
@@ -137,6 +139,8 @@ int main ( int argc, char * argv[] )
 		{ "--q", "-q",        0x10, cT ( bool ), ((uint8_t * )&flag), "hide all trace point" },
 		{ "--debug", "-d",    0x20, cT ( bool ), ((uint8_t * )&flag), "display many trace point" },
 		{ "--color", "-c",    0x40, cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
+		{ "--term", "-lT",    0x80, cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
+		{ "--file", "-lF",    0x01, cT ( bool ), ((uint8_t * )&flag + 1), "add color to debug traces" },
 		{ "--noArm", "-nA",   0x01, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable servo motor" },
 		{ "--armWait", NULL,  0x02, cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
 		{ "--armScan", NULL,  0x04, cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
@@ -173,7 +177,8 @@ int main ( int argc, char * argv[] )
 	};
 
 	// manage ending signals
-	signalHandling signal = {
+	signalHandling signal =
+	{
 		.flag = {
 			.Int = 1, //ctrl+C
 			.Term = 1, // kill
@@ -227,21 +232,27 @@ int main ( int argc, char * argv[] )
 		logSetQuiet ( flag.quiet );
 		logSetColor ( flag.color );
 		logSetDebug ( flag.debug );
+
+		logDebug ( "log File %s\n", flag.logFile ? "true" : "false" );
+		if ( flag.logFile )
+		{
+			flag.logFile = ( logSetFileName ( "log.txt" ) == 0 );
+		}
+
+		logSetOutput ( ( !flag.logFile ) ? 1 : flag.logTerm, flag.logFile );
 	}
 
 	if ( flag.help )
 	{
 		printf ( "build date: %s\n", DATE_BUILD );
-		printf ( "robot1.coeffLongG : %f\n", robot1.coeffLongG );
-		printf ( "robot1.coeffLongD : %f\n", robot1.coeffLongD );
-		printf ( "robot1.coeffAngleG : %f\n", robot1.coeffAngleG );
-		printf ( "robot1.coeffAngleD : %f\n", robot1.coeffAngleD );
 		printf ( "\n\e[4mparameter available for cmd line:\e[0m\n" );
 		helpParamArgs ( paramList );
 		printf ( "\n\e[4mparameter available in res/config.rco file:\e[0m\n" );
 		helpConfigArgs ( configList );
 		return ( 0 );
 	}
+	logDebug ( "test\n" );
+	exit ( 0 );
 
 	if ( !flagAction.noDrive )
 	{ // if engine wasn't disabled
