@@ -61,7 +61,9 @@ void proccessNormalEnd ( void * arg )
 {
 	robot1.vitesseGaucheToSend = 0.;
 	robot1.vitesseDroiteToSend = 0.;
-	envoiOrdreMoteur ( motorBoard, &robot1 );
+	
+	envoiOrdreMoteur ( motorBoard, &robot1, 0 );
+
 	if ( arg )
 	{
 		printf ( "\e[2K\r\e[1;33m%s\e[0m\n", ( char * )arg );
@@ -154,7 +156,7 @@ int main ( int argc, char * argv[] )
 		{ "--driveWait", NULL, 0x20, cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
 		{ "--driveScan", NULL, 0x40, cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
 		{ "--driveDone", NULL, 0x80, cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
-		{ "--MaxSpeed", "-Ms", 1, cT ( int16_t ), &maxSpeed, "set max speed [ 0 ; 32767 ]" },
+		{ "--MaxSpeed", "-Ms", 1, cT ( int16_t ), &maxSpeed, "set max speed [ 1 ; 32767 ]" },
 		{ "--ini", "-i", 1, cT ( str ), xmlInitPath, "xml initialisation file path" },
 		{ "--xml", "-x", 1, cT ( str ), xmlActionPath, "xml action file path" },
 		{ "--time", "-t", 1, cT ( uint32_t ), &globalTime, "game duration in seconds" },
@@ -577,6 +579,8 @@ int main ( int argc, char * argv[] )
 		Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
 		Comme ça, si on a pas d'actions influant sur les moteurs, on arrête la bête.
 		*/
+
+
 		robot1.vitesseGaucheToSend = robot1.vitesseGaucheDefault;
 		robot1.vitesseDroiteToSend = robot1.vitesseDroiteDefault;
 
@@ -588,7 +592,7 @@ int main ( int argc, char * argv[] )
 
 		if ( !flagAction.noDrive )
 		{ // engine enabled
-			envoiOrdreMoteur ( motorBoard, &robot1 );
+			envoiOrdreMoteur ( motorBoard, &robot1, maxSpeed );
 		}
 		else if ( flagAction.driveScan &&
 			_kbhit ( ) &&
