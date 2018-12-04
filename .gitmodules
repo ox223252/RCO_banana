@@ -22,3 +22,6 @@
 [submodule "src/lib/roboclaw"]
 	path = src/lib/roboclaw
 	url = https://github.com/ox223252/roboclaw.git
+[submodule "src/lib/Xbox360-wireless"]
+	path = src/lib/Xbox360-wireless
+	url = https://github.com/ox223252/Xbox360-wireless.git

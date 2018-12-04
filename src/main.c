@@ -1,4 +1,5 @@
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -16,6 +17,7 @@
 #include "lib/roboclaw/roboclaw.h"
 #include "lib/parserXML/loadXML.h"
 #include "lib/dynamixel_sdk/dynamixel_sdk.h"
+#include "lib/Xbox360-wireless/cXbox360.h"
 
 #include "struct/structRobot.h"
 #include "struct/structAction.h"
@@ -81,6 +83,9 @@ int main ( int argc, char * argv[] )
 	char motorBoadPath[ 128 ] = { 0 }; // roboclaw access point /dev/roboclaw
 
 	uint32_t motorBoardUartSpeed = 115200; // uart speed
+
+	int joystick = 0;
+	Xbox360Controller pad = { 0 };
 
 	uint8_t address = 0x80;
 	int16_t maxSpeed = 32767; // motor max speed, ti neved should cross this limit
@@ -229,6 +234,15 @@ int main ( int argc, char * argv[] )
 	}
 	else
 	{
+		if ( maxSpeed < 0 )
+		{
+			maxSpeed = -maxSpeed;
+		}
+		else if ( maxSpeed == 0 )
+		{
+			maxSpeed = 1;
+		}
+		
 		logSetQuiet ( flag.quiet );
 		logSetColor ( flag.color );
 		logSetDebug ( flag.debug );
@@ -299,6 +313,30 @@ int main ( int argc, char * argv[] )
 				{
 					case MENU_MANUAL_controller:
 					{
+						joystick = open ( "/dev/input/js0", O_RDONLY | O_NONBLOCK );
+
+						if ( joystick < 0 )
+						{
+							logVerbose ( "%s\n", strerror ( errno ) );
+							break;
+						}
+
+						getStatus360 ( joystick, &pad, true );
+						do
+						{
+							if ( pad.back )
+							{
+								break;
+							}
+
+							roboclaw_duty_m1m2 ( motorBoard, address,
+								( abs ( pad.Y1 ) < maxSpeed ) ? pad.Y1 : ( pad.Y1 > 0 ) ? maxSpeed : -maxSpeed,
+								( abs ( pad.Y2 ) < maxSpeed ) ? pad.Y1 : ( pad.Y2 > 0 ) ? maxSpeed : -maxSpeed );
+						}
+						while ( getStatus360 ( joystick, &pad, false ) );
+
+						close ( joystick );
+						joystick = -1;
 						break;
 					}
 					case MENU_MANUAL_keyboard:
