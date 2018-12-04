@@ -251,8 +251,6 @@ int main ( int argc, char * argv[] )
 		helpConfigArgs ( configList );
 		return ( 0 );
 	}
-	logDebug ( "test\n" );
-	exit ( 0 );
 
 	if ( !flagAction.noDrive )
 	{ // if engine wasn't disabled
