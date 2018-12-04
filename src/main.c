@@ -28,7 +28,6 @@
 #include "deplacement/controleMoteur.h"
 
 static Robot robot1 = { 0 };
-static struct roboclaw *motorBoard = NULL;
 
 enum
 {
@@ -52,18 +51,8 @@ void dynamixelClose ( void * arg )
 	closePort ( ( long ) arg );
 }
 
-void roboClawClose ( void * arg )
-{
-	roboclaw_close ( ( struct roboclaw * )arg );
-}
-
 void proccessNormalEnd ( void * arg )
 {
-	robot1.vitesseGaucheToSend = 0.;
-	robot1.vitesseDroiteToSend = 0.;
-	
-	envoiOrdreMoteur ( motorBoard, &robot1, 0 );
-
 	if ( arg )
 	{
 		printf ( "\e[2K\r\e[1;33m%s\e[0m\n", ( char * )arg );
@@ -84,6 +73,7 @@ int main ( int argc, char * argv[] )
 	long int dynaPortNum = 0;
 	char motorBoadPath[ 128 ] = { 0 }; // roboclaw access point /dev/roboclaw
 
+	struct roboclaw *motorBoard = NULL;
 	uint32_t motorBoardUartSpeed = 115200; // uart speed
 
 	int joystick = 0;
@@ -271,26 +261,14 @@ int main ( int argc, char * argv[] )
 	if ( !flagAction.noDrive )
 	{ // if engine wasn't disabled
 		// init motor
-		motorBoard = roboclaw_init ( motorBoadPath, motorBoardUartSpeed);
-
-		if ( !motorBoard )
+		if ( initEngine ( motorBoadPath, motorBoardUartSpeed, 12.0, 10.0, &motorBoard, 5000000 ) )
 		{
 			logVerbose ( "can't open robo claw bus at %s\n", motorBoadPath );
 			logVerbose ( "%s\n", strerror ( errno ) );
 			return ( __LINE__ );
 		}
-		setExecAfterAllOnExit ( roboClawClose, ( void * )motorBoard );
 
-		if ( roboclaw_main_battery_voltage ( motorBoard, address, ( int16_t * )&i ) != ROBOCLAW_OK)
-		{
-			logVerbose ( "error on reading battery voltage\n" );
-			return ( __LINE__ );
-		}
-		else
-		{
-			printf ( "battery voltage is : %f V\n", ( float )i / 10.0f );
-			initOdometrie ( motorBoard, &robot1 );
-		}
+		initOdometrie ( motorBoard, &robot1 );
 	}
 
 	while ( !( flag.red ^ flag.green ) )
@@ -331,9 +309,7 @@ int main ( int argc, char * argv[] )
 								break;
 							}
 
-							roboclaw_duty_m1m2 ( motorBoard, address,
-								( abs ( pad.Y1 ) < maxSpeed ) ? pad.Y1 : ( pad.Y1 > 0 ) ? maxSpeed : -maxSpeed,
-								( abs ( pad.Y2 ) < maxSpeed ) ? pad.Y1 : ( pad.Y2 > 0 ) ? maxSpeed : -maxSpeed );
+							envoiOrdreMoteur ( pad.Y1 >> 4, pad.Y2 >> 2, maxSpeed );
 						}
 						while ( getStatus360 ( joystick, &pad, false ) );
 
@@ -349,9 +325,7 @@ int main ( int argc, char * argv[] )
 							printf ( "%4d %4d\r", moteur.left, moteur.right );
 							if ( motorBoard )
 							{
-								roboclaw_duty_m1m2 ( motorBoard, address,
-									moteur.left,
-									moteur.right );
+								envoiOrdreMoteur ( robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend, maxSpeed );
 							}
 
 							switch ( getMovePad ( true ) )
@@ -590,9 +564,10 @@ int main ( int argc, char * argv[] )
 			break;
 		}
 
-		if ( !flagAction.noDrive )
-		{ // engine enabled
-			envoiOrdreMoteur ( motorBoard, &robot1, maxSpeed );
+		if ( !flagAction.noDrive &&
+			envoiOrdreMoteur ( robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend, maxSpeed ) )
+		{ // error occured
+			logVerbose ( "%s\n", strerror ( errno ) );
 		}
 		else if ( flagAction.driveScan &&
 			_kbhit ( ) &&

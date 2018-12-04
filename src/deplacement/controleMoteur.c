@@ -1,31 +1,164 @@
+#include <errno.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <sys/time.h>
+#include <time.h>
 
 #include "controleMoteur.h"
+#include "../lib/freeOnExit/freeOnExit.h"
 
-void envoiOrdreMoteur ( struct roboclaw* rc, Robot* robot, int16_t limitSpeed )
+#define MAX_SPEED_VALUE ( ( float )32767.0 )
+
+static uint32_t _conrtolMoateur_delay = 5000000;
+static struct roboclaw *_conrtolMoateur_motorBoard = NULL;
+static struct timeval lastDate;
+static struct
 {
-	int16_t vitesseToSendG = -1 * robot->vitesseGaucheToSend / 1500 * 32767;
-	int16_t vitesseToSendD = -1 * robot->vitesseDroiteToSend / 1500 * 32767;
+	float min;
+	float current;
+	float max;
+}
+_conrtolMoateur_voltage = { 0.0, 0.0, 0.0 };
 
-	if ( vitesseToSendG > limitSpeed )
+static void roboClawClose ( void * arg )
+{
+	roboclaw_duty_m1m2 ( ( struct roboclaw * ) arg, 0x80, 0, 0 );
+	roboclaw_close ( ( struct roboclaw * )arg );
+}
+
+float getBattery ( void )
+{
+	int16_t volatge = 0;
+
+
+	if ( roboclaw_main_battery_voltage ( _conrtolMoateur_motorBoard, 0x80, &volatge ) == ROBOCLAW_OK )
 	{
-		vitesseToSendG = limitSpeed;
+		return ( -1.0 );
 	}
-	if ( vitesseToSendG < -limitSpeed )
+	
+	gettimeofday ( &lastDate, NULL );
+
+	_conrtolMoateur_voltage.current = ( float )volatge / 10.0f;
+	return ( _conrtolMoateur_voltage.current );
+}
+
+int initEngine ( const char * restrict const path,
+	const uint32_t speed,
+	const float maxVoltage,
+	const float minVolatge,
+	const uint32_t delay,
+	void ** const ptr )
+{
+	int16_t volatge = 0;
+
+	if ( !path ||
+		( maxVoltage < 0 ) || 
+		( minVolatge < 0 ) )
 	{
-		vitesseToSendG = -limitSpeed;
-	}
-	if ( vitesseToSendD > limitSpeed )
-	{
-		vitesseToSendD = limitSpeed;
-	}
-	if ( vitesseToSendD < -limitSpeed )
-	{
-		vitesseToSendD = -limitSpeed;
+		errno = EINVAL;
+		return ( __LINE__ );
 	}
 
-	if ( roboclaw_duty_m1m2 ( rc, 0x80, vitesseToSendG,vitesseToSendD) != ROBOCLAW_OK )
+	_conrtolMoateur_voltage.min = minVolatge;
+	_conrtolMoateur_voltage.max = maxVoltage;
+	_conrtolMoateur_delay = delay;
+
+	_conrtolMoateur_motorBoard = roboclaw_init ( path, speed );
+	if ( !_conrtolMoateur_motorBoard )
 	{
-		printf ( "Send moteur failed !!!!!!! \n" );
+		return ( __LINE__ );
 	}
+
+	setExecAfterAllOnExit ( roboClawClose, ( void * )_conrtolMoateur_motorBoard );
+
+	if ( roboclaw_main_battery_voltage ( _conrtolMoateur_motorBoard, 0x80, &volatge ) != ROBOCLAW_OK)
+	{
+		return ( __LINE__ );
+	}
+
+	_conrtolMoateur_voltage.current = ( float )volatge / 10.0f;
+
+	if ( ptr )
+	{
+		*ptr = _conrtolMoateur_motorBoard;
+	}
+
+	gettimeofday ( &lastDate, NULL );
+
+	return ( 0 );
+}
+
+int envoiOrdreMoteur ( int16_t left, int16_t right, int16_t limitSpeed )
+{
+	float coefVoltage = 1.0;
+
+	struct timeval now;
+	uint32_t time = 0;
+	int16_t volatge = 0;
+
+	// init speed left and right from limits
+	if ( abs ( left ) > limitSpeed )
+	{
+		if ( left > 0 )
+		{
+			left = limitSpeed;
+		}
+		else
+		{
+			left = -limitSpeed;
+		}
+	}
+	if ( abs ( right ) > limitSpeed )
+	{
+		if ( right > 0 )
+		{
+			right = limitSpeed;
+		}
+		else
+		{
+			right = -limitSpeed;
+		}
+	}
+
+	// if battery power verification requested
+	if ( _conrtolMoateur_delay > 0 )
+	{
+		gettimeofday ( &now, NULL );
+
+		time = ( now.tv_sec - lastDate.tv_sec ) * 1000000 + ( now.tv_usec - lastDate.tv_usec );
+
+		// get battery volatge if delay is past
+		if ( time > _conrtolMoateur_delay )
+		{
+			lastDate = now;
+			if ( roboclaw_main_battery_voltage ( _conrtolMoateur_motorBoard, 0x80, &volatge ) != ROBOCLAW_OK )
+			{
+				return ( __LINE__ );
+			}
+
+			_conrtolMoateur_voltage.current = ( float )volatge / 10.0f;
+		}
+
+		// if battery too low stop motor
+		if ( _conrtolMoateur_voltage.current < _conrtolMoateur_voltage.min )
+		{
+			printf ( "Battery too low stop motor\n" );
+			roboclaw_duty_m1m2 ( _conrtolMoateur_motorBoard, 0x80, 0, 0 );
+			errno = 1;
+			return ( __LINE__ );
+		}
+
+		// if power change coef will did it too to correct this change
+		coefVoltage = _conrtolMoateur_voltage.max / _conrtolMoateur_voltage.current;
+	}
+
+	left = ( MAX_SPEED_VALUE * coefVoltage ) * left / 1500;
+	right = ( MAX_SPEED_VALUE * coefVoltage ) * right / 1500;
+
+	if ( roboclaw_duty_m1m2 ( _conrtolMoateur_motorBoard, 0x80, left, right ) != ROBOCLAW_OK )
+	{
+		return ( __LINE__ );
+	}
+
+	return(  0 );
 }
