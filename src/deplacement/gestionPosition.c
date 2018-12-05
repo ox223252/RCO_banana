@@ -72,8 +72,8 @@ int calculDeplacement ( Robot* robot )
 		robot->vitesseDroiteToSend = 1. * robot->cible.vitesseMax;
 	}
 
-	robot->vitesseDroiteToSend += 1.*erreurAngle;
-	robot->vitesseGaucheToSend -= 1.*erreurAngle;
+	robot->vitesseDroiteToSend -= 3.*erreurAngle;
+	robot->vitesseGaucheToSend += 3.*erreurAngle;
 
 	gettimeofday ( &_gestionPosition_now,  NULL );
 	_gestionPosition_tempsEcoule = ( _gestionPosition_now. tv_sec * 1000000 + _gestionPosition_now. tv_usec ) - ( _gestionPosition_pre. tv_sec * 1000000 + _gestionPosition_pre. tv_usec );
@@ -116,18 +116,16 @@ int tenirAngle ( Robot* robot )
 	float erreurAngle;
 	erreurAngle = minimumErreur2Angles ( robot->orientationRobot,robot->orientationVisee );
 
-	if ( fabs ( erreurAngle ) <= robot->cible.precision )
+	if ( fabs ( erreurAngle ) <= fabs(robot->cible.precision) )
 	{
 		return 1;
 	}
-	gettimeofday ( &_gestionPosition_now,  NULL );
-	_gestionPosition_tempsEcoule = ( _gestionPosition_now. tv_sec * 1000000 + _gestionPosition_now. tv_usec ) - ( _gestionPosition_pre. tv_sec * 1000000 + _gestionPosition_pre. tv_usec );
+//	gettimeofday ( &_gestionPosition_now,  NULL );
+//	_gestionPosition_tempsEcoule = ( _gestionPosition_now. tv_sec * 1000000 + _gestionPosition_now. tv_usec ) - ( _gestionPosition_pre. tv_sec * 1000000 + _gestionPosition_pre. tv_usec );
 
-	robot->vitesseDroiteToSend = 10.*erreurAngle;
-	robot->vitesseGaucheToSend = 10.*erreurAngle;
+	robot->vitesseDroiteToSend = -2.*erreurAngle;
+	robot->vitesseGaucheToSend = 2.*erreurAngle;
 
-	robot->vitesseGaucheToSend *= ( robot->cible.vitesseMax / 100 );
-	robot->vitesseDroiteToSend *= ( robot->cible.vitesseMax / 100 );
 	return 0;
 }
 

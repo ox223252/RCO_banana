@@ -23,7 +23,7 @@ void envoiOrdreMoteur ( struct roboclaw* rc, Robot* robot, int16_t limitSpeed )
 	{
 		vitesseToSendD = -limitSpeed;
 	}
-
+	printf("\n limiteSpeed : %d VG %d VD %d \n",limitSpeed, vitesseToSendG, vitesseToSendD);
 	if ( roboclaw_duty_m1m2 ( rc, 0x80, vitesseToSendG,vitesseToSendD) != ROBOCLAW_OK )
 	{
 		printf ( "Send moteur failed !!!!!!! \n" );

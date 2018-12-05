@@ -138,14 +138,14 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 				_management_newDeplacement = 0;
 				robot->vitesseGaucheDefault = 0.;
 				robot->vitesseDroiteDefault = 0.;
-				robot->cible.xCible = atoi ( listAction[ indiceAction ].params[ 0 ] );
-				robot->cible.yCible = atoi ( listAction[ indiceAction ].params[ 1 ] );
-				robot->cible.vitesseMax = atoi ( listAction[ indiceAction ].params[ 2 ] );
-				robot->cible.acc = atoi ( listAction[ indiceAction ].params[ 3 ] );
-				robot->cible.dec = atoi ( listAction[ indiceAction ].params[ 4 ] );
-				robot->cible.sens = atoi ( listAction[ indiceAction ].params[ 5 ] );
-				robot->cible.precision = atoi ( listAction[ indiceAction ].params[ 6 ] );
-				robot->cible.distanceFreinage = atoi ( listAction[ indiceAction ].params[ 7 ] );
+				robot->cible.xCible = 						atoi ( listAction[ indiceAction ].params[ 0 ] );
+				robot->cible.yCible = 						atoi ( listAction[ indiceAction ].params[ 1 ] );
+				robot->cible.vitesseMax = 				atoi ( listAction[ indiceAction ].params[ 2 ] );
+				robot->cible.acc = 								atoi ( listAction[ indiceAction ].params[ 3 ] );
+				robot->cible.dec = 								atoi ( listAction[ indiceAction ].params[ 4 ] );
+				robot->cible.sens = 							atoi ( listAction[ indiceAction ].params[ 5 ] );
+				robot->cible.precision = 					atoi ( listAction[ indiceAction ].params[ 6 ] );
+				robot->cible.distanceFreinage = 	atoi ( listAction[ indiceAction ].params[ 7 ] );
 				premierAppel ( robot );
 			}
 			else
@@ -154,6 +154,8 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 				{
 					_management_newDeplacement = 1;
 					listAction[indiceAction].isDone = 1;
+					robot->vitesseGaucheDefault = 0.;
+					robot->vitesseDroiteDefault = 0.;
 				}
 			}
 
@@ -166,9 +168,9 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 				_management_newDeplacement = 0;
 				robot->vitesseGaucheDefault = 0.;
 				robot->vitesseDroiteDefault = 0.;
-				robot->orientationVisee = atoi ( listAction[ indiceAction ].params[ 0 ] );
-				robot->cible.vitesseMax = atoi ( listAction[ indiceAction ].params[ 1 ] );
-				robot->cible.precision = atoi ( listAction[ indiceAction ].params[ 2 ] );
+				robot->orientationVisee = 			atoi ( listAction[ indiceAction ].params[ 0 ] );
+				robot->cible.vitesseMax = 			atoi ( listAction[ indiceAction ].params[ 1 ] );
+				robot->cible.precision = 				atoi ( listAction[ indiceAction ].params[ 2 ] );
 				premierAppelTenirAngle ( robot );
 			}else
 			{
@@ -176,6 +178,8 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 				{
 					_management_newDeplacement = 1;
 					listAction[indiceAction].isDone = 1;
+					robot->vitesseGaucheDefault = 0.;
+					robot->vitesseDroiteDefault = 0.;
 				}
 			}
 			break;
@@ -346,7 +350,7 @@ int updateActionEnCours ( Action* listAction, int nbAction, Robot* robot )
 	do
 	{
 		numAction = atoi ( token );
-	
+
 		logDebug ( "en cours : %s\n", token );
 		logDebug ( " - start time : %ld\n", listAction[ numAction ].heureCreation / 1000000 );
 		logDebug ( " - fils       : %s\n", listAction[ numAction ].listFils );
@@ -375,9 +379,9 @@ int updateActionEnCours ( Action* listAction, int nbAction, Robot* robot )
 					newAction = getIndiceActionByIndice ( listAction, atoi ( buffer ), nbAction );
 					listAction[ newAction ].heureCreation = now.tv_sec * 1000000 + now.tv_usec;
 					sprintf ( newList, "%s%d;", newList, newAction );
-	
+
 					actionRemaining++;
-	
+
 					j += ( int )( strlen ( buffer ) + 1 );
 					logDebug ( " - new action : %s\n", buffer );
 				}
@@ -391,7 +395,7 @@ int updateActionEnCours ( Action* listAction, int nbAction, Robot* robot )
 			if ( !listAction[ numAction ].listTimeOut )
 			{ // no timeout list provided
 			}
-			else 
+			else
 			{
 				logDebug ( " - liste : %s\n", listAction[ numAction ].listTimeOut );
 				j = 0;
@@ -404,9 +408,9 @@ int updateActionEnCours ( Action* listAction, int nbAction, Robot* robot )
 					newAction = getIndiceActionByIndice ( listAction, atoi ( buffer ), nbAction );
 					listAction[ newAction ].heureCreation = now.tv_sec * 1000000 + now.tv_usec;
 					sprintf ( newList, "%s%d;", newList, newAction );
-	
+
 					actionRemaining++;
-	
+
 					j += ( int )( strlen ( buffer ) + 1 );
 					logDebug ( " - new action : %s\n", buffer );
 					break;
