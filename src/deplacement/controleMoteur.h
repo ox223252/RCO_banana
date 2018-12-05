@@ -2,6 +2,7 @@
 #define __CONTROLEMOTEUR_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "../lib/roboclaw/roboclaw.h"
 #include "../struct/structRobot.h"
@@ -9,7 +10,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int initEngine ( const char * restrict const path, const uint32_t speed,
 ///     const float maxVoltage, const float minVolatge, const uint32_t delay,
-///     void ** const ptr );
+///     struct roboclaw ** const ptr );
 /// \param[ in ] path : path to the device /dev/ttyUSBx
 /// \param[ in ] speed : bauderate of the uart
 /// \param[ in ] maxVoltage : volateg limite for usage
@@ -20,7 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 int initEngine ( const char * restrict const path, const uint32_t speed,
 	const float maxVoltage, const float minVolatge, const uint32_t delay,
-	void ** const ptr );
+	struct roboclaw ** const ptr );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn float getBattery ( void );
@@ -32,5 +33,18 @@ float getBattery ( void );
 /// \fn int envoiOrdreMoteur ( int16_t left, int16_t right, int16_t limitSpeed);
 ////////////////////////////////////////////////////////////////////////////////
 int envoiOrdreMoteur ( int16_t left, int16_t right, int16_t limitSpeed );
+
+////////////////////////////////////////////////////////////////////////////////
+/// \fn void initBoost ( const float voltage, const uint32_t delay );
+/// \param[ in ] voltage : boost voltage level
+/// \param[ in ] delay : boost duration
+////////////////////////////////////////////////////////////////////////////////
+void initBoost ( const float voltage, const uint32_t delay );
+
+////////////////////////////////////////////////////////////////////////////////
+/// \fn int requestBoost ( void );
+/// \brief request a boost during, predefined delay
+////////////////////////////////////////////////////////////////////////////////
+int requestBoost ( bool flag );
 
 #endif //__CONTROLEMOTEUR_H__

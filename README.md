@@ -32,7 +32,7 @@ Vous pouvez lancer le programme comme suit :
 Pour avoir de l'aide :
 ```Shell
 > ./bin/Banana -h
-build date: 2018.11.08 16:51:25
+build date: 2018.12.04 19:52:20
 
 parameter available for cmd line:
     usage : key value value2 key2 value3 ...
@@ -43,6 +43,8 @@ parameter available for cmd line:
             --q :  -q : bool : hide all trace point
         --debug :  -d : bool : display many trace point
         --color :  -c : bool : add color to debug traces
+         --term : -lT : bool : add color to debug traces
+         --file : -lF : bool : add color to debug traces
         --noArm : -nA : bool : use it to disable servo motor
       --armWait : (null) : bool : wait end of timeout before set action to done
       --armScan : (null) : bool : wait a key pressed to action to done
@@ -51,10 +53,14 @@ parameter available for cmd line:
     --driveWait : (null) : bool : wait end of timeout before set action to done
     --driveScan : (null) : bool : wait a key pressed to action to done
     --driveDone : (null) : bool : automaticaly set action to done (default)
-     --MaxSpeed : -Ms :    1 : set max speed [ 0 ; 32767 ]
+     --MaxSpeed : -Ms :    1 : set max speed [ 1 ; 32767 ]
           --ini :  -i :    1 : xml initialisation file path
           --xml :  -x :    1 : xml action file path
          --time :  -t :    1 : game duration in seconds
+  --linear_left : -ll :    1 : linear coef for left wheel
+ --linear_right : -lr :    1 : linear coef for right wheel
+   --angle_left : -al :    1 : angular coef for right wheel
+  --angle_right : -ar :    1 : angular coef for right wheel
 
 parameter available in res/config.rco file:
     usage : key=value key2=value2
@@ -66,11 +72,35 @@ PATH_MOTOR_BOARD_UART_SPEED : UART speed for robocloaw board
      XML_ACTION_PATH : xml initialisation file path
        XML_INIT_PATH : xml action file path
          GLOBAL_TIME : game duration in seconds
+    COEF_LINEAR_LEFT : linear coef for left wheel
+   COEF_LINEAR_RIGHT : linear coef for right wheel
+     COEF_ANGLE_LEFT : angular coef for right wheel
+    COEF_ANGLE_RIGHT : angular coef for right wheel
 ```
 
-Les éléments de type bool sont des flags n'acceptant pas de paramètres. Ils est à noter que les flags armWait/armScan/armDone ne sont valide que si noArm est lui même activé. De même que driveWait/driveScan/driveDone ne sont valide que si noDrive est lui même actif.
+## debug :
+Pour debogger en cas de problème ( si le système est compilé en MODE_DEBUG ), il existe 5 options :
+ - `-q` : qui désactive toutes les sorties de debug (s'il n'est pas appelé le niveau verbose est activé par défaut ),
+ - `-d` : qui active le debug de niveau supérieur,
+ - `-c` : qui active la couleur pour plus de lisibilité,
+ - `-lT` : qui active la sortie dans le terminal ( actif par défaut si aucune autre n'est demandé ),
+ - `-lF` : qui active la sortie dans un fichier de log `log.txt` peut etre couplé à -lT.
 
-Le flag noDrive : désactive tout ce qui est relatif à la propulsion, tandis que noArm désactivera tout ce qui est relatif au autres actionneurs.
+Pour le contrôle du robot les flags noDrive et noArm vont respectivement désactiver les moteurs et les actionneurs, ils peuvent être complété par :
+ - `--xxxWait` : attend le timeout pour valider l'action
+ - `--xxxScan` : attend un appuis sur le clavier pour valider la action
+ - `--xxxDone` : valide l'action par défaut
+
+`--MaxSpeed` : représente la vitesse max du robot en m/s
+
+`--ini` : est un xml d'initialisation
+`--xml` : est le xml rincipal celui qui doit durer maximum `--time`
+`--time` : est le temps maximum que doit durer la partie
+
+`--linear_left` : coefficient utile que pour la mise au point doit être placé dans le fichier de config ( `COEF_LINEAR_LEFT` ) par la suite.
+`--linear_right` : coefficient utile que pour la mise au point doit être placé dans le fichier de config ( `COEF_LINEAR_RIGHT` ) par la suite.
+`--angle_left` : coefficient utile que pour la mise au point doit être placé dans le fichier de config ( `COEF_ANGLE_LEFT` ) par la suite.
+`--angle_right` : coefficient utile que pour la mise au point doit être placé dans le fichier de config ( `COEF_ANGLE_RIGHT` ) par la suite.
 
 Certain paramètres tels que la durée de jeux sont existent dans le fichier de config ainsi que pour la ligne de commande, la ligne de commande sera prioritaire sur la configuration du fichier.
 
@@ -163,3 +193,5 @@ Some parameters as time are available in config file and cmd line, the cmd line 
 ## [Dynamixel lib](https://github.com/ROBOTIS-GIT/DynamixelSDK)
 
 ## [License compliance](https://www.gnu.org/licenses/license-list.en.html)
+
+[![Watch me]](png)(youtube)

@@ -10,20 +10,37 @@
 #define MAX_SPEED_VALUE ( ( float )32767.0 )
 
 static uint32_t _conrtolMoateur_delay = 5000000;
+static uint32_t _conrtolMoateur_boostdelay = 0;
+static uint8_t _conrtolMoateur_boostRequested = false;
 static struct roboclaw *_conrtolMoateur_motorBoard = NULL;
-static struct timeval lastDate;
+static struct timeval _conrtolMoateur_lastDate;
 static struct
 {
 	float min;
 	float current;
 	float max;
+	float boost;
 }
-_conrtolMoateur_voltage = { 0.0, 0.0, 0.0 };
+_conrtolMoateur_voltage = { 0.0, 0.0, 0.0, 0.0 };
 
 static void roboClawClose ( void * arg )
 {
 	roboclaw_duty_m1m2 ( ( struct roboclaw * ) arg, 0x80, 0, 0 );
 	roboclaw_close ( ( struct roboclaw * )arg );
+}
+
+void initBoost ( const float voltage, const uint32_t delay )
+{
+	_conrtolMoateur_voltage.boost = voltage;
+	_conrtolMoateur_boostdelay = delay;
+}
+
+int requestBoost ( bool flag )
+{
+	static bool last = false;
+	_conrtolMoateur_boostRequested = flag & ( flag ^ last );
+	last = flag;
+	return ( getBattery ( ) < 0 );
 }
 
 float getBattery ( void )
@@ -36,7 +53,7 @@ float getBattery ( void )
 		return ( -1.0 );
 	}
 	
-	gettimeofday ( &lastDate, NULL );
+	gettimeofday ( &_conrtolMoateur_lastDate, NULL );
 
 	_conrtolMoateur_voltage.current = ( float )volatge / 10.0f;
 	return ( _conrtolMoateur_voltage.current );
@@ -47,7 +64,7 @@ int initEngine ( const char * restrict const path,
 	const float maxVoltage,
 	const float minVolatge,
 	const uint32_t delay,
-	void ** const ptr )
+	struct roboclaw ** const ptr )
 {
 	int16_t volatge = 0;
 
@@ -83,7 +100,7 @@ int initEngine ( const char * restrict const path,
 		*ptr = _conrtolMoateur_motorBoard;
 	}
 
-	gettimeofday ( &lastDate, NULL );
+	gettimeofday ( &_conrtolMoateur_lastDate, NULL );
 
 	return ( 0 );
 }
@@ -125,18 +142,19 @@ int envoiOrdreMoteur ( int16_t left, int16_t right, int16_t limitSpeed )
 	{
 		gettimeofday ( &now, NULL );
 
-		time = ( now.tv_sec - lastDate.tv_sec ) * 1000000 + ( now.tv_usec - lastDate.tv_usec );
+		time = ( now.tv_sec - _conrtolMoateur_lastDate.tv_sec ) * 1000000 + ( now.tv_usec - _conrtolMoateur_lastDate.tv_usec );
 
 		// get battery volatge if delay is past
 		if ( time > _conrtolMoateur_delay )
 		{
-			lastDate = now;
+			_conrtolMoateur_lastDate = now;
 			if ( roboclaw_main_battery_voltage ( _conrtolMoateur_motorBoard, 0x80, &volatge ) != ROBOCLAW_OK )
 			{
 				return ( __LINE__ );
 			}
 
 			_conrtolMoateur_voltage.current = ( float )volatge / 10.0f;
+			_conrtolMoateur_boostRequested = false;
 		}
 
 		// if battery too low stop motor
@@ -148,8 +166,19 @@ int envoiOrdreMoteur ( int16_t left, int16_t right, int16_t limitSpeed )
 			return ( __LINE__ );
 		}
 
-		// if power change coef will did it too to correct this change
-		coefVoltage = _conrtolMoateur_voltage.max / _conrtolMoateur_voltage.current;
+		if ( _conrtolMoateur_boostRequested &&
+			( _conrtolMoateur_voltage.boost > _conrtolMoateur_voltage.max ) &&
+			( time < _conrtolMoateur_boostdelay ) )
+		{
+			// if power change coef will did it too to correct this change
+			coefVoltage = _conrtolMoateur_voltage.boost / _conrtolMoateur_voltage.current;
+		}
+		else
+		{
+			// if power change coef will did it too to correct this change
+			coefVoltage = _conrtolMoateur_voltage.max / _conrtolMoateur_voltage.current;
+			_conrtolMoateur_boostRequested = false;
+		}
 	}
 
 	left = ( MAX_SPEED_VALUE * coefVoltage ) * left / 1500;

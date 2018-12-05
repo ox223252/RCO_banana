@@ -79,7 +79,6 @@ int main ( int argc, char * argv[] )
 	int joystick = 0;
 	Xbox360Controller pad = { 0 };
 
-	uint8_t address = 0x80;
 	int16_t maxSpeed = 32767; // motor max speed, ti neved should cross this limit
 	uint32_t globalTime = 0; // global game time
 	char xmlInitPath[ 128 ] = { 0 };
@@ -89,6 +88,8 @@ int main ( int argc, char * argv[] )
 	uint32_t readDelay = 5000000;
 	float Vmax = 12.0;
 	float Vmin = 10.0;
+	float Vboost = 14.0;
+	uint32_t tBoost = 1000000;
 
 	uint8_t pca9685 = 0; // servo driver handler (i2c)
 
@@ -135,32 +136,34 @@ int main ( int argc, char * argv[] )
 
 	param_el paramList[] =
 	{
-		{ "--help", "-h",     0x08, cT ( bool ), ((uint8_t * )&flag), "this window" },
-		{ "--green", "-g",    0x01, cT ( bool ), ((uint8_t * )&flag), "launch the green prog" },
-		{ "--red", "-r",      0x02, cT ( bool ), ((uint8_t * )&flag), "launch the red prog" },
-		{ "--q", "-q",        0x10, cT ( bool ), ((uint8_t * )&flag), "hide all trace point" },
-		{ "--debug", "-d",    0x20, cT ( bool ), ((uint8_t * )&flag), "display many trace point" },
-		{ "--color", "-c",    0x40, cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
-		{ "--term", "-lT",    0x80, cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
-		{ "--file", "-lF",    0x01, cT ( bool ), ((uint8_t * )&flag + 1), "add color to debug traces" },
-		{ "--noArm", "-nA",   0x01, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable servo motor" },
-		{ "--armWait", NULL,  0x02, cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
-		{ "--armScan", NULL,  0x04, cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
-		{ "--armDone", NULL,  0x08, cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
-		{ "--noDrive", "-nD", 0x10, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
+		{ "--help", "-h",      0x08, cT ( bool ), ((uint8_t * )&flag), "this window" },
+		{ "--green", "-g",     0x01, cT ( bool ), ((uint8_t * )&flag), "launch the green prog" },
+		{ "--red", "-r",       0x02, cT ( bool ), ((uint8_t * )&flag), "launch the red prog" },
+		{ "--q", "-q",         0x10, cT ( bool ), ((uint8_t * )&flag), "hide all trace point" },
+		{ "--debug", "-d",     0x20, cT ( bool ), ((uint8_t * )&flag), "display many trace point" },
+		{ "--color", "-c",     0x40, cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
+		{ "--term", "-lT",     0x80, cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
+		{ "--file", "-lF",     0x01, cT ( bool ), ((uint8_t * )&flag + 1), "add color to debug traces" },
+		{ "--noArm", "-nA",    0x01, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable servo motor" },
+		{ "--armWait", NULL,   0x02, cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
+		{ "--armScan", NULL,   0x04, cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
+		{ "--armDone", NULL,   0x08, cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
+		{ "--noDrive", "-nD",  0x10, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
 		{ "--driveWait", NULL, 0x20, cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
 		{ "--driveScan", NULL, 0x40, cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
 		{ "--driveDone", NULL, 0x80, cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
-		{ "--MaxSpeed", "-Ms", 1, cT ( int16_t ), &maxSpeed, "set max speed [ 1 ; 32767 ]" },
-		{ "--ini", "-i", 1, cT ( str ), xmlInitPath, "xml initialisation file path" },
-		{ "--xml", "-x", 1, cT ( str ), xmlActionPath, "xml action file path" },
-		{ "--time", "-t", 1, cT ( uint32_t ), &globalTime, "game duration in seconds" },
+		{ "--MaxSpeed", "-Ms", 1,    cT ( int16_t ), &maxSpeed, "set max speed [ 1 ; 32767 ]" },
+		{ "--ini", "-i",       1,    cT ( str ), xmlInitPath, "xml initialisation file path" },
+		{ "--xml", "-x",       1,    cT ( str ), xmlActionPath, "xml action file path" },
+		{ "--time", "-t",      1,    cT ( uint32_t ), &globalTime, "game duration in seconds" },
 		{ "--linear_left", "-ll", 1, cT ( float ), &robot1.coeffLongG, "linear coef for left wheel" },
 		{ "--linear_right", "-lr", 1, cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
-		{ "--angle_left", "-al", 1, cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
+		{ "--angle_left", "-al", 1,  cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
 		{ "--angle_right", "-ar", 1, cT ( float ), &robot1.coeffAngleD, "angular coef for right wheel" },
-		{ "--Vmax", "-vM", 1, cT ( float ), &Vmax, "maximum voltage that should provide systeme too engine" },
-		{ "--Vmin", "-vm", 1, cT ( float ), &Vmin, "minimum voltage that should provide systeme too engine" },
+		{ "--Vmax", "-vM",     1,    cT ( float ), &Vmax, "maximum voltage that should provide systeme to engine" },
+		{ "--Vmin", "-vm",     1,    cT ( float ), &Vmin, "minimum voltage that should provide systeme to engine" },
+		{ "--Vboost", "-vB",   1,    cT ( float ), &Vboost, "maximum voltage that should provide systeme to engine during boost mode" },
+		{ "--tBoost", "-tB",   1,    cT ( uint32_t ), &tBoost, "maximum delay for boost mode" },
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
 
@@ -180,6 +183,8 @@ int main ( int argc, char * argv[] )
 		{ "BATTERY_DELAY", cT ( uint32_t ), &readDelay, "delay min between two read of battery delay during engin control" },
 		{ "VOLATGE_MAX", cT ( float ), &Vmax, "maximum voltage that should provide systeme too engine" },
 		{ "VOLATGE_MIN", cT ( float ), &Vmin, "minimum voltage that should provide systeme too engine" },
+		{ "BOOST_VOLTAGE", cT ( float ), &Vboost, "maximum voltage that should provide systeme to engine during boost mode" },
+		{ "BOOST_TIME", cT ( uint32_t ), &tBoost, "maximum delay for boost mode" },
 		{ NULL, 0, NULL, NULL }
 	};
 
@@ -271,12 +276,14 @@ int main ( int argc, char * argv[] )
 	if ( !flagAction.noDrive )
 	{ // if engine wasn't disabled
 		// init motor
-		if ( initEngine ( motorBoadPath, motorBoardUartSpeed, Vmax, Vmin, &motorBoard, readDelay ) )
+		if ( initEngine ( motorBoadPath, motorBoardUartSpeed, Vmax, Vmin, readDelay, &motorBoard ) )
 		{
 			logVerbose ( "can't open robo claw bus at %s\n", motorBoadPath );
 			logVerbose ( "%s\n", strerror ( errno ) );
 			return ( __LINE__ );
 		}
+
+		initBoost ( Vboost, tBoost );
 
 		initOdometrie ( motorBoard, &robot1 );
 	}
@@ -567,6 +574,16 @@ int main ( int argc, char * argv[] )
 
 		robot1.vitesseGaucheToSend = robot1.vitesseGaucheDefault;
 		robot1.vitesseDroiteToSend = robot1.vitesseDroiteDefault;
+
+		if ( ( robot1.vitesseGaucheToSend > 1500 ) &&
+			( robot1.vitesseDroiteToSend > 1500 ) )
+		{
+			requestBoost ( true );
+		}
+		else
+		{
+			requestBoost ( false );
+		}
 
 		if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
 		{
