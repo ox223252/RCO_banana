@@ -61,6 +61,11 @@ parameter available for cmd line:
  --linear_right : -lr :    1 : linear coef for right wheel
    --angle_left : -al :    1 : angular coef for right wheel
   --angle_right : -ar :    1 : angular coef for right wheel
+         --Vmax : -vM :    1 : maximum voltage that should provide systeme to engine
+         --Vmin : -vm :    1 : minimum voltage that should provide systeme to engine
+       --Vboost : -vB :    1 : maximum voltage that should provide systeme to engine during boost mode
+       --tBoost : -tB :    1 : maximum delay for boost mode
+
 
 parameter available in res/config.rco file:
     usage : key=value key2=value2
@@ -76,6 +81,12 @@ PATH_MOTOR_BOARD_UART_SPEED : UART speed for robocloaw board
    COEF_LINEAR_RIGHT : linear coef for right wheel
      COEF_ANGLE_LEFT : angular coef for right wheel
     COEF_ANGLE_RIGHT : angular coef for right wheel
+       BATTERY_DELAY : delay min between two read of battery delay during engin control
+         VOLATGE_MAX : maximum voltage that should provide systeme too engine
+         VOLATGE_MIN : minimum voltage that should provide systeme too engine
+       BOOST_VOLTAGE : maximum voltage that should provide systeme to engine during boost mode
+          BOOST_TIME : maximum delay for boost mode
+
 ```
 
 ## debug :
@@ -101,6 +112,11 @@ Pour le contrôle du robot les flags noDrive et noArm vont respectivement désac
 `--linear_right` : coefficient utile que pour la mise au point doit être placé dans le fichier de config ( `COEF_LINEAR_RIGHT` ) par la suite.
 `--angle_left` : coefficient utile que pour la mise au point doit être placé dans le fichier de config ( `COEF_ANGLE_LEFT` ) par la suite.
 `--angle_right` : coefficient utile que pour la mise au point doit être placé dans le fichier de config ( `COEF_ANGLE_RIGHT` ) par la suite.
+
+`--Vmax` : tension maximum à envoyer au moteurs
+`--Vmin` : tension minimum de la batterie pour autoriser le contrôle des moteurs
+`--Vboost` : tension maximum de boost
+`--tBoost` : temps maximum de boost, la durée de boost est forcement inférieur ou égale au temps `BATTERY_DELAY`
 
 Certain paramètres tels que la durée de jeux sont existent dans le fichier de config ainsi que pour la ligne de commande, la ligne de commande sera prioritaire sur la configuration du fichier.
 
