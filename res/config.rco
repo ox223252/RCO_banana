@@ -28,3 +28,11 @@ COEF_LINEAR_LEFT=0.0489441484
 COEF_LINEAR_RIGHT=-0.0489296636
 COEF_ANGLE_LEFT=0.0108754758
 COEF_ANGLE_RIGHT=-0.0108584183
+
+# battery control
+# delay min between two read of battery delay during engin control (µs)
+BATTERY_DELAY=5000000
+# maximum voltage that should provide systeme too engine (V)
+VOLATGE_MAX=12.0
+# minimum voltage that should provide systeme too engine (V)
+VOLATGE_MIN=10.0

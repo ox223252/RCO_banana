@@ -85,6 +85,11 @@ int main ( int argc, char * argv[] )
 	char xmlInitPath[ 128 ] = { 0 };
 	char xmlActionPath[ 128 ] = { 0 };
 
+	// battery management
+	uint32_t readDelay = 5000000;
+	float Vmax = 12.0;
+	float Vmin = 10.0;
+
 	uint8_t pca9685 = 0; // servo driver handler (i2c)
 
 	Action* tabActionTotal = NULL;
@@ -154,6 +159,8 @@ int main ( int argc, char * argv[] )
 		{ "--linear_right", "-lr", 1, cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
 		{ "--angle_left", "-al", 1, cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
 		{ "--angle_right", "-ar", 1, cT ( float ), &robot1.coeffAngleD, "angular coef for right wheel" },
+		{ "--Vmax", "-vM", 1, cT ( float ), &Vmax, "maximum voltage that should provide systeme too engine" },
+		{ "--Vmin", "-vm", 1, cT ( float ), &Vmin, "minimum voltage that should provide systeme too engine" },
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
 
@@ -170,6 +177,9 @@ int main ( int argc, char * argv[] )
 		{ "COEF_LINEAR_RIGHT", cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
 		{ "COEF_ANGLE_LEFT", cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
 		{ "COEF_ANGLE_RIGHT", cT ( float ), &robot1.coeffAngleD, "angular coef for right wheel" },
+		{ "BATTERY_DELAY", cT ( uint32_t ), &readDelay, "delay min between two read of battery delay during engin control" },
+		{ "VOLATGE_MAX", cT ( float ), &Vmax, "maximum voltage that should provide systeme too engine" },
+		{ "VOLATGE_MIN", cT ( float ), &Vmin, "minimum voltage that should provide systeme too engine" },
 		{ NULL, 0, NULL, NULL }
 	};
 
@@ -261,7 +271,7 @@ int main ( int argc, char * argv[] )
 	if ( !flagAction.noDrive )
 	{ // if engine wasn't disabled
 		// init motor
-		if ( initEngine ( motorBoadPath, motorBoardUartSpeed, 12.0, 10.0, &motorBoard, 5000000 ) )
+		if ( initEngine ( motorBoadPath, motorBoardUartSpeed, Vmax, Vmin, &motorBoard, readDelay ) )
 		{
 			logVerbose ( "can't open robo claw bus at %s\n", motorBoadPath );
 			logVerbose ( "%s\n", strerror ( errno ) );
