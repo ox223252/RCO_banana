@@ -8,9 +8,9 @@ static float coeffID = 0.;
 static float coeffDD = 0.;
 static int16_t maxSpeed = 1500;
 
-static int16_t erreurPreGauche = 0;
+static int16_t erreurPreGauche = -1000;
 static int16_t sommeErreurGauche = 0;
-static int16_t erreurPreDroite = 0;
+static int16_t erreurPreDroite = -1000;
 static int16_t sommeErreurDroite = 0;
 
 void razAsserv()
@@ -59,7 +59,6 @@ int asservirVitesseGaucheDroite(int16_t consigneGauche, int16_t consigneDroite, 
 
   vitesseGToSend = coeffPG * erreurGauche + coeffIG * sommeErreurGauche + coeffDG * diffErreurGauche;
   vitesseDToSend = coeffPD * erreurGauche + coeffID * sommeErreurGauche + coeffDD * diffErreurGauche;
-
 
   return envoiOrdreMoteur ( vitesseGToSend, vitesseDToSend, maxSpeed );
 }
