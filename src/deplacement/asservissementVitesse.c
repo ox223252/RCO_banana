@@ -1,38 +1,38 @@
 #include "asservissementVitesse.h"
 
-static float coeffPG = 1.;
-static float coeffIG = 0.;
-static float coeffDG = 0.;
-static float coeffPD = 1.;
-static float coeffID = 0.;
-static float coeffDD = 0.;
-static int16_t maxSpeed = 1500;
+static float _asservissementVitesse_coeffPG = 1.;
+static float _asservissementVitesse_coeffIG = 0.;
+static float _asservissementVitesse_coeffDG = 0.;
+static float _asservissementVitesse_coeffPD = 1.;
+static float _asservissementVitesse_coeffID = 0.;
+static float _asservissementVitesse_coeffDD = 0.;
+static int16_t _asservissementVitesse_maxSpeed = 1500;
 
-static int16_t erreurPreGauche = -1000;
-static int16_t sommeErreurGauche = 0;
-static int16_t erreurPreDroite = -1000;
-static int16_t sommeErreurDroite = 0;
+static int16_t _asservissementVitesse_erreurPreGauche = -1000;
+static int16_t _asservissementVitesse_sommeErreurGauche = 0;
+static int16_t _asservissementVitesse_erreurPreDroite = -1000;
+static int16_t _asservissementVitesse_sommeErreurDroite = 0;
 
 void razAsserv()
 {
-  erreurPreGauche   = -1000;
-  erreurPreDroite   = -1000;
-  sommeErreurGauche = 0;
-  sommeErreurDroite = 0;
+  _asservissementVitesse_erreurPreGauche   = -1000;
+  _asservissementVitesse_erreurPreDroite   = -1000;
+  _asservissementVitesse_sommeErreurGauche = 0;
+  _asservissementVitesse_sommeErreurDroite = 0;
 }
 
-void initAsservissementVitesse(float _coeffPG, float _coeffIG, float _coeffDG,int16_t _maxSpeed,float _coeffPD, float _coeffID, float _coeffDD)
+void initAsservissementVitesse(const float _coeffPG,const float _coeffIG,const float _coeffDG,const int16_t _maxSpeed,const float _coeffPD,const float _coeffID,const float _coeffDD)
 {
-  coeffPG = _coeffPG;
-  coeffIG = _coeffIG;
-  coeffDG = _coeffDG;
-  coeffPD = _coeffPD;
-  coeffID = _coeffID;
-  coeffDD = _coeffDD;
-  maxSpeed = _maxSpeed;
+  _asservissementVitesse_coeffPG = _coeffPG;
+  _asservissementVitesse_coeffIG = _coeffIG;
+  _asservissementVitesse_coeffDG = _coeffDG;
+  _asservissementVitesse_coeffPD = _coeffPD;
+  _asservissementVitesse_coeffID = _coeffID;
+  _asservissementVitesse_coeffDD = _coeffDD;
+  _asservissementVitesse_maxSpeed = _maxSpeed;
 }
 
-int asservirVitesseGaucheDroite(int16_t consigneGauche, int16_t consigneDroite, int16_t vitesseGauche, int16_t vitesseDroite)
+int asservirVitesseGaucheDroite(const int16_t consigneGauche,const int16_t consigneDroite,const int16_t vitesseGauche,const int16_t vitesseDroite)
 {
   int16_t diffErreurGauche;
   int16_t diffErreurDroite;
@@ -41,24 +41,30 @@ int asservirVitesseGaucheDroite(int16_t consigneGauche, int16_t consigneDroite, 
   int16_t erreurGauche = consigneGauche - vitesseGauche;
   int16_t erreurDroite = consigneDroite - vitesseDroite;
 
-  if(erreurPreGauche != -1000 && erreurPreDroite != -1000)
+  if(_asservissementVitesse_erreurPreGauche != -1000 &&
+     _asservissementVitesse_erreurPreDroite != -1000)
   {
-    diffErreurGauche = erreurGauche - erreurPreGauche;
-    diffErreurDroite = erreurDroite - erreurPreDroite;
+    diffErreurGauche = erreurGauche - _asservissementVitesse_erreurPreGauche;
+    diffErreurDroite = erreurDroite - _asservissementVitesse_erreurPreDroite;
   }else
   {
     diffErreurGauche = 0;
     diffErreurDroite = 0;
   }
 
-  erreurPreDroite = erreurDroite;
-  erreurPreGauche = erreurGauche;
+  _asservissementVitesse_erreurPreDroite = erreurDroite;
+  _asservissementVitesse_erreurPreGauche = erreurGauche;
 
-  sommeErreurGauche += erreurGauche;
-  sommeErreurDroite += erreurDroite;
+  _asservissementVitesse_sommeErreurGauche += erreurGauche;
+  _asservissementVitesse_sommeErreurDroite += erreurDroite;
 
-  vitesseGToSend = coeffPG * erreurGauche + coeffIG * sommeErreurGauche + coeffDG * diffErreurGauche;
-  vitesseDToSend = coeffPD * erreurGauche + coeffID * sommeErreurGauche + coeffDD * diffErreurGauche;
+  vitesseGToSend =  _asservissementVitesse_coeffPG * erreurGauche +
+                    _asservissementVitesse_coeffIG * _asservissementVitesse_sommeErreurGauche +
+                    _asservissementVitesse_coeffDG * diffErreurGauche;
 
-  return envoiOrdreMoteur ( vitesseGToSend, vitesseDToSend, maxSpeed );
+  vitesseDToSend =  _asservissementVitesse_coeffPD * erreurGauche +
+                    _asservissementVitesse_coeffID * _asservissementVitesse_sommeErreurGauche +
+                    _asservissementVitesse_coeffDD * diffErreurDroite;
+
+  return envoiOrdreMoteur ( vitesseGToSend, vitesseDToSend, _asservissementVitesse_maxSpeed );
 }
