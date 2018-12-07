@@ -1,6 +1,7 @@
 #ifndef __GESTIONPOSITION_H__
 #define __GESTIONPOSITION_H__
 #include "../struct/structRobot.h"
+#include "asservissementVitesse.h"
 #include <math.h>
 #include <errno.h>
 #include <sys/time.h>
