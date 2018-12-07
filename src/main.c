@@ -28,6 +28,7 @@
 #include "deplacement/controleMoteur.h"
 
 static Robot robot1 = { 0 };
+struct roboclaw *motorBoard = NULL;
 
 enum
 {
@@ -78,7 +79,7 @@ int main ( int argc, char * argv[] )
 	long int dynaPortNum = 0;
 	char motorBoadPath[ 128 ] = { 0 }; // roboclaw access point /dev/roboclaw
 
-	struct roboclaw *motorBoard = NULL;
+
 	uint32_t motorBoardUartSpeed = 115200; // uart speed
 
 	int joystick = 0;
