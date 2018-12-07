@@ -18,7 +18,6 @@ double pytagor ( double x, double y );
 
 void premierAppel ( Robot* robot )
 {
-
 	premierAppelTenirAngle ( robot );
 	_gestionPosition_distanceCiblePre = pytagor ( dX, dY );
 	robot->orientationVisee = acos ( ( robot->cible.xCible - robot->xRobot ) / _gestionPosition_distanceCiblePre ) * 360. / ( 2. * M_PI );
@@ -32,6 +31,7 @@ void premierAppel ( Robot* robot )
 
 void premierAppelTenirAngle ( Robot* robot )
 {
+	razAsserv();
 	gettimeofday ( &_gestionPosition_pre,  NULL );
 	_gestionPosition_erreurAnglePre = minimumErreur2Angles ( robot->orientationRobot,robot->orientationVisee );
 }
@@ -72,8 +72,8 @@ int calculDeplacement ( Robot* robot )
 		robot->vitesseDroiteToSend = 1. * robot->cible.vitesseMax;
 	}
 
-	robot->vitesseDroiteToSend -= 3.*erreurAngle;
-	robot->vitesseGaucheToSend += 3.*erreurAngle;
+	robot->vitesseDroiteToSend -= 5.*erreurAngle;
+	robot->vitesseGaucheToSend += 5.*erreurAngle;
 
 	gettimeofday ( &_gestionPosition_now,  NULL );
 	_gestionPosition_tempsEcoule = ( _gestionPosition_now. tv_sec * 1000000 + _gestionPosition_now. tv_usec ) - ( _gestionPosition_pre. tv_sec * 1000000 + _gestionPosition_pre. tv_usec );

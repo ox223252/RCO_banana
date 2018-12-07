@@ -36,6 +36,7 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 		return ( __LINE__ );
 
 	}
+
 	// save olds values
 	_odometrie_old.left = robot->codeurGauche;
 	_odometrie_old.right = robot->codeurDroit;
@@ -50,7 +51,6 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 	// calc moves
 	deltaComptG = robot->codeurGauche - _odometrie_old.left;
 	deltaComptD = robot->codeurDroit - _odometrie_old.right;
-
 	// calc robot angle
 	robot->orientationRobot += ( robot->coeffAngleG * deltaComptG ) - ( robot->coeffAngleD * deltaComptD );
 

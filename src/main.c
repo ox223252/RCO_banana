@@ -26,9 +26,10 @@
 #include "gestionAction/action.h"
 #include "deplacement/odometrie.h"
 #include "deplacement/controleMoteur.h"
+#include "deplacement/asservissementVitesse.h"
 
 static Robot robot1 = { 0 };
-struct roboclaw *motorBoard = NULL;
+
 
 enum
 {
@@ -73,7 +74,7 @@ int main ( int argc, char * argv[] )
 	uint32_t dynamixelUartSpeed = 1000000; // uart speed
 	long int dynaPortNum = 0;
 	char motorBoadPath[ 128 ] = { 0 }; // roboclaw access point /dev/roboclaw
-
+	struct roboclaw *motorBoard = NULL;
 
 	uint32_t motorBoardUartSpeed = 115200; // uart speed
 
@@ -91,6 +92,14 @@ int main ( int argc, char * argv[] )
 	float Vmin = 10.0;
 	float Vboost = 14.0;
 	uint32_t tBoost = 1000000;
+
+	//Speed PID management
+	float speedAsservPG = 1.;
+	float speedAsservIG = 0.;
+	float speedAsservDG = 0.;
+	float speedAsservPD = 1.;
+	float speedAsservID = 0.;
+	float speedAsservDD = 0.;
 
 	uint8_t pca9685 = 0; // servo driver handler (i2c)
 
@@ -186,6 +195,12 @@ int main ( int argc, char * argv[] )
 		{ "VOLATGE_MIN", cT ( float ), &Vmin, "minimum voltage that should provide systeme too engine" },
 		{ "BOOST_VOLTAGE", cT ( float ), &Vboost, "maximum voltage that should provide systeme to engine during boost mode" },
 		{ "BOOST_TIME", cT ( uint32_t ), &tBoost, "maximum delay for boost mode" },
+		{ "COEFF_PG_VITESSE", cT ( float ), &speedAsservPG, "G proportionnel coefficient for speed asservissment" },
+		{ "COEFF_IG_VITESSE", cT ( float ), &speedAsservIG, "G Integral coefficient for speed asservissment" },
+		{ "COEFF_DG_VITESSE", cT ( float ), &speedAsservDG, "G derivative coefficient for speed asservissment" },
+		{ "COEFF_PD_VITESSE", cT ( float ), &speedAsservPD, "D proportionnel coefficient for speed asservissment" },
+		{ "COEFF_ID_VITESSE", cT ( float ), &speedAsservID, "D Integral coefficient for speed asservissment" },
+		{ "COEFF_DD_VITESSE", cT ( float ), &speedAsservDD, "D derivative coefficient for speed asservissment" },
 		{ NULL, 0, NULL, NULL }
 	};
 
@@ -287,6 +302,9 @@ int main ( int argc, char * argv[] )
 		initBoost ( Vboost, tBoost );
 
 		initOdometrie ( motorBoard, &robot1 );
+
+		initAsservissementVitesse(speedAsservPG,speedAsservIG,speedAsservDG, maxSpeed,speedAsservPD,speedAsservID,speedAsservDD);
+
 	}
 
 	while ( !( flag.red ^ flag.green ) )
@@ -554,8 +572,6 @@ int main ( int argc, char * argv[] )
 	{
 		calculPosition ( motorBoard, &robot1 );
 
-		setPosition ( -1, 1 );
-
 		printf ( "Gauche : %3d Droite : %3d X : %.3f  Y : %.3f Angle : %.3f VGauche : %.3f VDroite : %.3f\n",
 			robot1.codeurGauche,
 			robot1.codeurDroit,
@@ -571,7 +587,6 @@ int main ( int argc, char * argv[] )
 		Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
 		Comme ça, si on a pas d'actions influant sur les moteurs, on arrête la bête.
 		*/
-
 
 		robot1.vitesseGaucheToSend = robot1.vitesseGaucheDefault;
 		robot1.vitesseDroiteToSend = robot1.vitesseDroiteDefault;
@@ -591,12 +606,14 @@ int main ( int argc, char * argv[] )
 			logVerbose ( "no more action remaining\n" );
 			robot1.vitesseGaucheToSend = 0;
 			robot1.vitesseDroiteToSend = 0;
-			envoiOrdreMoteur ( motorBoard, &robot1, maxSpeed );
+
 			break;
 		}
 
 		if ( !flagAction.noDrive &&
-			envoiOrdreMoteur ( robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend, maxSpeed ) )
+			asservirVitesseGaucheDroite(robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend,
+					robot1.vitesseGauche, robot1.vitesseDroite)
+			 )
 		{ // error occured
 			logVerbose ( "%s\n", strerror ( errno ) );
 		}
