@@ -54,11 +54,6 @@ void dynamixelClose ( void * arg )
 
 void proccessNormalEnd ( void * arg )
 {
-	robot1.vitesseGaucheToSend = 0.;
-	robot1.vitesseDroiteToSend = 0.;
-
-	envoiOrdreMoteur ( motorBoard, &robot1, 0 );
-
 	if ( arg )
 	{
 		printf ( "\e[2K\r\e[1;33m%s\e[0m\n", ( char * )arg );
