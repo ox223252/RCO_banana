@@ -92,10 +92,8 @@ int initEngine ( const char * restrict const path,
 	{
 		return ( __LINE__ );
 	}
-
-	_conrtolMoateur_voltage.current = ( float )volatge / 10.0f;
-
-	if ( ptr )
+	printf("\n limiteSpeed : %d VG %d VD %d \n",limitSpeed, vitesseToSendG, vitesseToSendD);
+	if ( roboclaw_duty_m1m2 ( rc, 0x80, vitesseToSendG,vitesseToSendD) != ROBOCLAW_OK )
 	{
 		*ptr = _conrtolMoateur_motorBoard;
 	}

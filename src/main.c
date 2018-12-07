@@ -53,6 +53,11 @@ void dynamixelClose ( void * arg )
 
 void proccessNormalEnd ( void * arg )
 {
+	robot1.vitesseGaucheToSend = 0.;
+	robot1.vitesseDroiteToSend = 0.;
+
+	envoiOrdreMoteur ( motorBoard, &robot1, 0 );
+
 	if ( arg )
 	{
 		printf ( "\e[2K\r\e[1;33m%s\e[0m\n", ( char * )arg );
@@ -249,7 +254,7 @@ int main ( int argc, char * argv[] )
 		{
 			maxSpeed = 1;
 		}
-		
+
 		logSetQuiet ( flag.quiet );
 		logSetColor ( flag.color );
 		logSetDebug ( flag.debug );
@@ -588,6 +593,9 @@ int main ( int argc, char * argv[] )
 		if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
 		{
 			logVerbose ( "no more action remaining\n" );
+			robot1.vitesseGaucheToSend = 0;
+			robot1.vitesseDroiteToSend = 0;
+			envoiOrdreMoteur ( motorBoard, &robot1, maxSpeed );
 			break;
 		}
 
