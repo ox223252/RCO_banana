@@ -72,8 +72,8 @@ int calculDeplacement ( Robot* robot )
 		robot->vitesseDroiteToSend = 1. * robot->cible.vitesseMax;
 	}
 
-	robot->vitesseDroiteToSend -= 3.*erreurAngle;
-	robot->vitesseGaucheToSend += 3.*erreurAngle;
+	robot->vitesseDroiteToSend -= 5.*erreurAngle;
+	robot->vitesseGaucheToSend += 5.*erreurAngle;
 
 	gettimeofday ( &_gestionPosition_now,  NULL );
 	_gestionPosition_tempsEcoule = ( _gestionPosition_now. tv_sec * 1000000 + _gestionPosition_now. tv_usec ) - ( _gestionPosition_pre. tv_sec * 1000000 + _gestionPosition_pre. tv_usec );

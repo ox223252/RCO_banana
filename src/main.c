@@ -572,8 +572,6 @@ int main ( int argc, char * argv[] )
 	{
 		calculPosition ( motorBoard, &robot1 );
 
-		setPosition ( -1, 1 );
-
 		printf ( "Gauche : %3d Droite : %3d X : %.3f  Y : %.3f Angle : %.3f VGauche : %.3f VDroite : %.3f\n",
 			robot1.codeurGauche,
 			robot1.codeurDroit,
@@ -589,7 +587,6 @@ int main ( int argc, char * argv[] )
 		Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
 		Comme ça, si on a pas d'actions influant sur les moteurs, on arrête la bête.
 		*/
-
 
 		robot1.vitesseGaucheToSend = robot1.vitesseGaucheDefault;
 		robot1.vitesseDroiteToSend = robot1.vitesseDroiteDefault;

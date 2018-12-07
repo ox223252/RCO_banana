@@ -62,8 +62,8 @@ int asservirVitesseGaucheDroite(const int16_t consigneGauche,const int16_t consi
                     _asservissementVitesse_coeffIG * _asservissementVitesse_sommeErreurGauche +
                     _asservissementVitesse_coeffDG * diffErreurGauche;
 
-  vitesseDToSend =  _asservissementVitesse_coeffPD * erreurGauche +
-                    _asservissementVitesse_coeffID * _asservissementVitesse_sommeErreurGauche +
+  vitesseDToSend =  _asservissementVitesse_coeffPD * erreurDroite +
+                    _asservissementVitesse_coeffID * _asservissementVitesse_sommeErreurDroite +
                     _asservissementVitesse_coeffDD * diffErreurDroite;
 
   return envoiOrdreMoteur ( vitesseGToSend, vitesseDToSend, _asservissementVitesse_maxSpeed );

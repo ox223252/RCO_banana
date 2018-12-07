@@ -86,19 +86,18 @@ int initEngine ( const char * restrict const path,
 		return ( __LINE__ );
 	}
 
-	setExecAfterAllOnExit ( roboClawClose, ( void * )_controlMoteur_motorBoard );
+	setExecBeforeAllOnExit ( roboClawClose, ( void * )_controlMoteur_motorBoard );
 
 	if ( roboclaw_main_battery_voltage ( _controlMoteur_motorBoard, 0x80, &voltage ) != ROBOCLAW_OK)
 	{
 		return ( __LINE__ );
 	}
 
-	if ( roboclaw_duty_m1m2 ( _controlMoteur_motorBoard, 0x80, 0,0) != ROBOCLAW_OK )
+	if ( ptr )
 	{
 		*ptr = _controlMoteur_motorBoard;
 	}
-
-	gettimeofday ( &_controlMoteur_lastDate, NULL );
+	getBattery();
 
 	return ( 0 );
 }
@@ -156,6 +155,7 @@ int envoiOrdreMoteur ( int16_t left, int16_t right, int16_t limitSpeed )
 		}
 
 		// if battery too low stop motor
+
 		if ( _controlMoteur_voltage.current < _controlMoteur_voltage.min )
 		{
 			printf ( "Battery too low stop motor\n" );
@@ -182,7 +182,9 @@ int envoiOrdreMoteur ( int16_t left, int16_t right, int16_t limitSpeed )
 	left = ( MAX_SPEED_VALUE * coefVoltage ) * left / 1500;
 	right = ( MAX_SPEED_VALUE * coefVoltage ) * right / 1500;
 
-	if ( roboclaw_duty_m1m2 ( _controlMoteur_motorBoard, 0x80, left, right ) != ROBOCLAW_OK )
+	printf("Vitesse : %d %d\n",left, right);
+
+	if ( roboclaw_duty_m1m2 ( _controlMoteur_motorBoard, 0x80, -1*left, -1*right ) != ROBOCLAW_OK )
 	{
 		return ( __LINE__ );
 	}
