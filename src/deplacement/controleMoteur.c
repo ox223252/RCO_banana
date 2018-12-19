@@ -182,8 +182,7 @@ int envoiOrdreMoteur ( int16_t left, int16_t right, int16_t limitSpeed )
 	left = ( MAX_SPEED_VALUE * coefVoltage ) * left / 1500;
 	right = ( MAX_SPEED_VALUE * coefVoltage ) * right / 1500;
 
-	printf("Vitesse : %d %d\n",left, right);
-
+	printf("%d %d \n",left,right);
 	if ( roboclaw_duty_m1m2 ( _controlMoteur_motorBoard, 0x80, -1*left, -1*right ) != ROBOCLAW_OK )
 	{
 		return ( __LINE__ );

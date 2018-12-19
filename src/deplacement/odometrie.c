@@ -43,7 +43,7 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 	_odometrie_old.angle = robot->orientationRobot;
 
 	// request new ones
-	roboclaw_encoders ( rc, 0x80, &( robot->codeurGauche ), &( robot->codeurDroit ) );
+	roboclaw_encoders ( rc, 0x80, &( robot->codeurDroit ), &( robot->codeurGauche ) );
 
 	// get new date
 	gettimeofday ( &now, NULL );
@@ -52,7 +52,7 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 	deltaComptG = robot->codeurGauche - _odometrie_old.left;
 	deltaComptD = robot->codeurDroit - _odometrie_old.right;
 	// calc robot angle
-	robot->orientationRobot += ( robot->coeffAngleG * deltaComptG ) - ( robot->coeffAngleD * deltaComptD );
+	robot->orientationRobot += ( robot->coeffAngleD * deltaComptD ) - ( robot->coeffAngleG * deltaComptG );
 
 	if ( robot->orientationRobot > 180. )
 	{
@@ -69,7 +69,8 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 	dAngle = ( robot->orientationRobot + _odometrie_old.angle ) / 2.;
 
 	// calc real move
-	dDeplacement = ( ( robot->coeffLongD * deltaComptD ) + robot->coeffLongG * deltaComptG ) / 2.;
+	dDeplacement = ( ( robot->coeffLongD * deltaComptD ) + robot->coeffLongG * deltaComptG ) / -2.;
+
 	robot->distanceParcourue += dDeplacement;
 
 	// calc X / Y
@@ -85,8 +86,8 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 	// calc speed
 	if ( tempsEcoule )
 	{
-		robot->vitesseGauche = ( deltaComptG * robot->coeffAngleG ) / tempsEcoule;
-		robot->vitesseDroite = ( deltaComptD * robot->coeffAngleD ) / tempsEcoule;
+		robot->vitesseGauche = ( -1*deltaComptG * robot->coeffAngleG ) / tempsEcoule;
+		robot->vitesseDroite = ( -1*deltaComptD * robot->coeffAngleD ) / tempsEcoule;
 		robot->vitesseAngulaire = dAngle / tempsEcoule;
 	}
 	else
@@ -112,7 +113,7 @@ int initOdometrie ( struct roboclaw* rc, Robot* robot )
 	robot->vitesseGauche = 0.;
 	robot->vitesseDroite = 0.;
 
-	if ( roboclaw_encoders ( rc, 0x80, &(robot->codeurGauche), &(robot->codeurDroit) ) != ROBOCLAW_OK )
+	if ( roboclaw_encoders ( rc, 0x80, &(robot->codeurDroit), &(robot->codeurGauche) ) != ROBOCLAW_OK )
 	{
 		errno = ENETUNREACH;
 		return ( __LINE__ );

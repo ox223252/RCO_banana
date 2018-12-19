@@ -613,6 +613,8 @@ int main ( int argc, char * argv[] )
 		if ( !flagAction.noDrive &&
 			asservirVitesseGaucheDroite(robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend,
 					robot1.vitesseGauche, robot1.vitesseDroite)
+
+			//asservirVitesseGaucheDroite(400,0,robot1.vitesseGauche, robot1.vitesseDroite)
 			 )
 		{ // error occured
 			logVerbose ( "%s\n", strerror ( errno ) );
