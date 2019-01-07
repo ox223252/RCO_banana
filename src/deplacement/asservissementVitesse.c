@@ -6,12 +6,12 @@ static float _asservissementVitesse_coeffDG = 0.;
 static float _asservissementVitesse_coeffPD = 1.;
 static float _asservissementVitesse_coeffID = 0.;
 static float _asservissementVitesse_coeffDD = 0.;
-static int16_t _asservissementVitesse_maxSpeed = 1500;
+static int16_t _asservissementVitesse_maxSpeed = 800;
 
 static int16_t _asservissementVitesse_erreurPreGauche = -1000;
-static int16_t _asservissementVitesse_sommeErreurGauche = 0;
+static long _asservissementVitesse_sommeErreurGauche = 0;
 static int16_t _asservissementVitesse_erreurPreDroite = -1000;
-static int16_t _asservissementVitesse_sommeErreurDroite = 0;
+static long _asservissementVitesse_sommeErreurDroite = 0;
 
 void razAsserv()
 {
@@ -66,5 +66,6 @@ int asservirVitesseGaucheDroite(const int16_t consigneGauche,const int16_t consi
                     _asservissementVitesse_coeffID * _asservissementVitesse_sommeErreurDroite +
                     _asservissementVitesse_coeffDD * diffErreurDroite;
 
+printf("erreur %ld somme %ld\n",erreurGauche,_asservissementVitesse_sommeErreurGauche);
   return envoiOrdreMoteur ( vitesseGToSend, vitesseDToSend, _asservissementVitesse_maxSpeed );
 }
