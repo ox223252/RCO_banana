@@ -599,7 +599,7 @@ int main ( int argc, char * argv[] )
 		}
 		calculPosition ( motorBoard, &robot1 );
 
-		logVerbose ( "\e[2K\rGauche : %3d Droite : %3d X : %.3f  Y : %.3f Angle : %.3f VGauche : %.3f VDroite : %.3f",
+		logVerbose ( "\e[2K\rGauche : %3d Droite : %3d X : %.3f  Y : %.3f Angle : %.3f VGauche : %.3f VDroite : %.3f\n\e[A",
 			robot1.codeurGauche,
 			robot1.codeurDroit,
 			robot1.xRobot,
