@@ -1,122 +1,212 @@
-#include "mqtt.h"
 #include <string.h>
 #include <pthread.h>
 #include <errno.h>
+#include <stdint.h>
 
-struct mosquitto *mosq = NULL;
-char ** listTopic;
-int nbTopic = 0;
-pthread_t* thread1;
-char* topicInform;
-char* topicRequest;
+#include "mqtt.h"
+#include "../freeOnExit/freeOnExit.h"
+#include "../log/log.h"
 
-
-void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
+static struct
 {
-	printf("Topic : %s payload : %s",message->topic,message->payload);
+	char ** list;
+	uint16_t length;
+}
+_mqtt_topics = { NULL, 0 };
+
+static struct mosquitto * _mqtt_mosq = NULL;
+static struct
+{
+	uint8_t connected:1;
+}
+_mqtt_flags = { 0 };
+
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+static void MQTTAfterExit ( void * arg )
+{
+	mosquitto_destroy ( _mqtt_mosq );
+	mosquitto_lib_cleanup ( );
 }
 
-void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
+static void MQTTBeforeExit ( void * arg )
 {
-	for(int i=0;i<nbTopic;i++)
+	if ( _mqtt_flags.connected )
+	{ // to stop correctly infinite loop
+		mosquitto_disconnect ( _mqtt_mosq );
+		_mqtt_flags.connected = false;
+	}
+	
+	// if you call disconnect that will not send the last message (will)
+	// mosquitto_disconnect ( args->mosq );
+
+	logVerbose ( "\n\
+		mqtt disconnection required,\n\
+		wait for normal temrination,\n\
+		or press ctrl + C.\n" );
+}
+
+static void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
+{
+	logVerbose ( "Topic : %s payload : %s\n", message->topic, message->payload );
+}
+
+static void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
+{
+	if ( !result )
 	{
-		mqtt_subscribe(NULL,listTopic[i],1);
+		_mqtt_flags.connected = true;
+
+		for ( int i = 0; i < _mqtt_topics.length; i++ )
+		{
+			mqtt_subscribe ( NULL, _mqtt_topics.list[ i ], 1 );
+		}
+	}
+	else if ( result )
+	{
+		fprintf ( stderr, "%s\n", mosquitto_connack_string ( result ) );
 	}
 }
 
-void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
+static void my_disconnect_callback ( struct mosquitto * restrict mosq, void * restrict obj, int rc )
 {
-
+	_mqtt_flags.connected = false;
 }
 
-void *thread_1(void *arg)
+static void *infiniteLoop ( void *arg )
 {
-	mosquitto_loop_forever(mosq, 0, 1);
-	/* Pour enlever le warning */
-	(void) arg;
-	pthread_exit(NULL);
+	mosquitto_loop_forever ( ( struct mosquitto * )arg, 0, 1 );
+	pthread_exit ( NULL );
 }
+#pragma GCC diagnostic pop
 
-int mqtt_init(const char* name, const char* ipAddress, int port)
+int mqtt_init ( const char * const restrict name, const char* ipAddress, int port )
 {
-	thread1 = (pthread_t*)malloc(sizeof(pthread_t));
+	pthread_t threadID;
+	struct mosquitto *mosq = NULL;
 	int rc;
-	mosquitto_lib_init();
-	mosq = mosquitto_new(name, true, NULL);
-	if(!mosq)
+
+	if ( _mqtt_mosq )
+	{ // multiple init call
+		errno = EINVAL;
+		return ( __LINE__ );
+	}
+
+	if ( mosquitto_lib_init ( ) )
 	{
-		switch(errno){
+		return ( __LINE__ );
+	}
+
+	mosq = mosquitto_new(name, true, NULL);
+
+	if ( !mosq )
+	{
+		switch ( errno )
+		{
 			case ENOMEM:
-			fprintf(stderr, "Error: Out of memory.\n");
-			break;
+			{
+				fprintf ( stderr, "Error: Out of memory.\n" );
+				break;
+			}
 			case EINVAL:
-			fprintf(stderr, "Error: Invalid id.\n");
-			break;
+			{
+				fprintf ( stderr, "Error: Invalid id.\n" );
+				break;
+			}
 		}
 		mosquitto_lib_cleanup();
 
 
-		return 1;
+		return ( __LINE__ );
 	}
 
-	mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
-	mosquitto_message_callback_set(mosq, my_message_callback);
-	mosquitto_connect_callback_set(mosq, my_connect_callback);
-	rc = mosquitto_connect(mosq, ipAddress,port,1);
+	setExecAfterAllOnExit ( MQTTAfterExit, NULL );
+	setExecBeforeAllOnExit ( MQTTBeforeExit, NULL );
 
-	if(rc) return rc;
+	mosquitto_message_callback_set ( mosq, my_message_callback );
+	mosquitto_connect_callback_set ( mosq, my_connect_callback );
+	mosquitto_disconnect_callback_set ( mosq, my_disconnect_callback );
 
-	if(pthread_create(thread1, NULL, thread_1, NULL) == -1)
+	rc = mosquitto_connect ( mosq, ipAddress, port, 1 );
+
+	if ( rc )
 	{
-		perror("pthread_create");
-		return EXIT_FAILURE;
+		fprintf ( stderr, "%s\n", mosquitto_strerror ( rc ) );
+		return ( __LINE__ );
 	}
-	return rc;
+
+	if ( pthread_create ( &threadID, NULL, infiniteLoop, ( void * )mosq ) == -1 )
+	{
+		perror ( "pthread_create" );
+		return ( __LINE__ );
+	}
+	setThreadJoinOnExit ( threadID );
+
+	_mqtt_mosq = mosq;
+	return ( 0 );
 }
 
-int erase_sub_topic(char* topic)
+int erase_sub_topic ( const char * const restrict topic )
 {
-	for(int i=0;i<nbTopic;i++)
+	uint16_t i = 0;
+
+	// shear the topic need to be delet
+	while ( ( i < _mqtt_topics.length ) &&
+		strcmp ( topic, _mqtt_topics.list[ i ] ) )
 	{
-		if(strcmp(topic,listTopic[i])==0)
+		i++;
+	}
+
+	// if not present return
+	if ( i >= _mqtt_topics.length )
+	{
+		return ( __LINE__ );
+	}
+
+	// free the selected topic
+	free ( _mqtt_topics.list[ i ] );
+
+	// move all folloers to one place up
+	while ( i < ( _mqtt_topics.length - 1 ) )
+	{
+		_mqtt_topics.list[ i ] = _mqtt_topics.list[ i + 1 ];
+		i++;
+	}
+
+	// set last one is NULL
+	_mqtt_topics.list[ i ] = NULL;
+
+	return ( 0 );
+}
+
+int add_sub_topic ( const char * const restrict topic )
+{
+	char **ptr_realloc = realloc ( _mqtt_topics.list, sizeof ( char * ) * ( _mqtt_topics.length + 1 ) );
+
+	if ( ptr_realloc != NULL )
+	{
+		_mqtt_topics.list = ptr_realloc;
+		_mqtt_topics.list[ _mqtt_topics.length ] = malloc ( strlen( topic ) );
+		
+		if ( !_mqtt_topics.list[ _mqtt_topics.length ] )
 		{
-			mosquitto_unsubscribe(mosq, NULL,topic);
-			for(int j=i;j<nbTopic-1;j++)
-			{
-				free(listTopic[j]);
-				listTopic[j] = malloc(strlen(listTopic[j+1])*sizeof(char));
-				strcpy(listTopic[j],listTopic[j+1]);
-			}
-			nbTopic--;
-			return 0;
+			return ( __LINE__ );
 		}
-	}
-	return 1;
-}
-
-int add_sub_topic(char* topic)
-{
-	char **ptr_realloc = realloc(listTopic, sizeof(char*)*nbTopic+1);
-
-	if (ptr_realloc != NULL)
-	{
-		listTopic = ptr_realloc;
-		listTopic[nbTopic] = malloc(strlen(topic)*sizeof(char));
-		strcpy(listTopic[nbTopic],topic);
-		nbTopic++;
-		mqtt_subscribe(NULL,topic,1);
-		return 0;
+		
+		strcpy ( _mqtt_topics.list[ _mqtt_topics.length ], topic );
+		mqtt_subscribe ( NULL, _mqtt_topics.list[ _mqtt_topics.length ], 1 );
+		_mqtt_topics.length++;
+		return ( 0 );
 	}
 	/* Même si ptr_realloc est nul, on ne vide pas la mémoire. On laisse l'initiative au programmeur. */
-	return -1;
+	return ( __LINE__ );
 }
 
-int mqtt_subscribe(int* mid, const char* topic, int qos)
+int mqtt_subscribe ( int * mid, const char * const restrict topic, int qos )
 {
-	return mosquitto_subscribe(mosq, mid, topic, qos);
+	return mosquitto_subscribe ( _mqtt_mosq, mid, topic, qos );
 }
 
-int mqtt_publish(int*	mid, const char* topic,int payloadlen, const void* payload, int qos, bool	retain)
+int mqtt_publish ( int * mid, const char * const restrict topic, int payloadlen, const void * payload, int qos, bool	retain )
 {
-	return mosquitto_publish(mosq, mid, topic, payloadlen, payload, qos, retain);
+	return mosquitto_publish ( _mqtt_mosq, mid, topic, payloadlen, payload, qos, retain );
 }

@@ -135,7 +135,7 @@ int envoiOrdreMoteur ( int16_t left, int16_t right, int16_t limitSpeed )
 	}
 
 	// if battery power verification requested
-	/*if ( _controlMoteur_delay > 0 )
+	if ( _controlMoteur_delay > 0 )
 	{
 		gettimeofday ( &now, NULL );
 
@@ -177,10 +177,10 @@ int envoiOrdreMoteur ( int16_t left, int16_t right, int16_t limitSpeed )
 		//	coefVoltage = _controlMoteur_voltage.max / _controlMoteur_voltage.current;
 			_controlMoteur_boostRequested = false;
 		}
-	}*/
+	}
 
-	//left = ( MAX_SPEED_VALUE * coefVoltage ) * left / 800;
-	//right = ( MAX_SPEED_VALUE * coefVoltage ) * right / 800;
+	left = ( MAX_SPEED_VALUE * coefVoltage ) * left / 800;
+	right = ( MAX_SPEED_VALUE * coefVoltage ) * right / 800;
 
 	if ( roboclaw_duty_m1m2 ( _controlMoteur_motorBoard, 0x80, -1*left, -1*right ) != ROBOCLAW_OK )
 	{
