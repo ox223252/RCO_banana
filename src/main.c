@@ -311,6 +311,7 @@ int main ( int argc, char * argv[] )
 
 	if ( !flagAction.noDrive )
 	{ // if engine wasn't disabled
+	robot1.blocageVoulu = false;
 	initDetectionBlocage();
 	// init motor
 	if ( initEngine ( motorBoadPath, motorBoardUartSpeed, Vmax, Vmin, readDelay, &motorBoard ) )
@@ -637,7 +638,7 @@ while ( 1 )
 
 		break;
 	}
-	if ( !flagAction.noDrive)
+	if ( !flagAction.noDrive && robot1.blocageVoulu == false)
 	{
 		printf("BLOCAGE : %d",detectBlocage(&robot1,100));
 	}
