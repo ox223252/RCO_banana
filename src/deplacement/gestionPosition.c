@@ -31,7 +31,6 @@ void premierAppel ( Robot* robot )
 
 void premierAppelTenirAngle ( Robot* robot )
 {
-	razAsserv();
 	gettimeofday ( &_gestionPosition_pre,  NULL );
 	_gestionPosition_erreurAnglePre = minimumErreur2Angles ( robot->orientationRobot,robot->orientationVisee );
 }
