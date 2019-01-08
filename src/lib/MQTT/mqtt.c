@@ -12,7 +12,7 @@ char* topicRequest;
 
 void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
-  printf("Topic : %s payload : %s",message->topic,message->payload);
+  printf("Topic : %s payload : %s\n",message->topic,message->payload);
 }
 
 void my_connect_callback(struct mosquitto *mosq, void *obj, int result)

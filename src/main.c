@@ -137,13 +137,13 @@ int main ( int argc, char * argv[] )
 	struct
 	{
 		uint8_t green:1,    // &flag + 0 : 0x01
-			red:1,          //             0x02
-			un2:1,          //             0x04
-			help:1,         //             0x08
-			quiet:1,        //             0x10
-			debug:1,        //             0x20
-			color:1,        //             0x40
-			logTerm:1;      //             0x80
+		red:1,          //             0x02
+		un2:1,          //             0x04
+		help:1,         //             0x08
+		quiet:1,        //             0x10
+		debug:1,        //             0x20
+		color:1,        //             0x40
+		logTerm:1;      //             0x80
 		uint8_t logFile:1;  // &flag + 1 : 0x10
 	}
 	flag = { 0 };
@@ -258,7 +258,7 @@ int main ( int argc, char * argv[] )
 
 
 	if ( readConfigFile ( "res/config.rco", configList ) ||
-		readParamArgs ( argc, argv, paramList ) )
+	readParamArgs ( argc, argv, paramList ) )
 	{
 		return ( __LINE__ );
 	}
@@ -298,396 +298,352 @@ int main ( int argc, char * argv[] )
 
 	if(useMQTT)
 	{
-		if(!mqtt_init("RCO_NOIR","127.0.0.1",1883))
+		if(mqtt_init("RCO_NOIR","127.0.0.1",1883))
 		{
 			logVerbose ( "Can't init MQTT\n" );
-			return ( __LINE__ );
-		}
-		if(add_sub_topic("RCO_NOIR/x")!=0)
-		{
-			logVerbose ( "MQTT Can't add x topic\n" );
-			return ( __LINE__ );
-		}
-		if(add_sub_topic("RCO_NOIR/y")!=0)
-		{
-			logVerbose ( "MQTT Can't add y topic\n" );
-			return ( __LINE__ );
-		}
-		if(add_sub_topic("RCO_NOIR/orientation")!=0)
-		{
-			logVerbose ( "MQTT Can't add orientation topic\n" );
-			return ( __LINE__ );
-		}
-		if(add_sub_topic("RCO_NOIR/vitesseGauche")!=0)
-		{
-			logVerbose ( "MQTT Can't add vitesseGauche topic\n" );
-			return ( __LINE__ );
-		}
-		if(add_sub_topic("RCO_NOIR/vitesseDroite")!=0)
-		{
-			logVerbose ( "MQTT Can't add vitesseDroite topic\n" );
-			return ( __LINE__ );
-		}
-		if(add_sub_topic("RCO_NOIR/consigneVitesseG")!=0)
-		{
-			logVerbose ( "MQTT Can't add consigneVitesseG topic\n" );
-			return ( __LINE__ );
-		}
-		if(add_sub_topic("RCO_NOIR/consigneVitesseD")!=0)
-		{
-			logVerbose ( "MQTT Can't add consigneVitesseG topic\n" );
-			return ( __LINE__ );
-		}
-		if(add_sub_topic("RCO_NOIR/codeurG")!=0)
-		{
-			logVerbose ( "MQTT Can't add codeurG topic\n" );
-			return ( __LINE__ );
-		}
-		if(add_sub_topic("RCO_NOIR/codeurD")!=0)
-		{
-			logVerbose ( "MQTT Can't add codeurD topic\n" );
-			return ( __LINE__ );
-		}
-		if(add_sub_topic("RCO_NOIR/orientationVisee")!=0)
-		{
-			logVerbose ( "MQTT Can't add orientationVisee topic\n" );
 			return ( __LINE__ );
 		}
 	}
 
 	if ( !flagAction.noDrive )
 	{ // if engine wasn't disabled
-		// init motor
-		if ( initEngine ( motorBoadPath, motorBoardUartSpeed, Vmax, Vmin, readDelay, &motorBoard ) )
-		{
-			logVerbose ( "can't open robo claw bus at %s\n", motorBoadPath );
-			logVerbose ( "%s\n", strerror ( errno ) );
-			return ( __LINE__ );
-		}
-
-		initBoost ( Vboost, tBoost );
-
-		initOdometrie ( motorBoard, &robot1 );
-
-		initAsservissementVitesse(speedAsservPG,speedAsservIG,speedAsservDG, maxSpeed,speedAsservPD,speedAsservID,speedAsservDD);
-
+	// init motor
+	if ( initEngine ( motorBoadPath, motorBoardUartSpeed, Vmax, Vmin, readDelay, &motorBoard ) )
+	{
+		logVerbose ( "can't open robo claw bus at %s\n", motorBoadPath );
+		logVerbose ( "%s\n", strerror ( errno ) );
+		return ( __LINE__ );
 	}
 
-	while ( !( flag.red ^ flag.green ) )
-	{ // if no color or both colors set
-		switch ( menu ( 0, menuItems, NULL ) )
-		{
-			case MENU_red:
-			{
-				flag.red = 1;
-				flag.green = 0;
-				break;
-			}
-			case MENU_green:
-			{
-				flag.green = 1;
-				flag.red = 0;
-				break;
-			}
-			case MENU_manual:
-			{ // manual drive of robot zqsd / wasd / UP/LEFT/DOWN/RIGHT
-				switch ( menu ( 0, manualMenuItems, "  >", "   ", NULL ) )
-				{
-					case MENU_MANUAL_controller:
-					{
-						joystick = open ( "/dev/input/js0", O_RDONLY | O_NONBLOCK );
+	initBoost ( Vboost, tBoost );
 
-						if ( joystick < 0 )
+	initOdometrie ( motorBoard, &robot1 );
+
+	initAsservissementVitesse(speedAsservPG,speedAsservIG,speedAsservDG, maxSpeed,speedAsservPD,speedAsservID,speedAsservDD);
+
+}
+
+while ( !( flag.red ^ flag.green ) )
+{ // if no color or both colors set
+	switch ( menu ( 0, menuItems, NULL ) )
+	{
+		case MENU_red:
+		{
+			flag.red = 1;
+			flag.green = 0;
+			break;
+		}
+		case MENU_green:
+		{
+			flag.green = 1;
+			flag.red = 0;
+			break;
+		}
+		case MENU_manual:
+		{ // manual drive of robot zqsd / wasd / UP/LEFT/DOWN/RIGHT
+			switch ( menu ( 0, manualMenuItems, "  >", "   ", NULL ) )
+			{
+				case MENU_MANUAL_controller:
+				{
+					joystick = open ( "/dev/input/js0", O_RDONLY | O_NONBLOCK );
+
+					if ( joystick < 0 )
+					{
+						logVerbose ( "%s\n", strerror ( errno ) );
+						break;
+					}
+
+					getStatus360 ( joystick, &pad, true );
+					do
+					{
+						if ( pad.back )
 						{
-							logVerbose ( "%s\n", strerror ( errno ) );
 							break;
 						}
 
-						getStatus360 ( joystick, &pad, true );
-						do
+						envoiOrdreMoteur ( pad.Y1 >> 4, pad.Y2 >> 2, maxSpeed );
+					}
+					while ( getStatus360 ( joystick, &pad, false ) );
+
+					close ( joystick );
+					joystick = -1;
+					break;
+				}
+				case MENU_MANUAL_keyboard:
+				{
+					i = 1;
+					do
+					{
+						printf ( "%4d %4d\r", moteur.left, moteur.right );
+						if ( motorBoard )
 						{
-							if ( pad.back )
+							envoiOrdreMoteur ( robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend, maxSpeed );
+						}
+
+						switch ( getMovePad ( true ) )
+						{
+							case 	KEYCODE_ESCAPE:
+							{
+								moteur.left = 0;
+								moteur.right = 0;
+								i = 0;
+								break;
+							}
+							case KEYCODE_UP:
+							{
+								if ( moteur.left < maxSpeed )
+								{
+									moteur.left += speedStep;
+								}
+								if ( moteur.right < maxSpeed )
+								{
+									moteur.right += speedStep;
+								}
+								break;
+							}
+							case KEYCODE_LEFT:
+							{
+								if ( moteur.left > -maxSpeed )
+								{
+									moteur.left -= speedStep;
+								}
+								if ( moteur.right < maxSpeed )
+								{
+									moteur.right += speedStep;
+								}
+								break;
+							}
+							case KEYCODE_DOWN:
+							{
+								if ( moteur.left > -maxSpeed )
+								{
+									moteur.left -= speedStep;
+								}
+								if ( moteur.right > -maxSpeed )
+								{
+									moteur.right -= speedStep;
+								}
+								break;
+							}
+							case KEYCODE_RIGHT:
+							{
+								if ( moteur.left < maxSpeed )
+								{
+									moteur.left += speedStep;
+								}
+								if ( moteur.right > -maxSpeed )
+								{
+									moteur.right -= speedStep;
+								}
+								break;
+							}
+							case KEYCODE_SPACE:
+							{
+								moteur.left = 0;
+								moteur.right = 0;
+								break;
+							}
+							default:
 							{
 								break;
 							}
-
-							envoiOrdreMoteur ( pad.Y1 >> 4, pad.Y2 >> 2, maxSpeed );
 						}
-						while ( getStatus360 ( joystick, &pad, false ) );
 
-						close ( joystick );
-						joystick = -1;
-						break;
+						// drive motor
 					}
-					case MENU_MANUAL_keyboard:
-					{
-						i = 1;
-						do
-						{
-							printf ( "%4d %4d\r", moteur.left, moteur.right );
-							if ( motorBoard )
-							{
-								envoiOrdreMoteur ( robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend, maxSpeed );
-							}
+					while ( i );
 
-							switch ( getMovePad ( true ) )
-							{
-								case 	KEYCODE_ESCAPE:
-								{
-									moteur.left = 0;
-									moteur.right = 0;
-									i = 0;
-									break;
-								}
-								case KEYCODE_UP:
-								{
-									if ( moteur.left < maxSpeed )
-									{
-										moteur.left += speedStep;
-									}
-									if ( moteur.right < maxSpeed )
-									{
-										moteur.right += speedStep;
-									}
-									break;
-								}
-								case KEYCODE_LEFT:
-								{
-									if ( moteur.left > -maxSpeed )
-									{
-										moteur.left -= speedStep;
-									}
-									if ( moteur.right < maxSpeed )
-									{
-										moteur.right += speedStep;
-									}
-									break;
-								}
-								case KEYCODE_DOWN:
-								{
-									if ( moteur.left > -maxSpeed )
-									{
-										moteur.left -= speedStep;
-									}
-									if ( moteur.right > -maxSpeed )
-									{
-										moteur.right -= speedStep;
-									}
-									break;
-								}
-								case KEYCODE_RIGHT:
-								{
-									if ( moteur.left < maxSpeed )
-									{
-										moteur.left += speedStep;
-									}
-									if ( moteur.right > -maxSpeed )
-									{
-										moteur.right -= speedStep;
-									}
-									break;
-								}
-								case KEYCODE_SPACE:
-								{
-									moteur.left = 0;
-									moteur.right = 0;
-									break;
-								}
-								default:
-								{
-									break;
-								}
-							}
-
-							// drive motor
-						}
-						while ( i );
-
-						break;
-					}
-					default:
-					case MENU_MANUAL_exit:
-					{
-						break;
-					}
+					break;
 				}
-				break;
+				default:
+				case MENU_MANUAL_exit:
+				{
+					break;
+				}
 			}
-			case MENU_exit:
-			default:
-			{
-				return ( __LINE__ );
-			}
-		}
-	}
-
-	printf ( "run %s\n", ( flag.red )? "\e[1;31mred\e[0m" : "\e[1;32mgreen\e[0m" );
-
-	if ( !flagAction.noArm )
-	{ // arm enabled
-
-		dynaPortNum = portHandler ( dynamixelsPath );
-		packetHandler ( );
-		if ( !openPort ( dynaPortNum ) )
-		{ // can't open port
-			flagAction.noArm = 0;
-			logVerbose ( " - dyna : \e[31m%s\e[0m (open failure)\n", dynamixelsPath );
-		}
-		else
-		{
-			logVerbose ( " - dyna : %s\n", dynamixelsPath );
-			logVerbose ( "   - Device Name : %s\n", dynamixelsPath );
-
-
-			logVerbose( " Baudrate : %d \n",dynamixelUartSpeed);
-			setPortNum(dynaPortNum);
-			if ( !setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
-			{
-				logVerbose ( "   - Baudratesetting failed, stay with last value\n" );
-			}else
-			{
-				logVerbose ( "   - Baudrate    : %d\n", getBaudRate ( dynaPortNum ) );
-			}
-
-			setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
-		}
-
-		logVerbose ( " - pca9685 : %d\n", pca9685 );
-	}
-	else
-	{ // arm disabled
-		logVerbose ( " - dyna : \e[31m%s\e[0m\n", dynamixelsPath );
-		logVerbose ( " - pca9685 : \e[31m%d\e[0m\n", pca9685 );
-		setArmDesabledState ( flagAction.noArm );
-	}
-
-	// only for display
-	if ( !flagAction.noDrive )
-	{ // engine enabled
-		logVerbose ( " - robotclaw : %s\n", motorBoadPath );
-	}
-	else
-	{ // engne disabled
-		logVerbose ( " - robotclaw : \e[31m%s\e[0m\n", motorBoadPath );
-	}
-
-	//
-	// open initialisation xml
-	//
-	tabActionTotal = ouvrirXML ( &nbAction, xmlInitPath );
-	if ( !tabActionTotal )
-	{
-		logVerbose ( "xml loading failed: -%s- %s\n", xmlInitPath, strerror ( errno ) );
-		return ( __LINE__ );
-	}
-	setFreeOnExit ( tabActionTotal );
-	initAction ( &flagAction );
-
-	while ( 0 )
-	{ // initialisation
-		if ( !flagAction.noArm )
-		{ // dynamixel
-			// write1ByteTxRx(port_num, PROTOCOL_VERSION2, DXL2_ID, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE);
-			// if ((dxl_comm_result = getLastTxRxResult(port_num, PROTOCOL_VERSION2)) != COMM_SUCCESS)
-			// {
-			// 	printf("%s\n", getTxRxResult(PROTOCOL_VERSION2, dxl_comm_result));
-			// }
-			// else if ((dxl_error = getLastRxPacketError(port_num, PROTOCOL_VERSION2)) != 0)
-			// {
-			// 	printf("%s\n", getRxPacketError(PROTOCOL_VERSION2, dxl_error));
-			// }
-			// else
-			// {
-			// 	printf("Dynamixel#%d has been successfully connected \n", DXL2_ID);
-			// }
-		}
-
-		if ( !flagAction.noDrive )
-		{ // engine roboclaw
-
-		}
-	}
-
-	// free xml data
-	free ( tabActionTotal );
-	unsetFreeOnExit ( tabActionTotal );
-	tabActionTotal = NULL;
-
-
-	//
-	// open actions xml
-	//
-	tabActionTotal = ouvrirXML ( &nbAction, xmlActionPath );
-	if ( !tabActionTotal )
-	{
-		logVerbose ( "xml loading failed: -%s-\n %s\n", xmlActionPath, strerror ( errno ) );
-		return ( __LINE__ );
-	}
-	setFreeOnExit ( tabActionTotal );
-	initAction ( &flagAction );
-
-	gettimeofday ( &start, NULL );
-	if ( nbAction > 0 )
-	{
-		tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
-	}
-
-	timer ( globalTime * 99 * 10000, proccessNormalEnd, "stop request by timer", true );
-
-	while ( 1 )
-	{
-		calculPosition ( motorBoard, &robot1 );
-
-		printf ( "Gauche : %3d Droite : %3d X : %.3f  Y : %.3f Angle : %.3f VGauche : %.3f VDroite : %.3f\n",
-			robot1.codeurGauche,
-			robot1.codeurDroit,
-			robot1.xRobot,
-			robot1.yRobot,
-			robot1.orientationRobot,
-		 	robot1.vitesseGauche,
-			robot1.vitesseDroite );
-		printf ( "\e[2K\r" );
-		logDebug ( "\n" );
-
-		/*
-		Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
-		Comme ça, si on a pas d'actions influant sur les moteurs, on arrête la bête.
-		*/
-
-		robot1.vitesseGaucheToSend = robot1.vitesseGaucheDefault;
-		robot1.vitesseDroiteToSend = robot1.vitesseDroiteDefault;
-
-		if ( ( robot1.vitesseGaucheToSend > 1500 ) &&
-			( robot1.vitesseDroiteToSend > 1500 ) )
-		{
-			requestBoost ( true );
-		}
-		else
-		{
-			requestBoost ( false );
-		}
-
-		if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
-		{
-			logVerbose ( "no more action remaining\n" );
-			robot1.vitesseGaucheToSend = 0;
-			robot1.vitesseDroiteToSend = 0;
-
 			break;
 		}
-
-		if ( !flagAction.noDrive &&
-		//	asservirVitesseGaucheDroite(robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend,
-			//		robot1.vitesseGauche, robot1.vitesseDroite)
-
-			asservirVitesseGaucheDroite(200,200,robot1.vitesseGauche, robot1.vitesseDroite)
-			 )
-		{ // error occured
-			logVerbose ( "%s\n", strerror ( errno ) );
+		case MENU_exit:
+		default:
+		{
+			return ( __LINE__ );
 		}
-		else if ( flagAction.driveScan &&
-			_kbhit ( ) &&
-			getchar ( ) )
+	}
+}
+
+printf ( "run %s\n", ( flag.red )? "\e[1;31mred\e[0m" : "\e[1;32mgreen\e[0m" );
+
+if ( !flagAction.noArm )
+{ // arm enabled
+
+	dynaPortNum = portHandler ( dynamixelsPath );
+	packetHandler ( );
+	if ( !openPort ( dynaPortNum ) )
+	{ // can't open port
+	flagAction.noArm = 0;
+	logVerbose ( " - dyna : \e[31m%s\e[0m (open failure)\n", dynamixelsPath );
+}
+else
+{
+	logVerbose ( " - dyna : %s\n", dynamixelsPath );
+	logVerbose ( "   - Device Name : %s\n", dynamixelsPath );
+
+
+	logVerbose( " Baudrate : %d \n",dynamixelUartSpeed);
+	setPortNum(dynaPortNum);
+	if ( !setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
+	{
+		logVerbose ( "   - Baudratesetting failed, stay with last value\n" );
+	}else
+	{
+		logVerbose ( "   - Baudrate    : %d\n", getBaudRate ( dynaPortNum ) );
+	}
+
+	setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
+}
+
+logVerbose ( " - pca9685 : %d\n", pca9685 );
+}
+else
+{ // arm disabled
+	logVerbose ( " - dyna : \e[31m%s\e[0m\n", dynamixelsPath );
+	logVerbose ( " - pca9685 : \e[31m%d\e[0m\n", pca9685 );
+	setArmDesabledState ( flagAction.noArm );
+}
+
+// only for display
+if ( !flagAction.noDrive )
+{ // engine enabled
+	logVerbose ( " - robotclaw : %s\n", motorBoadPath );
+}
+else
+{ // engne disabled
+	logVerbose ( " - robotclaw : \e[31m%s\e[0m\n", motorBoadPath );
+}
+
+//
+// open initialisation xml
+//
+
+tabActionTotal = ouvrirXML ( &nbAction, xmlInitPath );
+
+if ( !tabActionTotal )
+{
+	logVerbose ( "xml loading failed: -%s- %s\n", xmlInitPath, strerror ( errno ) );
+	return ( __LINE__ );
+}
+
+setFreeOnExit ( tabActionTotal );
+initAction ( &flagAction );
+
+while ( 0 )
+{ // initialisation
+	if ( !flagAction.noArm )
+	{ // dynamixel
+		// write1ByteTxRx(port_num, PROTOCOL_VERSION2, DXL2_ID, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE);
+		// if ((dxl_comm_result = getLastTxRxResult(port_num, PROTOCOL_VERSION2)) != COMM_SUCCESS)
+		// {
+		// 	printf("%s\n", getTxRxResult(PROTOCOL_VERSION2, dxl_comm_result));
+		// }
+		// else if ((dxl_error = getLastRxPacketError(port_num, PROTOCOL_VERSION2)) != 0)
+		// {
+		// 	printf("%s\n", getRxPacketError(PROTOCOL_VERSION2, dxl_error));
+		// }
+		// else
+		// {
+		// 	printf("Dynamixel#%d has been successfully connected \n", DXL2_ID);
+		// }
+	}
+
+	if ( !flagAction.noDrive )
+	{ // engine roboclaw
+
+	}
+}
+
+// free xml data
+free ( tabActionTotal );
+unsetFreeOnExit ( tabActionTotal );
+tabActionTotal = NULL;
+
+
+//
+// open actions xml
+//
+tabActionTotal = ouvrirXML ( &nbAction, xmlActionPath );
+if ( !tabActionTotal )
+{
+	logVerbose ( "xml loading failed: -%s-\n %s\n", xmlActionPath, strerror ( errno ) );
+	return ( __LINE__ );
+}
+setFreeOnExit ( tabActionTotal );
+initAction ( &flagAction );
+
+gettimeofday ( &start, NULL );
+if ( nbAction > 0 )
+{
+	tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
+}
+
+timer ( globalTime * 99 * 10000, proccessNormalEnd, "stop request by timer", true );
+
+while ( 1 )
+{
+	if(useMQTT)
+	{
+		updateMQTT();
+	}
+	calculPosition ( motorBoard, &robot1 );
+
+	printf ( "Gauche : %3d Droite : %3d X : %.3f  Y : %.3f Angle : %.3f VGauche : %.3f VDroite : %.3f\n",
+	robot1.codeurGauche,
+	robot1.codeurDroit,
+	robot1.xRobot,
+	robot1.yRobot,
+	robot1.orientationRobot,
+	robot1.vitesseGauche,
+	robot1.vitesseDroite );
+	printf ( "\e[2K\r" );
+	logDebug ( "\n" );
+
+	/*
+	Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
+	Comme ça, si on a pas d'actions influant sur les moteurs, on arrête la bête.
+	*/
+
+	robot1.vitesseGaucheToSend = robot1.vitesseGaucheDefault;
+	robot1.vitesseDroiteToSend = robot1.vitesseDroiteDefault;
+
+	if ( ( robot1.vitesseGaucheToSend > 1500 ) &&
+	( robot1.vitesseDroiteToSend > 1500 ) )
+	{
+		//requestBoost ( true );
+	}
+	else
+	{
+		//requestBoost ( false );
+	}
+
+	if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
+	{
+		logVerbose ( "no more action remaining\n" );
+		robot1.vitesseGaucheToSend = 0;
+		robot1.vitesseDroiteToSend = 0;
+
+		break;
+	}
+	if ( !flagAction.noDrive &&
+		//	asservirVitesseGaucheDroite(robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend,
+		//		robot1.vitesseGauche, robot1.vitesseDroite)
+
+		asservirVitesseGaucheDroite(200,200,robot1.vitesseGauche, robot1.vitesseDroite)
+	)
+	{ // error occured
+		logVerbose ( "%s\n", strerror ( errno ) );
+	}
+	else if ( flagAction.driveScan &&
+		_kbhit ( ) &&
+		getchar ( ) )
 		{
 			robot1.xRobot = robot1.cible.xCible;
 			robot1.yRobot = robot1.cible.yCible;
@@ -703,10 +659,6 @@ int main ( int argc, char * argv[] )
 		}
 
 
-		if(useMQTT)
-		{
-			updateMQTT();
-		}
 		usleep ( 1000*25 );
 	}
 
@@ -715,14 +667,26 @@ int main ( int argc, char * argv[] )
 
 void updateMQTT()
 {
-	mqtt_publish(NULL,"RCO_NOIR/x",									sizeof(float),		&(robot1.xRobot),							0,false);
-	mqtt_publish(NULL,"RCO_NOIR/y",									sizeof(float),		&(robot1.yRobot),							0,false);
-	mqtt_publish(NULL,"RCO_NOIR/orientation",				sizeof(float),		&(robot1.orientationRobot),		0,false);
-	mqtt_publish(NULL,"RCO_NOIR/vitesseGauche",			sizeof(float),		&(robot1.vitesseGauche),				0,false);
-	mqtt_publish(NULL,"RCO_NOIR/vitesseDroite",			sizeof(float),		&(robot1.vitesseDroite),				0,false);
-	mqtt_publish(NULL,"RCO_NOIR/consigneVitesseG",	sizeof(float),		&(robot1.vitesseGaucheToSend),	0,false);
-	mqtt_publish(NULL,"RCO_NOIR/consigneVitesseD",	sizeof(float),		&(robot1.vitesseDroiteToSend),	0,false);
-	mqtt_publish(NULL,"RCO_NOIR/codeurG",						sizeof(int32_t),	&(robot1.codeurGauche),				0,false);
-	mqtt_publish(NULL,"RCO_NOIR/codeurD",						sizeof(int32_t),	&(robot1.codeurDroit),					0,false);
-	mqtt_publish(NULL,"RCO_NOIR/orientationVisee",	sizeof(float),		&(robot1.orientationVisee),		0,false);
+	char buffer[64];
+	snprintf(buffer, sizeof buffer, "%f", robot1.xRobot);
+	mqtt_publish(NULL,"RCO_NOIR/x",									sizeof(float),		buffer,	0,false);
+	snprintf(buffer, sizeof buffer, "%f", robot1.yRobot);
+	mqtt_publish(NULL,"RCO_NOIR/y",									sizeof(float),		buffer,	0,false);
+	snprintf(buffer, sizeof buffer, "%f", robot1.orientationRobot);
+	mqtt_publish(NULL,"RCO_NOIR/orientation",				sizeof(float),		buffer,	0,false);
+	snprintf(buffer, sizeof buffer, "%f", robot1.vitesseGauche);
+	mqtt_publish(NULL,"RCO_NOIR/vitesseGauche",			sizeof(float),		buffer,	0,false);
+	snprintf(buffer, sizeof buffer, "%f", robot1.vitesseDroite);
+	mqtt_publish(NULL,"RCO_NOIR/vitesseDroite",			sizeof(float),		buffer,	0,false);
+	snprintf(buffer, sizeof buffer, "%f", robot1.vitesseGaucheToSend);
+	mqtt_publish(NULL,"RCO_NOIR/consigneVitesseG",	sizeof(float),		buffer,	0,false);
+	snprintf(buffer, sizeof buffer, "%f", robot1.vitesseDroiteToSend);
+	mqtt_publish(NULL,"RCO_NOIR/consigneVitesseD",	sizeof(float),		buffer,	0,false);
+	snprintf(buffer, sizeof buffer, "%f", robot1.codeurGauche);
+	mqtt_publish(NULL,"RCO_NOIR/codeurG",						sizeof(int32_t),	buffer,	0,false);
+	snprintf(buffer, sizeof buffer, "%f", robot1.codeurDroit);
+	mqtt_publish(NULL,"RCO_NOIR/codeurD",						sizeof(int32_t),	buffer,	0,false);
+	snprintf(buffer, sizeof buffer, "%f", robot1.orientationVisee);
+	mqtt_publish(NULL,"RCO_NOIR/orientationVisee",	sizeof(float),		buffer,	0,false);
+
 }
