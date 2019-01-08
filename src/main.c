@@ -715,14 +715,14 @@ int main ( int argc, char * argv[] )
 
 void updateMQTT()
 {
-	mqtt_publish(NULL,"RCO_NOIR/x",									sizeof(float),		robot1.xRobot,							0,false);
-	mqtt_publish(NULL,"RCO_NOIR/y",									sizeof(float),		robot1.yRobot,							0,false);
-	mqtt_publish(NULL,"RCO_NOIR/orientation",				sizeof(float),		robot1.orientationRobot,		0,false);
-	mqtt_publish(NULL,"RCO_NOIR/vitesseGauche",			sizeof(float),		robot1.vitesseGauche,				0,false);
-	mqtt_publish(NULL,"RCO_NOIR/vitesseDroite",			sizeof(float),		robot1.vitesseDroite,				0,false);
-	mqtt_publish(NULL,"RCO_NOIR/consigneVitesseG",	sizeof(float),		robot1.vitesseGaucheToSend,	0,false);
-	mqtt_publish(NULL,"RCO_NOIR/consigneVitesseD",	sizeof(float),		robot1.vitesseDroiteToSend,	0,false);
-	mqtt_publish(NULL,"RCO_NOIR/codeurG",						sizeof(int32_t),	robot1.codeurGauche,				0,false);
-	mqtt_publish(NULL,"RCO_NOIR/codeurD",						sizeof(int32_t),	robot1.codeurDroit,					0,false);
-	mqtt_publish(NULL,"RCO_NOIR/orientationVisee",	sizeof(float),		robot1.orientationVisee,		0,false);
+	mqtt_publish(NULL,"RCO_NOIR/x",									sizeof(float),		&(robot1.xRobot),							0,false);
+	mqtt_publish(NULL,"RCO_NOIR/y",									sizeof(float),		&(robot1.yRobot),							0,false);
+	mqtt_publish(NULL,"RCO_NOIR/orientation",				sizeof(float),		&(robot1.orientationRobot),		0,false);
+	mqtt_publish(NULL,"RCO_NOIR/vitesseGauche",			sizeof(float),		&(robot1.vitesseGauche),				0,false);
+	mqtt_publish(NULL,"RCO_NOIR/vitesseDroite",			sizeof(float),		&(robot1.vitesseDroite),				0,false);
+	mqtt_publish(NULL,"RCO_NOIR/consigneVitesseG",	sizeof(float),		&(robot1.vitesseGaucheToSend),	0,false);
+	mqtt_publish(NULL,"RCO_NOIR/consigneVitesseD",	sizeof(float),		&(robot1.vitesseDroiteToSend),	0,false);
+	mqtt_publish(NULL,"RCO_NOIR/codeurG",						sizeof(int32_t),	&(robot1.codeurGauche),				0,false);
+	mqtt_publish(NULL,"RCO_NOIR/codeurD",						sizeof(int32_t),	&(robot1.codeurDroit),					0,false);
+	mqtt_publish(NULL,"RCO_NOIR/orientationVisee",	sizeof(float),		&(robot1.orientationVisee),		0,false);
 }
