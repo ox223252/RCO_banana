@@ -22,6 +22,7 @@ typedef struct Robot
 	int32_t codeurGauche;
 	int32_t codeurDroit;
 	Point cible;
+	uint8_t blocageVoulu;
 
 	float vitesseGauche;
 	float vitesseDroite;

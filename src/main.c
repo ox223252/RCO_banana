@@ -311,6 +311,7 @@ int main ( int argc, char * argv[] )
 
 	if ( !flagAction.noDrive )
 	{ // if engine wasn't disabled
+		robot1.blocageVoulu = false;
 		initDetectionBlocage();
 		// init motor
 		if ( initEngine ( motorBoadPath, motorBoardUartSpeed, Vmax, Vmin, readDelay, &motorBoard ) )
@@ -324,8 +325,7 @@ int main ( int argc, char * argv[] )
 
 		initOdometrie ( motorBoard, &robot1 );
 
-		initAsservissementVitesse(speedAsservPG,speedAsservIG,speedAsservDG, maxSpeed,speedAsservPD,speedAsservID,speedAsservDD);
-
+		initAsservissementVitesse ( speedAsservPG, speedAsservIG, speedAsservDG, maxSpeed, speedAsservPD, speedAsservID, speedAsservDD );
 	}
 
 	while ( !( flag.red ^ flag.green ) )
@@ -636,7 +636,8 @@ int main ( int argc, char * argv[] )
 			break;
 		}
 
-		if ( !flagAction.noDrive)
+		if ( !flagAction.noDrive &&
+			( robot1.blocageVoulu == false ) )
 		{
 			logVerbose ("BLOCAGE : %d  ", detectBlocage ( &robot1, 100 ) );
 		}

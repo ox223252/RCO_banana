@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "detectionBlocage.h"
 
 static long* tabErreurGauche;
