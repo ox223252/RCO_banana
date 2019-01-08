@@ -11,6 +11,7 @@
 #include "lib/config/config_file.h"
 #include "lib/freeOnExit/freeOnExit.h"
 #include "lib/log/log.h"
+#include "lib/MQTT/mqtt.h"
 #include "lib/signalHandler/signalHandler.h"
 #include "lib/termRequest/request.h"
 #include "lib/timer/timer.h"
@@ -52,6 +53,8 @@ void dynamixelClose ( void * arg )
 {
 	closePort ( ( long ) arg );
 }
+
+void updateMQTT();
 
 void proccessNormalEnd ( void * arg )
 {
@@ -100,6 +103,9 @@ int main ( int argc, char * argv[] )
 	float speedAsservPD = 1.;
 	float speedAsservID = 0.;
 	float speedAsservDD = 0.;
+
+	//Export MQTT
+	bool useMQTT = true;
 
 	uint8_t pca9685 = 0; // servo driver handler (i2c)
 
@@ -174,6 +180,7 @@ int main ( int argc, char * argv[] )
 		{ "--Vmin", "-vm",     1,    cT ( float ), &Vmin, "minimum voltage that should provide systeme to engine" },
 		{ "--Vboost", "-vB",   1,    cT ( float ), &Vboost, "maximum voltage that should provide systeme to engine during boost mode" },
 		{ "--tBoost", "-tB",   1,    cT ( uint32_t ), &tBoost, "maximum delay for boost mode" },
+		{ "--useMQTT", "-mqtt",   1, cT ( bool ), &useMQTT, "Export information through MQTT" },
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
 
@@ -287,6 +294,65 @@ int main ( int argc, char * argv[] )
 		printf ( "\n\e[4mparameter available in res/config.rco file:\e[0m\n" );
 		helpConfigArgs ( configList );
 		return ( 0 );
+	}
+
+	if(useMQTT)
+	{
+		if(!mqtt_init("RCO_NOIR","127.0.0.1",1883))
+		{
+			logVerbose ( "Can't init MQTT\n" );
+			return ( __LINE__ );
+		}
+		if(add_sub_topic("RCO_NOIR/x")!=0)
+		{
+			logVerbose ( "MQTT Can't add x topic\n" );
+			return ( __LINE__ );
+		}
+		if(add_sub_topic("RCO_NOIR/y")!=0)
+		{
+			logVerbose ( "MQTT Can't add y topic\n" );
+			return ( __LINE__ );
+		}
+		if(add_sub_topic("RCO_NOIR/orientation")!=0)
+		{
+			logVerbose ( "MQTT Can't add orientation topic\n" );
+			return ( __LINE__ );
+		}
+		if(add_sub_topic("RCO_NOIR/vitesseGauche")!=0)
+		{
+			logVerbose ( "MQTT Can't add vitesseGauche topic\n" );
+			return ( __LINE__ );
+		}
+		if(add_sub_topic("RCO_NOIR/vitesseDroite")!=0)
+		{
+			logVerbose ( "MQTT Can't add vitesseDroite topic\n" );
+			return ( __LINE__ );
+		}
+		if(add_sub_topic("RCO_NOIR/consigneVitesseG")!=0)
+		{
+			logVerbose ( "MQTT Can't add consigneVitesseG topic\n" );
+			return ( __LINE__ );
+		}
+		if(add_sub_topic("RCO_NOIR/consigneVitesseD")!=0)
+		{
+			logVerbose ( "MQTT Can't add consigneVitesseG topic\n" );
+			return ( __LINE__ );
+		}
+		if(add_sub_topic("RCO_NOIR/codeurG")!=0)
+		{
+			logVerbose ( "MQTT Can't add codeurG topic\n" );
+			return ( __LINE__ );
+		}
+		if(add_sub_topic("RCO_NOIR/codeurD")!=0)
+		{
+			logVerbose ( "MQTT Can't add codeurD topic\n" );
+			return ( __LINE__ );
+		}
+		if(add_sub_topic("RCO_NOIR/orientationVisee")!=0)
+		{
+			logVerbose ( "MQTT Can't add orientationVisee topic\n" );
+			return ( __LINE__ );
+		}
 	}
 
 	if ( !flagAction.noDrive )
@@ -636,8 +702,27 @@ int main ( int argc, char * argv[] )
 
 		}
 
+
+		if(useMQTT)
+		{
+			updateMQTT();
+		}
 		usleep ( 1000*25 );
 	}
 
 	return ( 0 );
+}
+
+void updateMQTT()
+{
+	mqtt_publish(NULL,"RCO_NOIR/x",									sizeof(float),		robot1.xRobot,							0,false);
+	mqtt_publish(NULL,"RCO_NOIR/y",									sizeof(float),		robot1.yRobot,							0,false);
+	mqtt_publish(NULL,"RCO_NOIR/orientation",				sizeof(float),		robot1.orientationRobot,		0,false);
+	mqtt_publish(NULL,"RCO_NOIR/vitesseGauche",			sizeof(float),		robot1.vitesseGauche,				0,false);
+	mqtt_publish(NULL,"RCO_NOIR/vitesseDroite",			sizeof(float),		robot1.vitesseDroite,				0,false);
+	mqtt_publish(NULL,"RCO_NOIR/consigneVitesseG",	sizeof(float),		robot1.vitesseGaucheToSend,	0,false);
+	mqtt_publish(NULL,"RCO_NOIR/consigneVitesseD",	sizeof(float),		robot1.vitesseDroiteToSend,	0,false);
+	mqtt_publish(NULL,"RCO_NOIR/codeurG",						sizeof(int32_t),	robot1.codeurGauche,				0,false);
+	mqtt_publish(NULL,"RCO_NOIR/codeurD",						sizeof(int32_t),	robot1.codeurDroit,					0,false);
+	mqtt_publish(NULL,"RCO_NOIR/orientationVisee",	sizeof(float),		robot1.orientationVisee,		0,false);
 }

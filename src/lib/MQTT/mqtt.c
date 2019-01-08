@@ -106,7 +106,6 @@ int add_sub_topic(char* topic)
     mqtt_subscribe(NULL,topic,1);
     return 0;
   }
-  /* Même si ptr_realloc est nul, on ne vide pas la mémoire. On laisse l'initiative au programmeur. */
   return -1;
 }
 
