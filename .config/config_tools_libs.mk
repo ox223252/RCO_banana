@@ -9,3 +9,4 @@ cares=off
 crypto=off
 use_DLL=off
 create_DLL=off
+mosquitto=on
