@@ -17,7 +17,8 @@ _mqtt_topics = { NULL, 0 };
 static struct mosquitto * _mqtt_mosq = NULL;
 static struct
 {
-	uint8_t connected:1;
+	uint8_t connected:1,
+		ackDone:1;
 }
 _mqtt_flags = { 0 };
 
@@ -36,9 +37,6 @@ static void MQTTBeforeExit ( void * arg )
 		_mqtt_flags.connected = false;
 	}
 
-	// if you call disconnect that will not send the last message (will)
-	// mosquitto_disconnect ( args->mosq );
-
 	logVerbose ( "\n\
 		mqtt disconnection required,\n\
 		wait for normal temrination,\n\
@@ -50,11 +48,11 @@ static void my_message_callback(struct mosquitto *mosq, void *obj, const struct 
 	logVerbose ( "Topic : %s payload : %s\n", message->topic, message->payload );
 }
 
-static void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
+static void my_connect_callback ( struct mosquitto *mosq, void *obj, int result )
 {
 	if ( !result )
 	{
-		_mqtt_flags.connected = true;
+		_mqtt_flags.ackDone = true;
 
 		for ( int i = 0; i < _mqtt_topics.length; i++ )
 		{
@@ -66,18 +64,13 @@ static void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
 		fprintf ( stderr, "%s\n", mosquitto_connack_string ( result ) );
 	}
 }
-
-static void my_disconnect_callback ( struct mosquitto * restrict mosq, void * restrict obj, int rc )
-{
-	_mqtt_flags.connected = false;
-}
+#pragma GCC diagnostic pop
 
 static void *infiniteLoop ( void *arg )
 {
 	mosquitto_loop_forever ( ( struct mosquitto * )arg, 0, 1 );
 	pthread_exit ( NULL );
 }
-#pragma GCC diagnostic pop
 
 int mqtt_init ( const char * const restrict name, const char* ipAddress, int port )
 {
@@ -89,13 +82,16 @@ int mqtt_init ( const char * const restrict name, const char* ipAddress, int por
 		errno = EINVAL;
 		return ( __LINE__ );
 	}
+	
+	_mqtt_flags.ackDone = false;
+	_mqtt_flags.connected = false;
 
 	if ( mosquitto_lib_init ( ) )
 	{
 		return ( __LINE__ );
 	}
 
-	_mqtt_mosq = mosquitto_new(name, true, NULL);
+	_mqtt_mosq = mosquitto_new ( name, true, NULL );
 
 	if ( !_mqtt_mosq )
 	{
@@ -112,8 +108,8 @@ int mqtt_init ( const char * const restrict name, const char* ipAddress, int por
 				break;
 			}
 		}
-		mosquitto_lib_cleanup();
 
+		mosquitto_lib_cleanup ( );
 
 		return ( __LINE__ );
 	}
@@ -123,15 +119,39 @@ int mqtt_init ( const char * const restrict name, const char* ipAddress, int por
 
 	mosquitto_message_callback_set ( _mqtt_mosq, my_message_callback );
 	mosquitto_connect_callback_set ( _mqtt_mosq, my_connect_callback );
-	mosquitto_disconnect_callback_set ( _mqtt_mosq, my_disconnect_callback );
+
+	if ( mosquitto_max_inflight_messages_set ( _mqtt_mosq, 20 ) )
+	{
+		printf ( "%d : %s\n", __LINE__, mosquitto_strerror ( rc ) );
+		return ( __LINE__ );
+	}
 
 	rc = mosquitto_connect ( _mqtt_mosq, ipAddress, port, 1 );
-	mosquitto_publish ( _mqtt_mosq, NULL, "RCO_NOIR/orientationVisee", strlen("Plop"), "Plop", 0, false );
 	if ( rc )
 	{
 		fprintf ( stderr, "%s\n", mosquitto_strerror ( rc ) );
 		return ( __LINE__ );
 	}
+
+	_mqtt_flags.connected = true;
+
+	while ( _mqtt_flags.ackDone == false )
+	{
+		rc = mosquitto_loop ( _mqtt_mosq, -1, 1 );
+		if ( rc )
+		{
+			printf ( "%d : %s\n", __LINE__, mosquitto_strerror ( rc ) );
+			return ( 1 );
+		}
+		else
+		{
+			usleep ( 50000 );
+		}
+	}
+
+	logDebug ( "server connected\n" );
+
+	mosquitto_threaded_set ( _mqtt_mosq, true );
 
 	if ( pthread_create ( &threadID, NULL, infiniteLoop, ( void * )_mqtt_mosq ) == -1 )
 	{
@@ -206,7 +226,5 @@ int mqtt_subscribe ( int * mid, const char * const restrict topic, int qos )
 
 int mqtt_publish ( int * mid, const char * const restrict topic, int payloadlen, const void * payload, int qos, bool	retain )
 {
-	int ret = mosquitto_publish ( _mqtt_mosq, mid, topic, payloadlen, payload, qos, retain );
-	printf("\n%d %s %s\n",ret,topic,payload);
-	return ret;
+	return mosquitto_publish ( _mqtt_mosq, mid, topic, payloadlen, payload, qos, retain );
 }
