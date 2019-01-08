@@ -28,6 +28,7 @@
 #include "deplacement/odometrie.h"
 #include "deplacement/controleMoteur.h"
 #include "deplacement/asservissementVitesse.h"
+#include "deplacement/detectionBlocage.h"
 
 static Robot robot1 = { 0 };
 
@@ -302,11 +303,15 @@ int main ( int argc, char * argv[] )
 		{
 			logVerbose ( "Can't init MQTT\n" );
 			return ( __LINE__ );
+		}else
+		{
+			printf("MQTT initialisé \n");
 		}
 	}
 
 	if ( !flagAction.noDrive )
 	{ // if engine wasn't disabled
+	initDetectionBlocage();
 	// init motor
 	if ( initEngine ( motorBoadPath, motorBoardUartSpeed, Vmax, Vmin, readDelay, &motorBoard ) )
 	{
@@ -632,6 +637,10 @@ while ( 1 )
 
 		break;
 	}
+	if ( !flagAction.noDrive)
+	{
+		printf("BLOCAGE : %d",detectBlocage(&robot1,100));
+	}
 	if ( !flagAction.noDrive &&
 		//	asservirVitesseGaucheDroite(robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend,
 		//		robot1.vitesseGauche, robot1.vitesseDroite)
@@ -659,7 +668,7 @@ while ( 1 )
 		}
 
 
-		usleep ( 1000*25 );
+		usleep ( 1000*10 );
 	}
 
 	return ( 0 );

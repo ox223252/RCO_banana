@@ -35,7 +35,7 @@ static void MQTTBeforeExit ( void * arg )
 		mosquitto_disconnect ( _mqtt_mosq );
 		_mqtt_flags.connected = false;
 	}
-	
+
 	// if you call disconnect that will not send the last message (will)
 	// mosquitto_disconnect ( args->mosq );
 
@@ -82,7 +82,6 @@ static void *infiniteLoop ( void *arg )
 int mqtt_init ( const char * const restrict name, const char* ipAddress, int port )
 {
 	pthread_t threadID;
-	struct mosquitto *mosq = NULL;
 	int rc;
 
 	if ( _mqtt_mosq )
@@ -96,9 +95,9 @@ int mqtt_init ( const char * const restrict name, const char* ipAddress, int por
 		return ( __LINE__ );
 	}
 
-	mosq = mosquitto_new(name, true, NULL);
+	_mqtt_mosq = mosquitto_new(name, true, NULL);
 
-	if ( !mosq )
+	if ( !_mqtt_mosq )
 	{
 		switch ( errno )
 		{
@@ -122,26 +121,25 @@ int mqtt_init ( const char * const restrict name, const char* ipAddress, int por
 	setExecAfterAllOnExit ( MQTTAfterExit, NULL );
 	setExecBeforeAllOnExit ( MQTTBeforeExit, NULL );
 
-	mosquitto_message_callback_set ( mosq, my_message_callback );
-	mosquitto_connect_callback_set ( mosq, my_connect_callback );
-	mosquitto_disconnect_callback_set ( mosq, my_disconnect_callback );
+	mosquitto_message_callback_set ( _mqtt_mosq, my_message_callback );
+	mosquitto_connect_callback_set ( _mqtt_mosq, my_connect_callback );
+	mosquitto_disconnect_callback_set ( _mqtt_mosq, my_disconnect_callback );
 
-	rc = mosquitto_connect ( mosq, ipAddress, port, 1 );
-
+	rc = mosquitto_connect ( _mqtt_mosq, ipAddress, port, 1 );
+	mosquitto_publish ( _mqtt_mosq, NULL, "RCO_NOIR/orientationVisee", strlen("Plop"), "Plop", 0, false );
 	if ( rc )
 	{
 		fprintf ( stderr, "%s\n", mosquitto_strerror ( rc ) );
 		return ( __LINE__ );
 	}
 
-	if ( pthread_create ( &threadID, NULL, infiniteLoop, ( void * )mosq ) == -1 )
+	if ( pthread_create ( &threadID, NULL, infiniteLoop, ( void * )_mqtt_mosq ) == -1 )
 	{
 		perror ( "pthread_create" );
 		return ( __LINE__ );
 	}
 	setThreadJoinOnExit ( threadID );
 
-	_mqtt_mosq = mosq;
 	return ( 0 );
 }
 
@@ -186,12 +184,12 @@ int add_sub_topic ( const char * const restrict topic )
 	{
 		_mqtt_topics.list = ptr_realloc;
 		_mqtt_topics.list[ _mqtt_topics.length ] = malloc ( strlen( topic ) );
-		
+
 		if ( !_mqtt_topics.list[ _mqtt_topics.length ] )
 		{
 			return ( __LINE__ );
 		}
-		
+
 		strcpy ( _mqtt_topics.list[ _mqtt_topics.length ], topic );
 		mqtt_subscribe ( NULL, _mqtt_topics.list[ _mqtt_topics.length ], 1 );
 		_mqtt_topics.length++;
@@ -208,5 +206,7 @@ int mqtt_subscribe ( int * mid, const char * const restrict topic, int qos )
 
 int mqtt_publish ( int * mid, const char * const restrict topic, int payloadlen, const void * payload, int qos, bool	retain )
 {
-	return mosquitto_publish ( _mqtt_mosq, mid, topic, payloadlen, payload, qos, retain );
+	int ret = mosquitto_publish ( _mqtt_mosq, mid, topic, payloadlen, payload, qos, retain );
+	printf("\n%d %s %s\n",ret,topic,payload);
+	return ret;
 }
