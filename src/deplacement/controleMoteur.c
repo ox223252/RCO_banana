@@ -178,10 +178,19 @@ int envoiOrdreMoteur ( int16_t left, int16_t right, int16_t limitSpeed )
 			_controlMoteur_boostRequested = false;
 		}
 	}
+	if(left > 800)
+	{
+		left = 800;
+	}else if(left < -800) left = -800;
+
+	if(right > 800)
+	{
+		right = 800;
+	}else if(right < -800) right = -800;
 
 	left = ( MAX_SPEED_VALUE * coefVoltage ) * left / 800;
 	right = ( MAX_SPEED_VALUE * coefVoltage ) * right / 800;
-
+	
 	if ( roboclaw_duty_m1m2 ( _controlMoteur_motorBoard, 0x80, -1*left, -1*right ) != ROBOCLAW_OK )
 	{
 		return ( __LINE__ );
