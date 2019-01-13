@@ -14,8 +14,17 @@
 static char* _management_listActionEnCours = NULL;
 static ActionFlag *_management_flagAction = NULL;
 static int8_t _management_newDeplacement = 1;
+static int * _management_pca9685 = 0;
 
 static int getIndiceActionByIndice ( Action* listAction, int indiceAction, int nbAction );
+
+static json_el *_management_json = NULL;
+static int _management_jsonLength = 0;
+
+void managementAfterAll ( void * arg )
+{
+	jsonFree ( &_management_json, _management_jsonLength );
+}
 
 int initAction ( ActionFlag *flag )
 {
@@ -33,8 +42,13 @@ int initAction ( ActionFlag *flag )
 		{
 			return ( __LINE__ );
 		}
-
 		setFreeOnExit ( _management_listActionEnCours );
+
+		if ( jsonParseString ( "{}", &_management_json, &_management_jsonLength ) )
+		{
+			return ( __LINE__ );
+		}
+		setExecAfterAllOnExit ( managementAfterAll, NULL );
 
 		sprintf ( _management_listActionEnCours, "0;" );
 
@@ -44,10 +58,16 @@ int initAction ( ActionFlag *flag )
 	{ // if already set, free all and set again
 		free ( _management_listActionEnCours );
 		unsetFreeOnExit ( _management_listActionEnCours );
+		unsetExecAfterAllOnExit ( managementAfterAll, NULL );
 		_management_listActionEnCours = NULL;
 
 		return ( initAction ( flag ) );
 	}
+}
+
+void actionSetFd ( int pca9685 )
+{
+	_management_pca9685 = pca9685;
 }
 
 void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
@@ -59,23 +79,24 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 	switch ( listAction[indiceAction].type )
 	{
 		case TYPE_SERVO:
-		{
+		{ // done
+			setPCA9685PWM ( listAction[ indiceAction ].params[ 0 ], 0, 210 + listAction[ indiceAction ].params[ 1 ] % 360, _management_pca9685 );
+			listAction[indiceAction].isDone = 1;
 			break;
 		}
 		case TYPE_DYNA:
-		{
+		{ // done
 			if ( _management_flagAction->noArm )
 			{
-				if ( _management_flagAction->armWait )
-				{ // a faire
-
-				}
-				else if ( _management_flagAction->armScan )
+				if ( _management_flagAction->armScan )
 				{
 					while ( _kbhit ( ) )
 					{
 						listAction[indiceAction].isDone = 1;
 					}
+				}
+				else if ( _management_flagAction->armWait )
+				{ 
 				}
 				else
 				{ // arm done
@@ -102,19 +123,18 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 			break;
 		}
 		case TYPE_MOTEUR:
-		{
+		{ // done 
 			if ( _management_flagAction->noDrive )
 			{
-				if ( _management_flagAction->driveWait )
-				{ // a faire
-
-				}
-				else if ( _management_flagAction->driveScan )
+				if ( _management_flagAction->driveScan )
 				{
 					while ( _kbhit ( ) )
 					{
 						listAction[indiceAction].isDone = 1;
 					}
+				}
+				else if ( _management_flagAction->driveWait )
+				{
 				}
 				else
 				{ // drive done
@@ -132,47 +152,45 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 			break;
 		}
 		case TYPE_POSITION:
-		{
+		{ // done
 			if ( _management_newDeplacement == 1 )
 			{
 				_management_newDeplacement = 0;
 				robot->vitesseGaucheDefault = 0.;
 				robot->vitesseDroiteDefault = 0.;
-				robot->cible.xCible = 						atoi ( listAction[ indiceAction ].params[ 0 ] );
-				robot->cible.yCible = 						atoi ( listAction[ indiceAction ].params[ 1 ] );
-				robot->cible.vitesseMax = 				atoi ( listAction[ indiceAction ].params[ 2 ] );
-				robot->cible.acc = 								atoi ( listAction[ indiceAction ].params[ 3 ] );
-				robot->cible.dec = 								atoi ( listAction[ indiceAction ].params[ 4 ] );
-				robot->cible.sens = 							atoi ( listAction[ indiceAction ].params[ 5 ] );
-				robot->cible.precision = 					atoi ( listAction[ indiceAction ].params[ 6 ] );
-				robot->cible.distanceFreinage = 	atoi ( listAction[ indiceAction ].params[ 7 ] );
+				robot->cible.xCible = atoi ( listAction[ indiceAction ].params[ 0 ] );
+				robot->cible.yCible = atoi ( listAction[ indiceAction ].params[ 1 ] );
+				robot->cible.vitesseMax = atoi ( listAction[ indiceAction ].params[ 2 ] );
+				robot->cible.acc = atoi ( listAction[ indiceAction ].params[ 3 ] );
+				robot->cible.dec = atoi ( listAction[ indiceAction ].params[ 4 ] );
+				robot->cible.sens = atoi ( listAction[ indiceAction ].params[ 5 ] );
+				robot->cible.precision = atoi ( listAction[ indiceAction ].params[ 6 ] );
+				robot->cible.distanceFreinage = atoi ( listAction[ indiceAction ].params[ 7 ] );
 				premierAppel ( robot );
 			}
-			else
+			else if ( calculDeplacement ( robot )==1 )
 			{
-				if ( calculDeplacement ( robot )==1 )
-				{
-					_management_newDeplacement = 1;
-					listAction[indiceAction].isDone = 1;
-					robot->vitesseGaucheDefault = 0.;
-					robot->vitesseDroiteDefault = 0.;
-				}
+				_management_newDeplacement = 1;
+				listAction[indiceAction].isDone = 1;
+				robot->vitesseGaucheDefault = 0.;
+				robot->vitesseDroiteDefault = 0.;
 			}
 
 			break;
 		}
 		case TYPE_ORIENTATION:
-		{
+		{ // done
 			if ( _management_newDeplacement == 1 )
 			{
 				_management_newDeplacement = 0;
 				robot->vitesseGaucheDefault = 0.;
 				robot->vitesseDroiteDefault = 0.;
-				robot->orientationVisee = 			atoi ( listAction[ indiceAction ].params[ 0 ] );
-				robot->cible.vitesseMax = 			atoi ( listAction[ indiceAction ].params[ 1 ] );
-				robot->cible.precision = 				atoi ( listAction[ indiceAction ].params[ 2 ] );
+				robot->orientationVisee = atoi ( listAction[ indiceAction ].params[ 0 ] );
+				robot->cible.vitesseMax = atoi ( listAction[ indiceAction ].params[ 1 ] );
+				robot->cible.precision = atoi ( listAction[ indiceAction ].params[ 2 ] );
 				premierAppelTenirAngle ( robot );
-			}else
+			}
+			else
 			{
 				if ( tenirAngle ( robot )==1 )
 				{
@@ -189,7 +207,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 			break;
 		}
 		case TYPE_ENTREE:
-		{
+		{ // done
 			listAction[indiceAction].isDone = 1;
 			break;
 		}
@@ -198,7 +216,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 			break;
 		}
 		case TYPE_ATTENTE_DYNA:
-		{
+		{ // done
 			//id:param0 value:param1
 			if ( abs ( getPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ] ) ) - atoi ( listAction[ indiceAction ].params[ 1 ] ) ) < 5 )
 			{
@@ -207,7 +225,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 			break;
 		}
 		case TYPE_ATTENTE_TEMPS:
-		{
+		{ // done
 			gettimeofday ( &now, NULL );
 			logDebug ( "attente %d type : %d\n", ( now.tv_sec * 1000000 + now.tv_usec - listAction[ indiceAction ].heureCreation ),1000* atoi ( listAction[indiceAction].params[ 0 ]) );
 			if ( ( int )( now.tv_sec * 1000000 + now.tv_usec - listAction[ indiceAction ].heureCreation ) >= ( 1000 * atoi ( listAction[indiceAction].params[ 0 ] ) ) )
@@ -242,7 +260,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 			break;
 		}
 		case TYPE_SET_VALEUR:
-		{
+		{ // done
 			switch ( atoi ( listAction[ indiceAction ].params[ 0 ] ) )
 			{
 				case 0:
@@ -303,10 +321,17 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		}
 		case TYPE_SET_VARIABLE:
 		{
+			jsonSet ( _management_json, 0, listAction[ indiceAction ].params[ 0 ], listAction[ indiceAction ].params[ 1 ], jT ( str ) );
+			listAction[indiceAction].isDone = 1;
 			break;
 		}
 		case TYPE_GET_VARIABLE:
 		{
+			jsonGet ( _management_json, 0, listAction[ indiceAction ].params[ 0 ], &listAction[ indiceAction ].params[ 2 ], jT ( str ) );
+			if ( !strcmp ( listAction[ indiceAction ].params[ 1 ], listAction[ indiceAction ].params[ 2 ] ) )
+			{
+				listAction[indiceAction].isDone = 1;
+			}
 			break;
 		}
 		default:
