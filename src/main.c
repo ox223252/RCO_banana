@@ -582,6 +582,7 @@ int main ( int argc, char * argv[] )
 		}
 		
 		if ( !flagAction.noDrive && 
+				//asservirVitesseGaucheDroite ( 200, 0, robot1.vitesseGauche, robot1.vitesseDroite ) )
 				asservirVitesseGaucheDroite ( robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend, robot1.vitesseGauche, robot1.vitesseDroite ) )
 		{ // error occured
 			logVerbose ( "%s\n ", strerror ( errno ) );
@@ -604,7 +605,7 @@ int main ( int argc, char * argv[] )
 		}
 		
 		
-		usleep ( 1000*50 );
+		usleep ( 1000*10 );
 	}
 	
 	return ( 0 );

@@ -84,8 +84,7 @@ int calculDeplacement ( Robot* robot )
 		robot->vitesseDroiteToSend = 1. * robot->cible.vitesseMax;
 	}
 
-	robot->vitesseDroiteToSend += 1.5*erreurAngle;
-	robot->vitesseGaucheToSend -= 1.5*erreurAngle;
+	
 
 	gettimeofday ( &_gestionPosition_now,  NULL );
 	_gestionPosition_tempsEcoule = ( _gestionPosition_now. tv_sec * 1000000 + _gestionPosition_now. tv_usec ) - ( _gestionPosition_pre. tv_sec * 1000000 + _gestionPosition_pre. tv_usec );
@@ -111,13 +110,16 @@ int calculDeplacement ( Robot* robot )
 			_gestionPosition_pourcentageVitesse = 100;
 		}
 	}
+	
+	robot->vitesseGaucheToSend *= ( _gestionPosition_pourcentageVitesse / 100 );
+	robot->vitesseDroiteToSend *= ( _gestionPosition_pourcentageVitesse / 100 );
+	robot->vitesseDroiteToSend += 1.5*erreurAngle;
+	robot->vitesseGaucheToSend -= 1.5*erreurAngle;
 	printf("distCible : %f, pcvitesse : %f, VG : %f, VD:%f \n",
 		distanceCible,
 		_gestionPosition_pourcentageVitesse,
 		robot->vitesseGaucheToSend,
 		robot->vitesseDroiteToSend);
-	robot->vitesseGaucheToSend *= ( _gestionPosition_pourcentageVitesse / 100 );
-	robot->vitesseDroiteToSend *= ( _gestionPosition_pourcentageVitesse / 100 );
 
 	return 0;
 }
@@ -127,6 +129,19 @@ int tenirAngle ( Robot* robot )
 	float erreurAngle;
 	erreurAngle = minimumErreur2Angles ( robot->orientationRobot,robot->orientationVisee );
 
+	gettimeofday ( &_gestionPosition_now,  NULL );
+	_gestionPosition_tempsEcoule = ( _gestionPosition_now. tv_sec * 1000000 + _gestionPosition_now. tv_usec ) - ( _gestionPosition_pre. tv_sec * 1000000 + _gestionPosition_pre. tv_usec );
+	_gestionPosition_tempsEcoule/=1000000.;
+	gettimeofday ( &_gestionPosition_pre,  NULL );
+
+
+	if ( ( _gestionPosition_pourcentageVitesse + (_gestionPosition_tempsEcoule)* 200 ) < 100 )
+	{
+		_gestionPosition_pourcentageVitesse += _gestionPosition_tempsEcoule * 200;
+	}else
+	{
+		_gestionPosition_pourcentageVitesse = 100;
+	}
 	if ( fabs ( erreurAngle ) <= fabs(robot->cible.precision) )
 	{
 		return 1;
@@ -134,8 +149,9 @@ int tenirAngle ( Robot* robot )
 //	gettimeofday ( &_gestionPosition_now,  NULL );
 //	_gestionPosition_tempsEcoule = ( _gestionPosition_now. tv_sec * 1000000 + _gestionPosition_now. tv_usec ) - ( _gestionPosition_pre. tv_sec * 1000000 + _gestionPosition_pre. tv_usec );
 
-	robot->vitesseDroiteToSend = +2.*erreurAngle;
-	robot->vitesseGaucheToSend = -2.*erreurAngle;
+
+	robot->vitesseDroiteToSend = +1.5*erreurAngle;
+	robot->vitesseGaucheToSend = -1.5*erreurAngle;
 
 	return 0;
 }
