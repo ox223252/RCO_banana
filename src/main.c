@@ -11,7 +11,6 @@
 #include "lib/config/config_file.h"
 #include "lib/freeOnExit/freeOnExit.h"
 #include "lib/log/log.h"
-#include "lib/MQTT/mqtt.h"
 #include "lib/signalHandler/signalHandler.h"
 #include "lib/termRequest/request.h"
 #include "lib/timer/timer.h"
@@ -54,8 +53,6 @@ void dynamixelClose ( void * arg )
 {
 	closePort ( ( long ) arg );
 }
-
-void updateMQTT();
 
 void proccessNormalEnd ( void * arg )
 {
@@ -105,10 +102,8 @@ int main ( int argc, char * argv[] )
 	float speedAsservID = 0.;
 	float speedAsservDD = 0.;
 	
-	//Export MQTT
-	bool useMQTT = true;
-	
 	uint8_t pca9685 = 0; // servo driver handler (i2c)
+	int pca9685Fd = 0;
 	
 	Action* tabActionTotal = NULL;
 	int nbAction = 0;
@@ -137,14 +132,14 @@ int main ( int argc, char * argv[] )
 	
 	struct
 	{
-		uint8_t green:1,	// &flag + 0 : 0x01
-			red:1,		  //			 0x02
-			un2:1,		  //			 0x04
-			help:1,		 //			 0x08
-			quiet:1,		//			 0x10
-			debug:1,		//			 0x20
-			color:1,		//			 0x40
-			logTerm:1;	  //			 0x80
+		uint8_t green:1,    // &flag + 0 : 0x01
+			red:1,          //             0x02
+			un2:1,          //             0x04
+			help:1,         //             0x08
+			quiet:1,        //             0x10
+			debug:1,        //             0x20
+			color:1,        //             0x40
+			logTerm:1;      //             0x80
 		uint8_t logFile:1;  // &flag + 1 : 0x10
 	}
 	flag = { 0 };
@@ -181,7 +176,6 @@ int main ( int argc, char * argv[] )
 		{ "--Vmin", "-vm",	 1,	cT ( float ), &Vmin, "minimum voltage that should provide systeme to engine" },
 		{ "--Vboost", "-vB",   1,	cT ( float ), &Vboost, "maximum voltage that should provide systeme to engine during boost mode" },
 		{ "--tBoost", "-tB",   1,	cT ( uint32_t ), &tBoost, "maximum delay for boost mode" },
-		{ "--useMQTT", "-mqtt",   1, cT ( bool ), &useMQTT, "Export information through MQTT" },
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
 	
@@ -295,18 +289,6 @@ int main ( int argc, char * argv[] )
 		printf ( "\n\e[4mparameter available in res/config.rco file:\e[0m\n" );
 		helpConfigArgs ( configList );
 		return ( 0 );
-	}
-	
-	if(useMQTT)
-	{
-		if(mqtt_init("RCO_NOIR","127.0.0.1",1883))
-		{
-			logVerbose ( "Can't init MQTT\n" );
-			return ( __LINE__ );
-		}else
-		{
-			printf("MQTT initialisé \n");
-		}
 	}
 	
 	if ( !flagAction.noDrive )
@@ -505,6 +487,18 @@ int main ( int argc, char * argv[] )
 		}
 		
 		logVerbose ( " - pca9685 : %d\n", pca9685 );
+
+		if ( openPCA9685 ( "/dev/i2c-0", pca9685, &pca9685Fd ) &&
+			openPCA9685 ( "/dev/i2c-1", pca9685, &pca9685Fd ) )
+		{
+			return ( __LINE__ );
+		}
+
+		if ( setCloseOnExit ( pca9685 ) )
+		{
+			close ( pca9685 );
+			return ( __LINE__ );
+		}
 	}
 	else
 	{ // arm disabled
@@ -534,6 +528,7 @@ int main ( int argc, char * argv[] )
 	}
 	setFreeOnExit ( tabActionTotal );
 	initAction ( &flagAction );
+	actionSetFd ( pca9685Fd );
 	
 	gettimeofday ( &start, NULL );
 	if ( nbAction > 0 )
@@ -545,10 +540,6 @@ int main ( int argc, char * argv[] )
 	
 	while ( 1 )
 	{
-		if ( useMQTT )
-		{
-			updateMQTT ( );
-		}
 		calculPosition ( motorBoard, &robot1 );
 		
 		logVerbose ( "\e[2K\rVGauche : %.3f VDroite : %.3f\n\e[A",
@@ -617,40 +608,4 @@ int main ( int argc, char * argv[] )
 	}
 	
 	return ( 0 );
-}
-
-void updateMQTT()
-{
-	/*char buffer[64];
-	
-	snprintf ( buffer, sizeof ( buffer ), "%f", robot1.xRobot );
-	mqtt_publish ( NULL, "RCO_NOIR/x", strlen ( buffer ), buffer, 0, false );
-	
-	snprintf ( buffer, sizeof ( buffer ), "%f", robot1.yRobot );
-	mqtt_publish ( NULL, "RCO_NOIR/y", strlen ( buffer ), buffer, 0, false );
-	
-	snprintf ( buffer, sizeof ( buffer ), "%f", robot1.orientationRobot );
-	mqtt_publish ( NULL, "RCO_NOIR/orientation", strlen ( buffer ), buffer, 0, false);
-	
-	snprintf ( buffer, sizeof ( buffer ), "%f", robot1.vitesseGauche );
-	mqtt_publish ( NULL, "RCO_NOIR/vitesseGauche", strlen ( buffer ), buffer, 0, false);
-	
-	snprintf ( buffer, sizeof ( buffer ), "%f", robot1.vitesseDroite );
-	mqtt_publish ( NULL, "RCO_NOIR/vitesseDroite", strlen ( buffer ), buffer, 0, false);
-	
-	snprintf ( buffer, sizeof ( buffer ), "%f", robot1.vitesseGaucheToSend );
-	mqtt_publish ( NULL, "RCO_NOIR/consigneVitesseG", strlen ( buffer ), buffer, 0, false);
-	
-	snprintf ( buffer, sizeof ( buffer ), "%f", robot1.vitesseDroiteToSend );
-	mqtt_publish ( NULL, "RCO_NOIR/consigneVitesseD", strlen ( buffer ), buffer, 0, false);
-	
-	snprintf ( buffer, sizeof ( buffer ), "%f", robot1.codeurGauche );
-	mqtt_publish ( NULL, "RCO_NOIR/codeurG", strlen ( buffer ), buffer, 0, false);
-	
-	snprintf ( buffer, sizeof ( buffer ), "%f", robot1.codeurDroit );
-	mqtt_publish ( NULL, "RCO_NOIR/codeurD", strlen ( buffer ), buffer, 0, false);
-	
-	snprintf ( buffer, sizeof ( buffer ), "%f", robot1.orientationVisee );
-	mqtt_publish ( NULL, "RCO_NOIR/orientationVisee", strlen ( buffer ), buffer, 0, false );*/
-	
 }
