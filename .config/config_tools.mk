@@ -12,7 +12,7 @@ LABEL=arm-Linux
 arm-Linux_CROSS_CC=arm-linux-gnueabihf-gcc
 arm-Linux_CROSS_CXX=arm-linux-gnueabihf-g++
 arm-Linux_FLAGS=
-arm-Linux_LIBS= -Lres -lmosquitto -lssl -lcrypto
+arm-Linux_LIBS= -Llib -lmosquitto -lssl -lcrypto
 arm-Linux_EXEC_AFTER=
 
 # tools / flags / libs only for arm target
