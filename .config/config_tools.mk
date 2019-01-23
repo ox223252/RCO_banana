@@ -5,14 +5,14 @@ FLAGS= -D'BY_LINUX_MAKEFILE' -DFOE_WITH_THREAD -g -DTIMER_WITH_FOE -lm
 CC=gcc
 CXX=g++
 natif_FLAGS=
-natif_LIBS=
+natif_LIBS= -lmosquitto
 
 # tools / flags / libs only for arm linux target
 LABEL=arm-Linux
 arm-Linux_CROSS_CC=arm-linux-gnueabihf-gcc
 arm-Linux_CROSS_CXX=arm-linux-gnueabihf-g++
 arm-Linux_FLAGS=
-arm-Linux_LIBS=
+arm-Linux_LIBS= -Lres -lmosquitto -lssl -lcrypto
 arm-Linux_EXEC_AFTER=
 
 # tools / flags / libs only for arm target

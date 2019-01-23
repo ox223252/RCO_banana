@@ -255,6 +255,7 @@ int main ( int argc, char * argv[] )
 	if ( readConfigFile ( "res/config.rco", configList ) ||
 		 readParamArgs ( argc, argv, paramList ) )
 	{
+		printf ( "no config file\n" );
 		return ( __LINE__ );
 	}
 	else

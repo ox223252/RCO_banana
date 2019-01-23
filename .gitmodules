@@ -28,3 +28,6 @@
 [submodule "src/lib/pca9685"]
 	path = src/lib/pca9685
 	url = https://github.com/ox223252/pca9685.git
+[submodule "src/lib/jsonParser"]
+	path = src/lib/jsonParser
+	url = https://github.com/ox223252/jsonParser.git

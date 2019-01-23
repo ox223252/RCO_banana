@@ -5,11 +5,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <stdint.h>
 
 #include "management.h"
 #include "../lib/log/log.h"
 #include "../lib/freeOnExit/freeOnExit.h"
 #include "../lib/termRequest/request.h"
+#include "../lib/jsonParser/jsonParser.h"
+#include "../lib/pca9685/pca9685.h"
 
 static char* _management_listActionEnCours = NULL;
 static ActionFlag *_management_flagAction = NULL;
@@ -19,12 +22,14 @@ static int * _management_pca9685 = 0;
 static int getIndiceActionByIndice ( Action* listAction, int indiceAction, int nbAction );
 
 static json_el *_management_json = NULL;
-static int _management_jsonLength = 0;
+static uint32_t _management_jsonLength = 0;
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void managementAfterAll ( void * arg )
 {
 	jsonFree ( &_management_json, _management_jsonLength );
 }
+#pragma GCC diagnostic pop
 
 int initAction ( ActionFlag *flag )
 {
@@ -58,7 +63,7 @@ int initAction ( ActionFlag *flag )
 	{ // if already set, free all and set again
 		free ( _management_listActionEnCours );
 		unsetFreeOnExit ( _management_listActionEnCours );
-		unsetExecAfterAllOnExit ( managementAfterAll, NULL );
+		unsetExecAfterAllOnExit ( managementAfterAll );
 		_management_listActionEnCours = NULL;
 
 		return ( initAction ( flag ) );
@@ -67,7 +72,7 @@ int initAction ( ActionFlag *flag )
 
 void actionSetFd ( int pca9685 )
 {
-	_management_pca9685 = pca9685;
+	_management_pca9685 = &pca9685;
 }
 
 void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
@@ -80,7 +85,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 	{
 		case TYPE_SERVO:
 		{ // done
-			setPCA9685PWM ( listAction[ indiceAction ].params[ 0 ], 0, 210 + listAction[ indiceAction ].params[ 1 ] % 360, _management_pca9685 );
+			setPCA9685PWM ( atoi ( listAction[ indiceAction ].params[ 0 ] ), 0, 210 + atoi ( listAction[ indiceAction ].params[ 1 ] ) % 360, *_management_pca9685 );
 			listAction[indiceAction].isDone = 1;
 			break;
 		}
@@ -327,7 +332,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		}
 		case TYPE_GET_VARIABLE:
 		{
-			jsonGet ( _management_json, 0, listAction[ indiceAction ].params[ 0 ], &listAction[ indiceAction ].params[ 2 ], jT ( str ) );
+			jsonGet ( _management_json, 0, listAction[ indiceAction ].params[ 0 ], &listAction[ indiceAction ].params[ 2 ], NULL );
 			if ( !strcmp ( listAction[ indiceAction ].params[ 1 ], listAction[ indiceAction ].params[ 2 ] ) )
 			{
 				listAction[indiceAction].isDone = 1;
@@ -354,9 +359,7 @@ int updateActionEnCours ( Action* listAction, int nbAction, Robot* robot )
 
 	int actionRemaining = 0;
 
-
 	struct timeval now;
-
 
 	if ( !_management_listActionEnCours )
 	{
