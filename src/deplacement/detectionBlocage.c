@@ -2,16 +2,14 @@
 
 #include "detectionBlocage.h"
 
-static long* tabVitesseGauche;
-static long* tabVitesseDroite;
+static long tabVitesseGauche[200];
+static long tabVitesseDroite[200];
 static int indiceTab;
 
 void initDetectionBlocage()
 {
   indiceTab = 0;
-  tabVitesseGauche = malloc(200*sizeof(long));
-  tabVitesseDroite = malloc(200*sizeof(long));
-  for(int i=0;i<2000;i++)
+  for(int i=0;i<200;i++)
   {
     tabVitesseGauche[i]=200;
     tabVitesseDroite[i]=200;
@@ -21,8 +19,6 @@ void initDetectionBlocage()
 void resetBlocage()
 {
   indiceTab = 0;
-  tabVitesseGauche = malloc(200*sizeof(long));
-  tabVitesseDroite = malloc(200*sizeof(long));
   for(int i=0;i<200;i++)
   {
     tabVitesseGauche[i]=200;
@@ -31,7 +27,7 @@ void resetBlocage()
 }
 
 int detectBlocage(Robot* robot, int seuilDetection)
-{//robot->vitesseDroiteToSend
+{
   tabVitesseGauche[indiceTab] = robot->vitesseGauche;
   tabVitesseDroite[indiceTab] = robot->vitesseDroite;
   indiceTab++;
