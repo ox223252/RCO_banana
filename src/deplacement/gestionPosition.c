@@ -102,7 +102,7 @@ int calculDeplacement ( Robot* robot )
 		}
 	}else
 	{
-		if ( ( _gestionPosition_pourcentageVitesse + (_gestionPosition_tempsEcoule)* robot->cible.acc ) < 100 )
+		if ( ( _gestionPosition_pourcentageVitesse + (_gestionPosition_tempsEcoule)* robot->cible.acc ) < 100  && robot->cible.acc != -1)
 		{
 			_gestionPosition_pourcentageVitesse += _gestionPosition_tempsEcoule * robot->cible.acc;
 		}else

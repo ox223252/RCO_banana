@@ -2,42 +2,53 @@
 
 #include "detectionBlocage.h"
 
-static long* tabErreurGauche;
-static long* tabErreurDroite;
+static long* tabVitesseGauche;
+static long* tabVitesseDroite;
 static int indiceTab;
 
 void initDetectionBlocage()
 {
   indiceTab = 0;
-  tabErreurGauche = calloc(68,sizeof(long));
-  tabErreurDroite = calloc(68,sizeof(long));
+  tabVitesseGauche = malloc(200*sizeof(long));
+  tabVitesseDroite = malloc(200*sizeof(long));
+  for(int i=0;i<2000;i++)
+  {
+    tabVitesseGauche[i]=200;
+    tabVitesseDroite[i]=200;
+  }
 }
 
 void resetBlocage()
 {
   indiceTab = 0;
-  tabErreurGauche = calloc(68,sizeof(long));
-  tabErreurDroite = calloc(68,sizeof(long));
+  tabVitesseGauche = malloc(200*sizeof(long));
+  tabVitesseDroite = malloc(200*sizeof(long));
+  for(int i=0;i<200;i++)
+  {
+    tabVitesseGauche[i]=200;
+    tabVitesseDroite[i]=200;
+  }
 }
 
 int detectBlocage(Robot* robot, int seuilDetection)
-{
-  float sommeErreurGauche=0,sommeErreurDroite=0;
-  tabErreurGauche[indiceTab] = robot->vitesseGaucheToSend - robot->vitesseGauche;
-  tabErreurDroite[indiceTab] = robot->vitesseDroiteToSend - robot->vitesseDroite;
+{//robot->vitesseDroiteToSend
+  tabVitesseGauche[indiceTab] = robot->vitesseGauche;
+  tabVitesseDroite[indiceTab] = robot->vitesseDroite;
   indiceTab++;
-  if(indiceTab == 68)indiceTab=0;
+  int indiceToCheck;
+  if(indiceTab == 200)indiceTab=0;
 
-  for(int i=0;i<68;i++)
+  for(int i=0;i<seuilDetection;i++)
   {
-    sommeErreurGauche+=tabErreurGauche[i];
-    sommeErreurDroite+=tabErreurGauche[i];
-  }
+    indiceToCheck = indiceTab - i;
+    if(indiceToCheck<0)indiceToCheck+=200;
 
-  if(sommeErreurGauche > seuilDetection*robot->vitesseGaucheToSend ||
-    sommeErreurDroite > seuilDetection*robot->vitesseDroiteToSend)
+    if(robot->vitesseDroiteToSend == 0 || tabVitesseDroite[indiceToCheck] > 20
+        || robot->vitesseGaucheToSend == 0 || tabVitesseGauche[indiceToCheck] > 20)
     {
-      return 1;
+      resetBlocage();
+      return 0;
     }
-    return 0;
-  }
+  }  
+    return 1;
+}
