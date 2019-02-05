@@ -163,6 +163,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 				_management_newDeplacement = 0;
 				robot->vitesseGaucheDefault = 0.;
 				robot->vitesseDroiteDefault = 0.;
+				resetBlocage();
 				robot->cible.xCible = atoi ( listAction[ indiceAction ].params[ 0 ] );
 				robot->cible.yCible = atoi ( listAction[ indiceAction ].params[ 1 ] );
 				robot->cible.vitesseMax = atoi ( listAction[ indiceAction ].params[ 2 ] );
@@ -190,6 +191,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 				_management_newDeplacement = 0;
 				robot->vitesseGaucheDefault = 0.;
 				robot->vitesseDroiteDefault = 0.;
+				resetBlocage();
 				robot->orientationVisee = atoi ( listAction[ indiceAction ].params[ 0 ] );
 				robot->cible.vitesseMax = atoi ( listAction[ indiceAction ].params[ 1 ] );
 				robot->cible.precision = atoi ( listAction[ indiceAction ].params[ 2 ] );
@@ -264,7 +266,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		{
 			break;
 		}
-		case TYPE_SET_VALEUR:
+		case TYPE_SET_VALEUR: //fonction
 		{ // done
 			switch ( atoi ( listAction[ indiceAction ].params[ 0 ] ) )
 			{

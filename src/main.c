@@ -537,7 +537,7 @@ int main ( int argc, char * argv[] )
 		tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
 	}
 	
-	timer ( globalTime * 100 * 10000, proccessNormalEnd, "stop request by timer", true );
+	//timer ( globalTime * 100 * 10000, proccessNormalEnd, "stop request by timer", true );
 	
 	while ( 1 )
 	{
@@ -598,14 +598,12 @@ int main ( int argc, char * argv[] )
 		}
 		else if ( flagAction.driveWait )
 		{
-			// wait itme out
+			// wait timeout
 		}
 		else
 		{
 			
-		}
-		
-		
+		}		
 		usleep ( 1000*10 );
 	}
 	

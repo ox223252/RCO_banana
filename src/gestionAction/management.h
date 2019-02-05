@@ -5,6 +5,7 @@
 #include "../struct/structAction.h"
 #include "../struct/structRobot.h"
 #include "../deplacement/gestionPosition.h"
+#include "../deplacement/detectionBlocage.h"
 
 int initAction ( ActionFlag *flag );
 void actionSetFd ( int pca9685 );

@@ -34,7 +34,7 @@ int detectBlocage(Robot* robot, int seuilDetection)
   int indiceToCheck;
   if(indiceTab == 200)indiceTab=0;
 
-  for(int i=0;i<seuilDetection;i++)
+  for(int i=0;i<seuilDetection/10;i++)
   {
     indiceToCheck = indiceTab - i;
     if(indiceToCheck<0)indiceToCheck+=200;
