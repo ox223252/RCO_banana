@@ -18,6 +18,7 @@
 #include "lib/parserXML/loadXML.h"
 #include "lib/dynamixel_sdk/dynamixel_sdk.h"
 #include "lib/Xbox360-wireless/cXbox360.h"
+#include "lib/GPIO/gpio.h"
 
 #include "struct/structRobot.h"
 #include "struct/structAction.h"
@@ -489,7 +490,7 @@ int main ( int argc, char * argv[] )
 		
 		logVerbose ( " - pca9685 : %d\n", pca9685 );
 
-		if ( openPCA9685 ( "/dev/i2c-0", pca9685, &pca9685Fd ) &&
+		/*if ( openPCA9685 ( "/dev/i2c-0", pca9685, &pca9685Fd ) &&
 			openPCA9685 ( "/dev/i2c-1", pca9685, &pca9685Fd ) )
 		{
 			return ( __LINE__ );
@@ -499,7 +500,7 @@ int main ( int argc, char * argv[] )
 		{
 			close ( pca9685 );
 			return ( __LINE__ );
-		}
+		}*/
 	}
 	else
 	{ // arm disabled
@@ -517,7 +518,7 @@ int main ( int argc, char * argv[] )
 	{ // engne disabled
 		logVerbose ( " - robotclaw : \e[31m%s\e[0m\n", motorBoadPath );
 	}
-	
+	GPIO_init_gpio();
 	//
 	// open actions xml
 	//
@@ -543,11 +544,11 @@ int main ( int argc, char * argv[] )
 	{
 		calculPosition ( motorBoard, &robot1 );
 		
-		logVerbose ( "\e[2K\rVGauche : %.3f VDroite : %.3f\n\e[A",
+		/*logVerbose ( "\e[2K\rVGauche : %.3f VDroite : %.3f\n\e[A",
 					 
 					 robot1.vitesseGauche,
 					 robot1.vitesseDroite );
-		logVerbose ( "\n" );
+		logVerbose ( "\n" );*/
 		
 		/*
 		Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
@@ -566,7 +567,6 @@ int main ( int argc, char * argv[] )
 		{
 			//requestBoost ( false );
 		}
-		
 		if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
 		{
 			logVerbose ( "no more action remaining\n" );

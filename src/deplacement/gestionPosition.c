@@ -115,11 +115,11 @@ int calculDeplacement ( Robot* robot )
 	robot->vitesseDroiteToSend *= ( _gestionPosition_pourcentageVitesse / 100 );
 	robot->vitesseDroiteToSend += 1.5*erreurAngle;
 	robot->vitesseGaucheToSend -= 1.5*erreurAngle;
-	printf("distCible : %f, pcvitesse : %f, VG : %f, VD:%f \n",
+	/*printf("distCible : %f, pcvitesse : %f, VG : %f, VD:%f \n",
 		distanceCible,
 		_gestionPosition_pourcentageVitesse,
 		robot->vitesseGaucheToSend,
-		robot->vitesseDroiteToSend);
+		robot->vitesseDroiteToSend);*/
 
 	return 0;
 }

@@ -13,6 +13,7 @@
 #include "../lib/termRequest/request.h"
 #include "../lib/jsonParser/jsonParser.h"
 #include "../lib/pca9685/pca9685.h"
+#include "../lib/GPIO/gpio.h"
 
 static char* _management_listActionEnCours = NULL;
 static ActionFlag *_management_flagAction = NULL;
@@ -77,7 +78,7 @@ void actionSetFd ( int pca9685 )
 
 void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 {
-	logDebug ( "GESTION ACTION %d type : %d\n", indiceAction,listAction[indiceAction].type );
+	printf ( "GESTION ACTION %d type : %d\n", indiceAction,listAction[indiceAction].type );
 
 	struct timeval now;
 
@@ -260,6 +261,10 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		}
 		case TYPE_RETOUR_GPIO:
 		{
+			if(GPIORead(atoi ( listAction[ indiceAction ].params[ 0 ] )) == atoi ( listAction[ indiceAction ].params[ 1 ] ))
+			{
+				listAction[indiceAction].isDone = 1;
+			}
 			break;
 		}
 		case TYPE_AND:

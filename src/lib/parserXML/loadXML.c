@@ -57,6 +57,7 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 		node = mxmlFindElement ( node, tree, "Action", NULL, NULL, MXML_DESCEND ) )
 	{
 		const char *name = mxmlGetElement ( node );
+
 		if ( strcmp ( name, "Action" ) == 0 )
 		{
 			tabActionTotal[ indiceActionEnCours ].numero = atoi ( mxmlElementGetAttr ( node, "numero" ) );
@@ -365,12 +366,12 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 
 				logDebug ( "Valeur pin : %s, value %s\n",tabActionTotal[ indiceActionEnCours ].params[ 0 ],tabActionTotal[ indiceActionEnCours ].params[ 1 ] );
 			}
-			else if ( strcmp ( type,"actionDepart" ) == 0 )
+			else if ( strcmp ( type,"Depart" ) == 0 )
 			{
 				tabActionTotal[ indiceActionEnCours ].type = TYPE_ENTREE;
 				logDebug ( "Départ \n" );
 			}
-			else if ( strcmp ( type,"actionFin" ) == 0 )
+			else if ( strcmp ( type,"Fin" ) == 0 )
 			{
 				tabActionTotal[ indiceActionEnCours ].type = TYPE_FIN;
 				logDebug ( "Fin\n" );
