@@ -19,6 +19,7 @@
 #include "lib/dynamixel_sdk/dynamixel_sdk.h"
 #include "lib/Xbox360-wireless/cXbox360.h"
 #include "lib/GPIO/gpio.h"
+#include "lib/mcp23017/mcp23017.h"
 
 #include "struct/structRobot.h"
 #include "struct/structAction.h"
@@ -85,8 +86,8 @@ int main ( int argc, char * argv[] )
 	
 	int16_t maxSpeed = 32767; // motor max speed, ti neved should cross this limit
 	uint32_t globalTime = 0; // global game time
-	char xmlInitPath[ 128 ] = { 0 };
 	char xmlActionPath[ 128 ] = { 0 };
+
 	
 	// battery management
 	uint32_t readDelay = 5000000;
@@ -102,10 +103,15 @@ int main ( int argc, char * argv[] )
 	float speedAsservPD = 1.;
 	float speedAsservID = 0.;
 	float speedAsservDD = 0.;
+
+	char i2cPortName[ 64 ] = "/dev/i2c-1";
 	
-	uint8_t pca9685 = 0; // servo driver handler (i2c)
+	uint8_t pca9685 = 0; // servo driver addr (i2c)
 	int pca9685Fd = 0;
 	
+	uint8_t mcp23017 = 0; // gpio direr addr
+	int mcp23017Fd = 0;
+
 	Action* tabActionTotal = NULL;
 	int nbAction = 0;
 	
@@ -149,34 +155,36 @@ int main ( int argc, char * argv[] )
 	
 	param_el paramList[] =
 	{
-		{ "--help", "-h",	  0x08, cT ( bool ), ((uint8_t * )&flag), "this window" },
-		{ "--green", "-g",	 0x01, cT ( bool ), ((uint8_t * )&flag), "launch the green prog" },
-		{ "--red", "-r",	   0x02, cT ( bool ), ((uint8_t * )&flag), "launch the red prog" },
-		{ "--q", "-q",		 0x10, cT ( bool ), ((uint8_t * )&flag), "hide all trace point" },
-		{ "--debug", "-d",	 0x20, cT ( bool ), ((uint8_t * )&flag), "display many trace point" },
-		{ "--color", "-c",	 0x40, cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
-		{ "--term", "-lT",	 0x80, cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
-		{ "--file", "-lF",	 0x01, cT ( bool ), ((uint8_t * )&flag + 1), "add color to debug traces" },
-		{ "--noArm", "-nA",	0x01, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable servo motor" },
-		{ "--armWait", NULL,   0x02, cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
-		{ "--armScan", NULL,   0x04, cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
-		{ "--armDone", NULL,   0x08, cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
-		{ "--noDrive", "-nD",  0x10, cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
-		{ "--driveWait", NULL, 0x20, cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
-		{ "--driveScan", NULL, 0x40, cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
-		{ "--driveDone", NULL, 0x80, cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
-		{ "--MaxSpeed", "-Ms", 1,	cT ( int16_t ), &maxSpeed, "set max speed [ 1 ; 32767 ]" },
-		{ "--ini", "-i",	   1,	cT ( str ), xmlInitPath, "xml initialisation file path" },
-		{ "--xml", "-x",	   1,	cT ( str ), xmlActionPath, "xml action file path" },
-		{ "--time", "-t",	  1,	cT ( uint32_t ), &globalTime, "game duration in seconds" },
-		{ "--linear_left", "-ll", 1, cT ( float ), &robot1.coeffLongG, "linear coef for left wheel" },
-		{ "--linear_right", "-lr", 1, cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
-		{ "--angle_left", "-al", 1,  cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
-		{ "--angle_right", "-ar", 1, cT ( float ), &robot1.coeffAngleD, "angular coef for right wheel" },
-		{ "--Vmax", "-vM",	 1,	cT ( float ), &Vmax, "maximum voltage that should provide systeme to engine" },
-		{ "--Vmin", "-vm",	 1,	cT ( float ), &Vmin, "minimum voltage that should provide systeme to engine" },
-		{ "--Vboost", "-vB",   1,	cT ( float ), &Vboost, "maximum voltage that should provide systeme to engine during boost mode" },
-		{ "--tBoost", "-tB",   1,	cT ( uint32_t ), &tBoost, "maximum delay for boost mode" },
+		{ "--help", 	"-h",	0x08, 	cT ( bool ), ((uint8_t * )&flag), "this window" },
+		{ "--green", 	"-g",	0x01, 	cT ( bool ), ((uint8_t * )&flag), "launch the green prog" },
+		{ "--red", 		"-r",	0x02, 	cT ( bool ), ((uint8_t * )&flag), "launch the red prog" },
+		{ "--q", 		"-q",	0x10, 	cT ( bool ), ((uint8_t * )&flag), "hide all trace point" },
+		{ "--debug", 	"-d",	0x20, 	cT ( bool ), ((uint8_t * )&flag), "display many trace point" },
+		{ "--color", 	"-c",	0x40, 	cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
+		{ "--term", 	"-lT",	0x80, 	cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
+		{ "--file", 	"-lF",	0x01, 	cT ( bool ), ((uint8_t * )&flag + 1), "add color to debug traces" },
+		{ "--noArm", 	"-nA",	0x01, 	cT ( bool ), ((uint8_t * )&flagAction), "use it to disable servo motor" },
+		{ "--armWait", 	NULL,	0x02, 	cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
+		{ "--armScan", 	NULL,	0x04, 	cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
+		{ "--armDone", 	NULL,	0x08, 	cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
+		{ "--noDrive", 	"-nD",	0x10, 	cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
+		{ "--driveWait", NULL,	0x20, 	cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
+		{ "--driveScan", NULL,	0x40, 	cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
+		{ "--driveDone", NULL,	0x80, 	cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
+		{ "--MaxSpeed", "-Ms",	1, 		cT ( int16_t ), &maxSpeed, "set max speed [ 1 ; 32767 ]" },
+		{ "--xml", 		"-x",	1, 		cT ( str ), xmlActionPath, "xml action file path" },
+		{ "--time", 	"-t",	1, 		cT ( uint32_t ), &globalTime, "game duration in seconds" },
+		{ "--linear_left", "-ll", 1, 	cT ( float ), &robot1.coeffLongG, "linear coef for left wheel" },
+		{ "--linear_right", "-lr", 1, 	cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
+		{ "--angle_left", "-al",1,  	cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
+		{ "--angle_right", "-ar", 1, 	cT ( float ), &robot1.coeffAngleD, "angular coef for right wheel" },
+		{ "--Vmax", 	"-vM",	1, 		cT ( float ), &Vmax, "maximum voltage that should provide systeme to engine" },
+		{ "--Vmin", 	"-vm",	1, 		cT ( float ), &Vmin, "minimum voltage that should provide systeme to engine" },
+		{ "--Vboost", 	"-vB",	1, 		cT ( float ), &Vboost, "maximum voltage that should provide systeme to engine during boost mode" },
+		{ "--tBoost", 	"-tB",	1, 		cT ( uint32_t ), &tBoost, "maximum delay for boost mode" },
+		{ "--i2cPortName", "-iN", 1, 	cT ( str ), i2cPortName, "i2c port name" },
+		{ "--pcaAddr", 	"-p",	1, 		cT ( uint8_t ), &pca9685, "pca9685 board i2c addr"},
+		{ "--mcpAddr", 	"-m",	1, 		cT ( uint8_t ), &mcp23017, "mcp23017 board i2c addr"},
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
 	
@@ -185,9 +193,7 @@ int main ( int argc, char * argv[] )
 		{ "PATH_DYNA", cT ( str ), dynamixelsPath, "PATH to access to dynamixels"},
 		{ "PATH_MOTOR_BOARD", cT ( str ), motorBoadPath, "PATH to access to dynamixels"},
 		{ "PATH_MOTOR_BOARD_UART_SPEED", cT ( uint32_t ), &motorBoardUartSpeed, "UART speed for robocloaw board" },
-		{ "PCA9695_ADDR", cT ( uint8_t ), &pca9685, "pca9685 board i2c addr"},
-		{ "XML_ACTION_PATH", cT ( str ), xmlInitPath, "xml initialisation file path"},
-		{ "XML_INIT_PATH", cT ( str ), xmlActionPath, "xml action file path"},
+		{ "XML_ACTION_PATH", cT ( str ), xmlActionPath, "xml action file path"},
 		{ "GLOBAL_TIME", cT ( uint32_t ), &globalTime, "game duration in seconds"},
 		{ "COEF_LINEAR_LEFT", cT ( float ), &robot1.coeffLongG, "linear coef for left wheel" },
 		{ "COEF_LINEAR_RIGHT", cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
@@ -204,6 +210,9 @@ int main ( int argc, char * argv[] )
 		{ "COEFF_PD_VITESSE", cT ( float ), &speedAsservPD, "D proportionnel coefficient for speed asservissment" },
 		{ "COEFF_ID_VITESSE", cT ( float ), &speedAsservID, "D Integral coefficient for speed asservissment" },
 		{ "COEFF_DD_VITESSE", cT ( float ), &speedAsservDD, "D derivative coefficient for speed asservissment" },
+		{ "I2C_PORT_NAME", cT ( str ), i2cPortName, "i2c port name" },
+		{ "PCA9685_ADDR", cT ( uint8_t ), &pca9685, "pca9685 board i2c addr"},
+		{ "MCP23017_ADDR", cT ( uint8_t ), &mcp23017, "mcp23017 board i2c addr"},
 		{ NULL, 0, NULL, NULL }
 	};
 	
@@ -487,20 +496,36 @@ int main ( int argc, char * argv[] )
 			
 			setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
 		}
-		
-		logVerbose ( " - pca9685 : %d\n", pca9685 );
 
-		/*if ( openPCA9685 ( "/dev/i2c-0", pca9685, &pca9685Fd ) &&
-			openPCA9685 ( "/dev/i2c-1", pca9685, &pca9685Fd ) )
+		if ( mcp23017 )
 		{
-			return ( __LINE__ );
+			logVerbose ( "   - mcp23017 : %d\n", mcp23017 );
+			if ( openPCA9685 ( i2cPortName, mcp23017, &mcp23017Fd ) )
+			{
+				return ( __LINE__ );
+			}
+
+			if ( setCloseOnExit ( mcp23017 ) )
+			{
+				close ( mcp23017 );
+				return ( __LINE__ );
+			}
 		}
-
-		if ( setCloseOnExit ( pca9685 ) )
+		
+		if ( pca9685 )
 		{
-			close ( pca9685 );
-			return ( __LINE__ );
-		}*/
+			logVerbose ( "   - pca9685 : %d\n", pca9685 );
+			if ( openPCA9685 ( i2cPortName, pca9685, &pca9685Fd ) )
+			{
+				return ( __LINE__ );
+			}
+
+			if ( setCloseOnExit ( pca9685 ) )
+			{
+				close ( pca9685 );
+				return ( __LINE__ );
+			}
+		}
 	}
 	else
 	{ // arm disabled

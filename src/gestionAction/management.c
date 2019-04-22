@@ -339,7 +339,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		}
 		case TYPE_GET_VARIABLE:
 		{
-			jsonGet ( _management_json, 0, listAction[ indiceAction ].params[ 0 ], &listAction[ indiceAction ].params[ 2 ], NULL );
+			jsonGet ( _management_json, 0, listAction[ indiceAction ].params[ 0 ], (void **)&listAction[ indiceAction ].params[ 2 ], NULL );
 			if ( !strcmp ( listAction[ indiceAction ].params[ 1 ], listAction[ indiceAction ].params[ 2 ] ) )
 			{
 				listAction[indiceAction].isDone = 1;
