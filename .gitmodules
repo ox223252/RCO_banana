@@ -31,3 +31,6 @@
 [submodule "src/lib/jsonParser"]
 	path = src/lib/jsonParser
 	url = https://github.com/ox223252/jsonParser.git
+[submodule "src/lib/mcp23017"]
+	path = src/lib/mcp23017
+	url = https://github.com/ox223252/mcp23017.git
