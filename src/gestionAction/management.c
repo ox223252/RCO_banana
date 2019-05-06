@@ -19,6 +19,7 @@ static char* _management_listActionEnCours = NULL;
 static ActionFlag *_management_flagAction = NULL;
 static int8_t _management_newDeplacement = 1;
 static int * _management_pca9685 = 0;
+static int * _management_mcp23017 = 0;
 
 static int getIndiceActionByIndice ( Action* listAction, int indiceAction, int nbAction );
 
@@ -71,9 +72,10 @@ int initAction ( ActionFlag *flag )
 	}
 }
 
-void actionSetFd ( int pca9685 )
+void actionSetFd ( int pca9685 , int mcp23017)
 {
 	_management_pca9685 = &pca9685;
+	_management_mcp23017 = &mcp23017;
 }
 
 void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
@@ -115,7 +117,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 				{
 					logVerbose ( "Erreur set vitesse dyna \n" );
 				}
-				if ( setPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ]), ( int )( 3.41*atoi ( listAction[ indiceAction ].params[ 1 ] ) ) ) )
+				if ( setPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ]), ( int )( atoi ( listAction[ indiceAction ].params[ 1 ] ) ) ) )
 				{
 					logVerbose ( "Erreur set angle dyna \n" );
 				}
@@ -257,6 +259,8 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		}
 		case TYPE_GPIO:
 		{
+			gpioSet ( _management_mcp23017, 'A', atoi ( listAction[ indiceAction ].params[ 0 ] ), atoi ( listAction[ indiceAction ].params[ 1 ] ) );
+			listAction[indiceAction].isDone = 1;
 			break;
 		}
 		case TYPE_RETOUR_GPIO:
@@ -329,6 +333,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		}
 		case TYPE_FIN:
 		{
+			listAction[indiceAction].isDone = 1;
 			break;
 		}
 		case TYPE_SET_VARIABLE:

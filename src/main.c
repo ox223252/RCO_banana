@@ -263,6 +263,7 @@ int main ( int argc, char * argv[] )
 	
 	
 	if ( readConfigFile ( "res/config.rco", configList ) ||
+		 readConfigArgs ( argc, argv, configList ) || 
 		 readParamArgs ( argc, argv, paramList ) )
 	{
 		printf ( "no config file\n" );
@@ -493,7 +494,15 @@ int main ( int argc, char * argv[] )
 			{
 				logVerbose ( "   - Baudrate	: %d\n", getBaudRate ( dynaPortNum ) );
 			}
-			
+
+			for(int i=40;i<44;i++)
+			{
+				write1ByteTxRx ( dynaPortNum, PROTOCOL_VERSION, i, ADDR_MX_TORQUE_ENABLE, 1 );
+			}
+			for(int i=50;i<55;i++)
+			{
+				write1ByteTxRx ( dynaPortNum, PROTOCOL_VERSION, i, ADDR_MX_TORQUE_ENABLE, 1 );
+			}			
 			setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
 		}
 

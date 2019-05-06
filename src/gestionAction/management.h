@@ -8,7 +8,7 @@
 #include "../deplacement/detectionBlocage.h"
 
 int initAction ( ActionFlag *flag );
-void actionSetFd ( int pca9685 );
+void actionSetFd ( int pca9685 , int mcp23017);
 void gestionAction ( Action* listAction, Robot* robot, int indiceAction );
 int updateActionEnCours ( Action* listAction, int nbAction, Robot* robot );
 
