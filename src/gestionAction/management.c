@@ -18,8 +18,8 @@
 static char* _management_listActionEnCours = NULL;
 static ActionFlag *_management_flagAction = NULL;
 static int8_t _management_newDeplacement = 1;
-static int * _management_pca9685 = 0;
-static int * _management_mcp23017 = 0;
+static int  _management_pca9685 = 0;
+static int  _management_mcp23017 = 0;
 
 static int getIndiceActionByIndice ( Action* listAction, int indiceAction, int nbAction );
 
@@ -74,8 +74,8 @@ int initAction ( ActionFlag *flag )
 
 void actionSetFd ( int pca9685 , int mcp23017)
 {
-	_management_pca9685 = &pca9685;
-	_management_mcp23017 = &mcp23017;
+	_management_pca9685 = pca9685;
+	_management_mcp23017 = mcp23017;
 }
 
 void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
@@ -88,7 +88,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 	{
 		case TYPE_SERVO:
 		{ // done
-			setPCA9685PWM ( atoi ( listAction[ indiceAction ].params[ 0 ] ), 0, 210 + atoi ( listAction[ indiceAction ].params[ 1 ] ) % 360, *_management_pca9685 );
+			//setPCA9685PWM ( atoi ( listAction[ indiceAction ].params[ 0 ] ), 0, 210 + atoi ( listAction[ indiceAction ].params[ 1 ] ) % 360, *_management_pca9685 );
 			listAction[indiceAction].isDone = 1;
 			break;
 		}
@@ -259,8 +259,17 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		}
 		case TYPE_GPIO:
 		{
-			printf("GPIO : %s %s\n",listAction[ indiceAction ].params[ 0 ],listAction[ indiceAction ].params[ 1 ]);
-			gpioSet ( _management_mcp23017, 'A', atoi ( listAction[ indiceAction ].params[ 0 ] ), atoi ( listAction[ indiceAction ].params[ 1 ] ) );
+			//printf("GPIO : %s %s %d\n",listAction[ indiceAction ].params[ 0 ],listAction[ indiceAction ].params[ 1 ],*(_management_mcp23017));
+			if(atoi ( listAction[ indiceAction ].params[ 1 ] ) == 1)
+			{
+				gpioSet ( (0), 'A', atoi ( listAction[ indiceAction ].params[ 0 ] ), 0 );
+			}else
+			{
+				gpioSet ( (0), 'A', atoi ( listAction[ indiceAction ].params[ 0 ] ), 1 );
+			}
+			
+			
+
 			listAction[indiceAction].isDone = 1;
 			break;
 		}

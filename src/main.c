@@ -509,20 +509,23 @@ int main ( int argc, char * argv[] )
 		if ( i2cPortName )
 		{
 			logVerbose ( "   - mcp23017 : %d\n", mcp23017 );
-			if ( openMCP23017 ( i2cPortName, mcp23017, &mcp23017Fd ) )
+			if ( openMCP23017 ( i2cPortName, mcp23017 ) )
 			{
 				return ( __LINE__ );
 			}
 
 			if ( setCloseOnExit ( mcp23017 ) )
 			{
-				close ( mcp23017 );
+				closeMCP23017 (  );
 				return ( __LINE__ );
 			}
 
-			gpioSetDir ( mcp23017, 'A', 0, mcp23017_OUTPUT );
-			gpioSetDir ( mcp23017, 'A', 1, mcp23017_OUTPUT );
-			printf("WOKAY ! \n");
+			gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_OUTPUT );
+			gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_OUTPUT );
+			gpioSet ( 0, 'A', 0,1 );
+			gpioSet ( 0, 'A', 1,1 );
+			
+			
 		}
 		
 		/*if ( i2cPortName )
@@ -569,7 +572,7 @@ int main ( int argc, char * argv[] )
 	}
 	setFreeOnExit ( tabActionTotal );
 	initAction ( &flagAction );
-	actionSetFd ( pca9685Fd , mcp23017 ); 
+	actionSetFd ( pca9685Fd , mcp23017Fd ); 
 	
 	gettimeofday ( &start, NULL );
 	if ( nbAction > 0 )
