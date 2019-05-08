@@ -506,10 +506,10 @@ int main ( int argc, char * argv[] )
 			setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
 		}
 
-		if ( mcp23017 )
+		if ( i2cPortName )
 		{
 			logVerbose ( "   - mcp23017 : %d\n", mcp23017 );
-			if ( openPCA9685 ( i2cPortName, mcp23017, &mcp23017Fd ) )
+			if ( openMCP23017 ( i2cPortName, mcp23017, &mcp23017Fd ) )
 			{
 				return ( __LINE__ );
 			}
@@ -519,9 +519,13 @@ int main ( int argc, char * argv[] )
 				close ( mcp23017 );
 				return ( __LINE__ );
 			}
+
+			gpioSetDir ( mcp23017, 'A', 0, mcp23017_OUTPUT );
+			gpioSetDir ( mcp23017, 'A', 1, mcp23017_OUTPUT );
+			printf("WOKAY ! \n");
 		}
 		
-		if ( pca9685 )
+		/*if ( i2cPortName )
 		{
 			logVerbose ( "   - pca9685 : %d\n", pca9685 );
 			if ( openPCA9685 ( i2cPortName, pca9685, &pca9685Fd ) )
@@ -534,8 +538,9 @@ int main ( int argc, char * argv[] )
 				close ( pca9685 );
 				return ( __LINE__ );
 			}
-		}
+		}*/
 	}
+
 	else
 	{ // arm disabled
 		logVerbose ( " - dyna : \e[31m%s\e[0m\n", dynamixelsPath );
@@ -564,7 +569,7 @@ int main ( int argc, char * argv[] )
 	}
 	setFreeOnExit ( tabActionTotal );
 	initAction ( &flagAction );
-	actionSetFd ( pca9685Fd );
+	actionSetFd ( pca9685Fd , mcp23017 ); 
 	
 	gettimeofday ( &start, NULL );
 	if ( nbAction > 0 )

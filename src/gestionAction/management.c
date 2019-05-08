@@ -80,7 +80,7 @@ void actionSetFd ( int pca9685 , int mcp23017)
 
 void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 {
-	printf ( "GESTION ACTION %d type : %d\n", indiceAction,listAction[indiceAction].type );
+	logDebug ( "GESTION ACTION %d type : %d\n", indiceAction,listAction[indiceAction].type );
 
 	struct timeval now;
 
@@ -259,6 +259,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		}
 		case TYPE_GPIO:
 		{
+			printf("GPIO : %s %s\n",listAction[ indiceAction ].params[ 0 ],listAction[ indiceAction ].params[ 1 ]);
 			gpioSet ( _management_mcp23017, 'A', atoi ( listAction[ indiceAction ].params[ 0 ] ), atoi ( listAction[ indiceAction ].params[ 1 ] ) );
 			listAction[indiceAction].isDone = 1;
 			break;
