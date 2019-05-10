@@ -14,6 +14,7 @@
 #include "../lib/jsonParser/jsonParser.h"
 #include "../lib/pca9685/pca9685.h"
 #include "../lib/GPIO/gpio.h"
+#include "../lib/mcp23017/mcp23017.h"
 
 static char* _management_listActionEnCours = NULL;
 static ActionFlag *_management_flagAction = NULL;
@@ -260,15 +261,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		case TYPE_GPIO:
 		{
 			//printf("GPIO : %s %s %d\n",listAction[ indiceAction ].params[ 0 ],listAction[ indiceAction ].params[ 1 ],*(_management_mcp23017));
-			if(atoi ( listAction[ indiceAction ].params[ 1 ] ) == 1)
-			{
-				gpioSet ( (0), 'A', atoi ( listAction[ indiceAction ].params[ 0 ] ), 0 );
-			}else
-			{
-				gpioSet ( (0), 'A', atoi ( listAction[ indiceAction ].params[ 0 ] ), 1 );
-			}
-			
-			
+			gpioSet ( _management_mcp23017, 'A', atoi ( listAction[ indiceAction ].params[ 0 ] ), atoi ( listAction[ indiceAction ].params[ 1 ] ) != 1 );
 
 			listAction[indiceAction].isDone = 1;
 			break;
