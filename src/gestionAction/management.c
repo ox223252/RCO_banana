@@ -228,7 +228,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		case TYPE_ATTENTE_DYNA:
 		{ // done
 			//id:param0 value:param1
-			if ( abs ( getPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ] ) ) - atoi ( listAction[ indiceAction ].params[ 1 ] ) ) < 5 )
+			if ( abs ( getPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ] ) ) - atoi ( listAction[ indiceAction ].params[ 1 ] ) ) < 3 )
 			{
 				listAction[indiceAction].isDone = 1;
 			}

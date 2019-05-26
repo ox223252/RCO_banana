@@ -585,6 +585,8 @@ int main ( int argc, char * argv[] )
 	while ( 1 )
 	{
 		calculPosition ( motorBoard, &robot1 );
+		printf("%ld %ld\n",robot1.codeurGauche,robot1.codeurDroit);
+
 		
 		/*logVerbose ( "\e[2K\rVGauche : %.3f VDroite : %.3f\n\e[A",
 					 
@@ -609,6 +611,8 @@ int main ( int argc, char * argv[] )
 		{
 			//requestBoost ( false );
 		}
+
+		/*
 		if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
 		{
 			logVerbose ( "no more action remaining\n" );
@@ -645,7 +649,7 @@ int main ( int argc, char * argv[] )
 		else
 		{
 			
-		}		
+		}	*/	
 		usleep ( 1000*10 );
 	}
 	
