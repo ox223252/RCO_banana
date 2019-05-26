@@ -144,7 +144,8 @@ int main ( int argc, char * argv[] )
 			debug:1,        //             0x20
 			color:1,        //             0x40
 			logTerm:1;      //             0x80
-		uint8_t logFile:1;  // &flag + 1 : 0x10
+		uint8_t logFile:1,  // &flag + 1 : 0x01
+			verbose:1;      //             0x02
 	}
 	flag = { 0 };
 
@@ -156,6 +157,7 @@ int main ( int argc, char * argv[] )
 		{ "--green", 	"-g",	0x01, 	cT ( bool ), ((uint8_t * )&flag), "launch the green prog" },
 		{ "--red", 		"-r",	0x02, 	cT ( bool ), ((uint8_t * )&flag), "launch the red prog" },
 		{ "--q", 		"-q",	0x10, 	cT ( bool ), ((uint8_t * )&flag), "hide all trace point" },
+		{ "--verbose", 	"-v",	0x02, 	cT ( bool ), ((uint8_t * )&flag + 1), "set verbose mode" },
 		{ "--debug", 	"-d",	0x20, 	cT ( bool ), ((uint8_t * )&flag), "display many trace point" },
 		{ "--color", 	"-c",	0x40, 	cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
 		{ "--term", 	"-lT",	0x80, 	cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
@@ -279,6 +281,7 @@ int main ( int argc, char * argv[] )
 		logSetQuiet ( flag.quiet );
 		logSetColor ( flag.color );
 		logSetDebug ( flag.debug );
+		logSetVerbose ( flag.verbose );
 
 		logDebug ( "log File %s\n", flag.logFile ? "true" : "false" );
 		if ( flag.logFile )
@@ -509,17 +512,24 @@ int main ( int argc, char * argv[] )
 			{
 				return ( __LINE__ );
 			}
+			logVerbose ( "\n" );
 
 			if ( setCloseOnExit ( mcp23017Fd ) )
 			{
 				close ( mcp23017Fd );
 				return ( __LINE__ );
 			}
+			logVerbose ( "\n" );
 
-			gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_OUTPUT );
-			gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_OUTPUT );
-			gpioSet ( 0, 'A', 0,1 );
-			gpioSet ( 0, 'A', 1,1 );
+			logVerbose ( "\n" );
+			gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_INPUT );
+			logVerbose ( "\n" );
+			gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_INPUT );
+			logVerbose ( "\n" );
+			//gpioSet ( mcp23017Fd, 'A', 0, 0 );
+			logVerbose ( "\n" );
+			//gpioSet ( mcp23017Fd, 'A', 1, 0 );
+			logVerbose ( "\n" );
 		}
 
 		/*if ( pca9685Addr )
