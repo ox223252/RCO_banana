@@ -1,4 +1,3 @@
-
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -580,6 +579,8 @@ int main ( int argc, char * argv[] )
 	{
 		calculPosition ( motorBoard, &robot1 );
 
+		printf("%ld %ld\n",robot1.codeurGauche,robot1.codeurDroit);
+
 		/*logVerbose ( "\e[2K\rVGauche : %.3f VDroite : %.3f\n\e[A",
 
 					 robot1.vitesseGauche,
@@ -603,6 +604,8 @@ int main ( int argc, char * argv[] )
 		{
 			//requestBoost ( false );
 		}
+
+		/*
 		if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
 		{
 			logVerbose ( "no more action remaining\n" );
@@ -638,8 +641,9 @@ int main ( int argc, char * argv[] )
 		}
 		else
 		{
+			
+		}	*/	
 
-		}
 		usleep ( 1000*10 );
 	}
 
