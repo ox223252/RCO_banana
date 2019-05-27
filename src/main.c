@@ -19,9 +19,11 @@
 #include "lib/Xbox360-wireless/cXbox360.h"
 #include "lib/GPIO/gpio.h"
 #include "lib/mcp23017/mcp23017.h"
+#include "lib/sharedMem/sharedMem.h"
 
 #include "struct/structRobot.h"
 #include "struct/structAction.h"
+#include "struct/structDetection.h"
 
 #include "gestionAction/management.h"
 #include "gestionAction/action.h"
@@ -31,7 +33,6 @@
 #include "deplacement/detectionBlocage.h"
 
 static Robot robot1 = { 0 };
-
 
 enum
 {
@@ -85,6 +86,9 @@ int main ( int argc, char * argv[] )
 	uint32_t globalTime = 0; // global game time
 	char xmlActionPath[ 128 ] = { 0 };
 
+	// shared memory used by lidar to get detection
+	detection_t * detection;
+	uint32_t memKey = 123456;
 
 	// battery management
 	uint32_t readDelay = 5000000;
@@ -183,7 +187,8 @@ int main ( int argc, char * argv[] )
 		{ "--tBoost", 	"-tB",	1, 		cT ( uint32_t ), &tBoost, "maximum delay for boost mode" },
 		{ "--i2cPortName", "-iN", 1, 	cT ( str ), i2cPortName, "i2c port name" },
 		{ "--pcaAddr", 	"-p",	1, 		cT ( uint8_t ), &pca9685Addr, "pca9685 board i2c addr"},
-		{ "--mcpAddr", 	"-m",	1, 		cT ( uint8_t ), &mcp23017Addr, "mcp23017 board i2c addr"},
+		{ "--mcpAddr",	"-m",	1, 		cT ( uint8_t ), &mcp23017Addr, "mcp23017 board i2c addr"},
+		{ "--memKey",	"-k", 	1, 		cT ( uint32_t ), &memKey, "shared memory key" },
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
 
@@ -212,6 +217,7 @@ int main ( int argc, char * argv[] )
 		{ "I2C_PORT_NAME", cT ( str ), i2cPortName, "i2c port name" },
 		{ "PCA9685_ADDR", cT ( uint8_t ), &pca9685Addr, "pca9685 board i2c addr"},
 		{ "MCP23017_ADDR", cT ( uint8_t ), &mcp23017Addr, "mcp23017 board i2c addr"},
+		{ "SHARED_MEM_KEY",	cT ( uint32_t ), &memKey, "shared memory key" },
 		{ NULL, 0, NULL, NULL }
 	};
 
@@ -556,6 +562,12 @@ int main ( int argc, char * argv[] )
 	else
 	{ // engne disabled
 		logVerbose ( " - robotclaw : \e[31m%s\e[0m\n", motorBoadPath );
+	}
+
+	// detection shared memory
+	if ( getSharedMem ( ( void ** ) &detection, sizeof ( *detection ), memKey ) )
+	{
+		return ( __LINE__ );
 	}
 
 	//
