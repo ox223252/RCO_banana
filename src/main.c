@@ -35,8 +35,8 @@ static Robot robot1 = { 0 };
 
 enum
 {
-	MENU_red,
-	MENU_green,
+	MENU_purple,
+	MENU_yellow,
 	MENU_manual,
 	MENU_exit
 };
@@ -120,8 +120,8 @@ int main ( int argc, char * argv[] )
 	moteur = { 0 };
 
 	char *menuItems[] = {
-		"run \e[1;31mRED\e[0m",
-		"run \e[1;32mGREEN\e[0m",
+		"run \e[1;33mYELLOW\e[0m",
+		"run \e[1;35mPURPLE\e[0m",
 		"manual mode",
 		"exit",
 		NULL
@@ -136,15 +136,16 @@ int main ( int argc, char * argv[] )
 
 	struct
 	{
-		uint8_t green:1,    // &flag + 0 : 0x01
-			red:1,          //             0x02
+		uint8_t yellow:1,    // &flag + 0 : 0x01
+			purple:1,          //             0x02
 			un2:1,          //             0x04
 			help:1,         //             0x08
 			quiet:1,        //             0x10
 			debug:1,        //             0x20
 			color:1,        //             0x40
 			logTerm:1;      //             0x80
-		uint8_t logFile:1;  // &flag + 1 : 0x10
+		uint8_t logFile:1,  // &flag + 1 : 0x01
+			verbose:1;      //             0x02
 	}
 	flag = { 0 };
 
@@ -153,9 +154,10 @@ int main ( int argc, char * argv[] )
 	param_el paramList[] =
 	{
 		{ "--help", 	"-h",	0x08, 	cT ( bool ), ((uint8_t * )&flag), "this window" },
-		{ "--green", 	"-g",	0x01, 	cT ( bool ), ((uint8_t * )&flag), "launch the green prog" },
-		{ "--red", 		"-r",	0x02, 	cT ( bool ), ((uint8_t * )&flag), "launch the red prog" },
-		{ "--q", 		"-q",	0x10, 	cT ( bool ), ((uint8_t * )&flag), "hide all trace point" },
+		{ "--yellow", 	"-Y",	0x01, 	cT ( bool ), ((uint8_t * )&flag), "launch the yellow prog" },
+		{ "--purple", 	"-P",	0x02, 	cT ( bool ), ((uint8_t * )&flag), "launch the purple prog" },
+		{ "--quiet", 	"-q",	0x10, 	cT ( bool ), ((uint8_t * )&flag), "hide all trace point" },
+		{ "--verbose", 	"-v",	0x02, 	cT ( bool ), ((uint8_t * )&flag + 1), "set verbose mode" },
 		{ "--debug", 	"-d",	0x20, 	cT ( bool ), ((uint8_t * )&flag), "display many trace point" },
 		{ "--color", 	"-c",	0x40, 	cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
 		{ "--term", 	"-lT",	0x80, 	cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
@@ -279,6 +281,7 @@ int main ( int argc, char * argv[] )
 		logSetQuiet ( flag.quiet );
 		logSetColor ( flag.color );
 		logSetDebug ( flag.debug );
+		logSetVerbose ( flag.verbose );
 
 		logDebug ( "log File %s\n", flag.logFile ? "true" : "false" );
 		if ( flag.logFile )
@@ -318,153 +321,153 @@ int main ( int argc, char * argv[] )
 		initAsservissementVitesse ( speedAsservPG, speedAsservIG, speedAsservDG, maxSpeed, speedAsservPD, speedAsservID, speedAsservDD );
 	}
 
-	while ( !( flag.red ^ flag.green ) )
+	while ( !( flag.yellow ^ flag.purple ) )
 	{ // if no color or both colors set
 		switch ( menu ( 0, menuItems, NULL ) )
 		{
-		case MENU_red:
-		{
-			flag.red = 1;
-			flag.green = 0;
-			break;
-		}
-		case MENU_green:
-		{
-			flag.green = 1;
-			flag.red = 0;
-			break;
-		}
-		case MENU_manual:
-		{ // manual drive of robot zqsd / wasd / UP/LEFT/DOWN/RIGHT
-			switch ( menu ( 0, manualMenuItems, "  >", "   ", NULL ) )
+			case MENU_purple:
 			{
-			case MENU_MANUAL_controller:
+				flag.purple = 1;
+				flag.yellow = 0;
+				break;
+			}
+			case MENU_yellow:
 			{
-				joystick = open ( "/dev/input/js0", O_RDONLY | O_NONBLOCK );
-
-				if ( joystick < 0 )
+				flag.yellow = 1;
+				flag.purple = 0;
+				break;
+			}
+			case MENU_manual:
+			{ // manual drive of robot zqsd / wasd / UP/LEFT/DOWN/RIGHT
+				switch ( menu ( 0, manualMenuItems, "  >", "   ", NULL ) )
 				{
-					logVerbose ( "%s\n", strerror ( errno ) );
-					break;
-				}
-
-				getStatus360 ( joystick, &pad, true );
-				do
+				case MENU_MANUAL_controller:
 				{
-					if ( pad.back )
+					joystick = open ( "/dev/input/js0", O_RDONLY | O_NONBLOCK );
+
+					if ( joystick < 0 )
 					{
+						logVerbose ( "%s\n", strerror ( errno ) );
 						break;
 					}
 
-					envoiOrdreMoteur ( pad.Y1 >> 4, pad.Y2 >> 2, maxSpeed );
-				}
-				while ( getStatus360 ( joystick, &pad, false ) );
+					getStatus360 ( joystick, &pad, true );
+					do
+					{
+						if ( pad.back )
+						{
+							break;
+						}
 
-				close ( joystick );
-				joystick = -1;
-				break;
-			}
-			case MENU_MANUAL_keyboard:
-			{
-				uint8_t continusFlag = 1;
-				do
+						envoiOrdreMoteur ( pad.Y1 >> 4, pad.Y2 >> 2, maxSpeed );
+					}
+					while ( getStatus360 ( joystick, &pad, false ) );
+
+					close ( joystick );
+					joystick = -1;
+					break;
+				}
+				case MENU_MANUAL_keyboard:
 				{
-					printf ( "%4d %4d\r", moteur.left, moteur.right );
-					if ( motorBoard )
+					uint8_t continusFlag = 1;
+					do
 					{
-						envoiOrdreMoteur ( moteur.left * 30, moteur.right * 30, maxSpeed );
-					}
+						printf ( "%4d %4d\r", moteur.left, moteur.right );
+						if ( motorBoard )
+						{
+							envoiOrdreMoteur ( moteur.left * 30, moteur.right * 30, maxSpeed );
+						}
 
-					switch ( getMovePad ( true ) )
-					{
-						case 	KEYCODE_ESCAPE:
+						switch ( getMovePad ( true ) )
 						{
-							moteur.left = 0;
-							moteur.right = 0;
-							continusFlag = 0;
-							break;
-						}
-						case KEYCODE_UP:
-						{
-							if ( moteur.left < maxSpeed )
+							case 	KEYCODE_ESCAPE:
 							{
-								moteur.left += speedStep;
+								moteur.left = 0;
+								moteur.right = 0;
+								continusFlag = 0;
+								break;
 							}
-							if ( moteur.right < maxSpeed )
+							case KEYCODE_UP:
 							{
-								moteur.right += speedStep;
+								if ( moteur.left < maxSpeed )
+								{
+									moteur.left += speedStep;
+								}
+								if ( moteur.right < maxSpeed )
+								{
+									moteur.right += speedStep;
+								}
+								break;
 							}
-							break;
-						}
-						case KEYCODE_LEFT:
-						{
-							if ( moteur.left > -maxSpeed )
+							case KEYCODE_LEFT:
 							{
-								moteur.left -= speedStep / 2;
+								if ( moteur.left > -maxSpeed )
+								{
+									moteur.left -= speedStep / 2;
+								}
+								if ( moteur.right < maxSpeed )
+								{
+									moteur.right += speedStep / 2;
+								}
+								break;
 							}
-							if ( moteur.right < maxSpeed )
+							case KEYCODE_DOWN:
 							{
-								moteur.right += speedStep / 2;
+								if ( moteur.left > -maxSpeed )
+								{
+									moteur.left -= speedStep;
+								}
+								if ( moteur.right > -maxSpeed )
+								{
+									moteur.right -= speedStep;
+								}
+								break;
 							}
-							break;
-						}
-						case KEYCODE_DOWN:
-						{
-							if ( moteur.left > -maxSpeed )
+							case KEYCODE_RIGHT:
 							{
-								moteur.left -= speedStep;
+								if ( moteur.left < maxSpeed )
+								{
+									moteur.left += speedStep / 2;
+								}
+								if ( moteur.right > -maxSpeed )
+								{
+									moteur.right -= speedStep / 2;
+								}
+								break;
 							}
-							if ( moteur.right > -maxSpeed )
+							case KEYCODE_SPACE:
 							{
-								moteur.right -= speedStep;
+								moteur.left = 0;
+								moteur.right = 0;
+								break;
 							}
-							break;
-						}
-						case KEYCODE_RIGHT:
-						{
-							if ( moteur.left < maxSpeed )
+							default:
 							{
-								moteur.left += speedStep / 2;
+								break;
 							}
-							if ( moteur.right > -maxSpeed )
-							{
-								moteur.right -= speedStep / 2;
-							}
-							break;
-						}
-						case KEYCODE_SPACE:
-						{
-							moteur.left = 0;
-							moteur.right = 0;
-							break;
-						}
-						default:
-						{
-							break;
 						}
 					}
+					while ( continusFlag );
+
+					break;
 				}
-				while ( continusFlag );
-
+				default:
+				case MENU_MANUAL_exit:
+				{
+					break;
+				}
+				}
 				break;
 			}
+			case MENU_exit:
 			default:
-			case MENU_MANUAL_exit:
 			{
-				break;
+				return ( __LINE__ );
 			}
-			}
-			break;
-		}
-		case MENU_exit:
-		default:
-		{
-			return ( __LINE__ );
-		}
 		}
 	}
 
-	printf ( "run %s\n", ( flag.red )? "\e[1;31mred\e[0m" : "\e[1;32mgreen\e[0m" );
+	printf ( "run %s\n", ( flag.yellow )? "\e[1;33myellow\e[0m" : "\e[1;35mpurple\e[0m" );
 
 	if ( !flagAction.noArm )
 	{ // arm enabled
@@ -516,13 +519,13 @@ int main ( int argc, char * argv[] )
 				return ( __LINE__ );
 			}
 
-			gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_OUTPUT );
-			gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_OUTPUT );
-			gpioSet ( 0, 'A', 0,1 );
-			gpioSet ( 0, 'A', 1,1 );
+			gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_INPUT );
+			gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_INPUT );
+			gpioSet ( mcp23017Fd, 'A', 0, 0 );
+			gpioSet ( mcp23017Fd, 'A', 1, 0 );
 		}
 
-		/*if ( pca9685Addr )
+		if ( pca9685Addr )
 		{
 			logVerbose ( "   - pca9685 : %d\n", pca9685Addr );
 			if ( openPCA9685 ( i2cPortName, pca9685Addr, &pca9685Fd ) )
@@ -535,9 +538,8 @@ int main ( int argc, char * argv[] )
 				close ( pca9685Fd );
 				return ( __LINE__ );
 			}
-		}*/
+		}
 	}
-
 	else
 	{ // arm disabled
 		logVerbose ( " - dyna : \e[31m%s\e[0m\n", dynamixelsPath );
@@ -555,7 +557,7 @@ int main ( int argc, char * argv[] )
 	{ // engne disabled
 		logVerbose ( " - robotclaw : \e[31m%s\e[0m\n", motorBoadPath );
 	}
-	GPIO_init_gpio();
+
 	//
 	// open actions xml
 	//
@@ -579,33 +581,21 @@ int main ( int argc, char * argv[] )
 	{
 		calculPosition ( motorBoard, &robot1 );		
 
-		/*logVerbose ( "\e[2K\rVGauche : %.3f VDroite : %.3f\n\e[A",
-
+		logVerbose ( "\e[2K\rVGauche : %.3f VDroite : %.3f\n\e[A",
 					 robot1.vitesseGauche,
 					 robot1.vitesseDroite );
-		logVerbose ( "\n" );*/
 
-		/*
-		Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
-		Comme ça, si on a pas d'actions influant sur les moteurs, on arrête la bête.
-		*/
+		// Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
+		// Comme ça, si on a pas d'actions influant sur les moteurs, on arrête la bête.
 
 		robot1.vitesseGaucheToSend = robot1.vitesseGaucheDefault;
 		robot1.vitesseDroiteToSend = robot1.vitesseDroiteDefault;
 
-		if ( ( robot1.vitesseGaucheToSend > 1500 ) &&
-			 ( robot1.vitesseDroiteToSend > 1500 ) )
-		{
-			//requestBoost ( true );
-		}
-		else
-		{
-			//requestBoost ( false );
-		}
+
 		
 		
 		tenirAngle(&robot1);
-		
+
 		if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
 		{
 			logVerbose ( "no more action remaining\n" );
@@ -615,13 +605,13 @@ int main ( int argc, char * argv[] )
 		if ( !flagAction.noDrive &&
 			 ( robot1.blocageVoulu == false ) )
 		{
-			//logVerbose ("BLOCAGE : %d  ", detectBlocage ( &robot1, 100 ) );
+			logVerbose ("BLOCAGE : %d  ", detectBlocage ( &robot1, 100 ) );
 		}
 		//printf("%f %f %f %f %f %f %f\n",robot1.vitesseGauche,robot1.vitesseDroite,
 		//	robot1.xRobot,robot1.yRobot,robot1.orientationRobot,robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend);
 		
 		if ( !flagAction.noDrive &&
-				//asservirVitesseGaucheDroite ( 100, 100, robot1.vitesseGauche, robot1.vitesseDroite ) )
+
 				asservirVitesseGaucheDroite ( robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend, robot1.vitesseGauche, robot1.vitesseDroite ) )
 		{ // error occured
 			logVerbose ( "%s\n ", strerror ( errno ) );
