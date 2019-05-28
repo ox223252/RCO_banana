@@ -105,11 +105,9 @@ int initEngine ( const char * restrict const path,
 int envoiOrdreMoteur ( int16_t left, int16_t right, int16_t limitSpeed )
 {
 	float coefVoltage = 1.0;
-
 	struct timeval now;
 	uint32_t time = 0;
 	int16_t voltage = 0;
-
 	// init speed left and right from limits
 	if ( abs ( left ) > limitSpeed )
 	{
@@ -187,11 +185,10 @@ int envoiOrdreMoteur ( int16_t left, int16_t right, int16_t limitSpeed )
 	{
 		right = 800;
 	}else if(right < -800) right = -800;
-
 	left = ( MAX_SPEED_VALUE * coefVoltage ) * left / 800;
 	right = ( MAX_SPEED_VALUE * coefVoltage ) * right / 800;
-	
-	if ( roboclaw_duty_m1m2 ( _controlMoteur_motorBoard, 0x80, -1*left, -1*right ) != ROBOCLAW_OK )
+
+	if ( roboclaw_duty_m1m2 ( _controlMoteur_motorBoard, 0x80, left, -1*right ) != ROBOCLAW_OK )
 	{
 		return ( __LINE__ );
 	}

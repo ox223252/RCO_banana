@@ -43,14 +43,14 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 	_odometrie_old.angle = robot->orientationRobot;
 
 	// request new ones
-	roboclaw_encoders ( rc, 0x80, &( robot->codeurDroit ), &( robot->codeurGauche ) );
-
+	roboclaw_encoders ( rc, 0x80, &( robot->codeurGauche ), &( robot->codeurDroit ) );
 	// get new date
 	gettimeofday ( &now, NULL );
 
 	// calc moves
 	deltaComptG = robot->codeurGauche - _odometrie_old.left;
 	deltaComptD = robot->codeurDroit - _odometrie_old.right;
+
 	// calc robot angle
 	robot->orientationRobot += ( robot->coeffAngleD * deltaComptD ) - ( robot->coeffAngleG * deltaComptG );
 
@@ -86,8 +86,8 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 	// calc speed
 	if ( tempsEcoule )
 	{
-		robot->vitesseGauche = ( -1*deltaComptG * robot->coeffAngleG ) / tempsEcoule;
-		robot->vitesseDroite = ( -1*deltaComptD * robot->coeffAngleD ) / tempsEcoule;
+		robot->vitesseGauche = ( deltaComptG * robot->coeffAngleG ) / tempsEcoule;
+		robot->vitesseDroite = ( deltaComptD * robot->coeffAngleD ) / tempsEcoule;
 		robot->vitesseAngulaire = dAngle / tempsEcoule;
 	}
 	else
@@ -96,7 +96,6 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 		robot->vitesseDroite = 0.;
 		robot->vitesseAngulaire = 0.;
 	}
-
 	return ( 0 );
 }
 
@@ -112,8 +111,7 @@ int initOdometrie ( struct roboclaw* rc, Robot* robot )
 	robot->vitesseDroiteDefault = 0.;
 	robot->vitesseGauche = 0.;
 	robot->vitesseDroite = 0.;
-
-	if ( roboclaw_encoders ( rc, 0x80, &(robot->codeurDroit), &(robot->codeurGauche) ) != ROBOCLAW_OK )
+	if ( roboclaw_encoders ( rc, 0x80, &(robot->codeurGauche), &(robot->codeurDroit) ) != ROBOCLAW_OK )
 	{
 		errno = ENETUNREACH;
 		return ( __LINE__ );
@@ -125,7 +123,7 @@ int initOdometrie ( struct roboclaw* rc, Robot* robot )
 
 	gettimeofday ( &_odometrie_old.date,  NULL );
 
-	logDebug ( "Init codeurs : %d %d\n", _odometrie_old.left, _odometrie_old.right );
+	logDebug ( "Init codeurs : %d %d\n", robot->codeurGauche, robot->codeurDroit );
 
 	return ( 0 );
 }

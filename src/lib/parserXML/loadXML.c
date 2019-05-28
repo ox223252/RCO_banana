@@ -376,6 +376,22 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 				tabActionTotal[ indiceActionEnCours ].type = TYPE_FIN;
 				logDebug ( "Fin\n" );
 			}
+			else if ( strcmp ( type,"SetValeur" ) == 0 )
+			{
+				tabActionTotal[ indiceActionEnCours ].type = TYPE_SET_VALEUR;
+				tabActionTotal[ indiceActionEnCours ].params = ( char** ) malloc ( 2*sizeof ( char* ) );
+				setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
+
+				tabActionTotal[ indiceActionEnCours ].params[ 0 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "id" ) ) + 1 );
+				setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params[ 0 ] );
+				strcpy(tabActionTotal[ indiceActionEnCours ].params[ 0 ], ( char* ) mxmlElementGetAttr ( nodeBis, "id" ) );
+
+				tabActionTotal[ indiceActionEnCours ].params[ 1 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "value" ) ) + 1 );
+				setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params[ 1 ] );
+				strcpy(tabActionTotal[ indiceActionEnCours ].params[ 1 ], ( char* ) mxmlElementGetAttr ( nodeBis, "value" ) );
+
+				logDebug ( "Valeur : %s, value %s\n",tabActionTotal[ indiceActionEnCours ].params[ 0 ],tabActionTotal[ indiceActionEnCours ].params[ 1 ] );
+			}
 			else
 			{
 				logDebug ( "Type unknown !\n" );
