@@ -1,6 +1,8 @@
 #ifndef __LIDAR_STRUCT_H__
 #define __LIDAR_STRUCT_H__
 
+#define DISTANCE_MIN ((float)200.0)
+
 typedef enum
 {
 	DIR_NONE = 0x00,
