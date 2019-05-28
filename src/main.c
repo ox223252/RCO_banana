@@ -20,6 +20,7 @@
 #include "lib/GPIO/gpio.h"
 #include "lib/mcp23017/mcp23017.h"
 #include "lib/sharedMem/sharedMem.h"
+#include "lib/pca9685/pca9685.h"
 
 #include "struct/structRobot.h"
 #include "struct/structAction.h"
@@ -83,7 +84,6 @@ int main ( int argc, char * argv[] )
 	Xbox360Controller pad = { 0 };
 
 	int16_t maxSpeed = 32767; // motor max speed, ti neved should cross this limit
-	uint32_t globalTime = 0; // global game time
 	char xmlActionPath[ 128 ] = { 0 };
 
 	// shared memory used by lidar to get detection
@@ -176,7 +176,6 @@ int main ( int argc, char * argv[] )
 		{ "--driveDone", NULL,	0x80, 	cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
 		{ "--MaxSpeed", "-Ms",	1, 		cT ( int16_t ), &maxSpeed, "set max speed [ 1 ; 32767 ]" },
 		{ "--xml", 		"-x",	1, 		cT ( str ), xmlActionPath, "xml action file path" },
-		{ "--time", 	"-t",	1, 		cT ( uint32_t ), &globalTime, "game duration in seconds" },
 		{ "--linear_left", "-ll", 1, 	cT ( float ), &robot1.coeffLongG, "linear coef for left wheel" },
 		{ "--linear_right", "-lr", 1, 	cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
 		{ "--angle_left", "-al",1,  	cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
@@ -198,7 +197,6 @@ int main ( int argc, char * argv[] )
 		{ "PATH_MOTOR_BOARD", cT ( str ), motorBoadPath, "PATH to access to dynamixels"},
 		{ "PATH_MOTOR_BOARD_UART_SPEED", cT ( uint32_t ), &motorBoardUartSpeed, "UART speed for robocloaw board" },
 		{ "XML_ACTION_PATH", cT ( str ), xmlActionPath, "xml action file path"},
-		{ "GLOBAL_TIME", cT ( uint32_t ), &globalTime, "game duration in seconds"},
 		{ "COEF_LINEAR_LEFT", cT ( float ), &robot1.coeffLongG, "linear coef for left wheel" },
 		{ "COEF_LINEAR_RIGHT", cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
 		{ "COEF_ANGLE_LEFT", cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
