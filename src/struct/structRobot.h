@@ -2,7 +2,7 @@
 #define __STRUCTROBOT_H__
 
 #include <stdint.h> //uint8_t, int16_t
-
+#include "structDetection.h"
 typedef struct
 {
 	float xCible;
@@ -46,6 +46,10 @@ typedef struct Robot
 	float coeffLongD;
 	float coeffAngleG;
 	float coeffAngleD;
+
+	// shared memory used by lidar to get detection
+	detection_t * detection;
+	uint32_t memKey;
 }
 Robot;
 

@@ -5,6 +5,7 @@
 
 #include <math.h>
 #include <errno.h>
+#include "../lib/sharedMem/sharedMem.h"
 #include <sys/time.h>
 #include <time.h>
 

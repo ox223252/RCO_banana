@@ -22,7 +22,7 @@
 
 #define LOW  0
 #define HIGH 1
-
+int compteurGPIO = 0;
 int GPIOExport(int pin)
 {
 	#define BUFFER_MAX 3
@@ -94,6 +94,7 @@ int GPIORead(int pin)
 	char path[VALUE_MAX];
 	char value_str[3];
 	int fd;
+	int ret = 1;
 
 	snprintf(path, VALUE_MAX, "/sys/class/gpio/gpio%d/value", pin);
 	fd = open(path, O_RDONLY);
@@ -109,9 +110,25 @@ int GPIORead(int pin)
 		return(-1);
 	}
 
-	close(fd);
+	if(atoi(value_str) == 0)
+	{
+		compteurGPIO++;
+	}else
+	{
+		compteurGPIO=0;
+	}
 
-	return(atoi(value_str));
+	if(compteurGPIO == 5)
+	{
+		ret = 0;
+	}else
+	{
+		ret = 1;
+	}
+
+
+	close(fd);
+	return(ret);
 }
 
 int GPIOWrite(int pin, int value)

@@ -21,7 +21,15 @@ void premierAppel ( Robot* robot )
 	premierAppelTenirAngle ( robot );
 	_gestionPosition_distanceCiblePre = pytagor ( dX, dY );
 	robot->orientationVisee = acos ( ( robot->cible.xCible - robot->xRobot ) / _gestionPosition_distanceCiblePre ) * 360. / ( 2. * M_PI );
-
+	printf("Clef : %d \n",robot->memKey);
+	if(robot->cible.sens == 0)
+	{
+		robot->detection->dir = DIR_FORWARD;
+	}else
+	{
+		robot->detection->dir = DIR_BACKWARD;
+	}
+	
 	if ( robot->cible.yCible < robot->yRobot )
 	{
 		robot->orientationVisee = -1. * robot->orientationVisee;
@@ -110,16 +118,25 @@ int calculDeplacement ( Robot* robot )
 			_gestionPosition_pourcentageVitesse = 100;
 		}
 	}
+	printf("Detection : %f\n",robot->detection->distance);
+	if(robot->detection->distance <= 350 && robot->detection->distance >= 180)
+	{
+		robot->vitesseDroiteToSend = 0;
+		robot->vitesseGaucheToSend = 0;
+		razAsserv();
+	}else if(robot->detection->distance <= 550 && robot->detection->distance >= 350)
+	{
+		_gestionPosition_pourcentageVitesse /= 2;
+		
+	}else
+	{
+		robot->vitesseGaucheToSend *= ( _gestionPosition_pourcentageVitesse / 100 );
+		robot->vitesseDroiteToSend *= ( _gestionPosition_pourcentageVitesse / 100 );
+		robot->vitesseDroiteToSend -= 5.0*erreurAngle;
+		robot->vitesseGaucheToSend += 5.0*erreurAngle;
+	}
 	
-	robot->vitesseGaucheToSend *= ( _gestionPosition_pourcentageVitesse / 100 );
-	robot->vitesseDroiteToSend *= ( _gestionPosition_pourcentageVitesse / 100 );
-	robot->vitesseDroiteToSend -= 2.0*erreurAngle;
-	robot->vitesseGaucheToSend += 2.0*erreurAngle;
-	/*printf("distCible : %f, pcvitesse : %f, VG : %f, VD:%f \n",
-		distanceCible,
-		_gestionPosition_pourcentageVitesse,
-		robot->vitesseGaucheToSend,
-		robot->vitesseDroiteToSend);*/
+	
 
 	return 0;
 }

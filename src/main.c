@@ -86,9 +86,7 @@ int main ( int argc, char * argv[] )
 	uint32_t globalTime = 0; // global game time
 	char xmlActionPath[ 128 ] = { 0 };
 
-	// shared memory used by lidar to get detection
-	detection_t * detection;
-	uint32_t memKey = 123456;
+	robot1.memKey = 123456;
 
 	// battery management
 	uint32_t readDelay = 5000000;
@@ -188,7 +186,7 @@ int main ( int argc, char * argv[] )
 		{ "--i2cPortName", "-iN", 1, 	cT ( str ), i2cPortName, "i2c port name" },
 		{ "--pcaAddr", 	"-p",	1, 		cT ( uint8_t ), &pca9685Addr, "pca9685 board i2c addr"},
 		{ "--mcpAddr",	"-m",	1, 		cT ( uint8_t ), &mcp23017Addr, "mcp23017 board i2c addr"},
-		{ "--memKey",	"-k", 	1, 		cT ( uint32_t ), &memKey, "shared memory key" },
+		{ "--memKey",	"-k", 	1, 		cT ( uint32_t ), &(robot1.memKey), "shared memory key" },
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
 
@@ -217,7 +215,7 @@ int main ( int argc, char * argv[] )
 		{ "I2C_PORT_NAME", cT ( str ), i2cPortName, "i2c port name" },
 		{ "PCA9685_ADDR", cT ( uint8_t ), &pca9685Addr, "pca9685 board i2c addr"},
 		{ "MCP23017_ADDR", cT ( uint8_t ), &mcp23017Addr, "mcp23017 board i2c addr"},
-		{ "SHARED_MEM_KEY",	cT ( uint32_t ), &memKey, "shared memory key" },
+		{ "SHARED_MEM_KEY",	cT ( uint32_t ), &(robot1.memKey), "shared memory key" },
 		{ NULL, 0, NULL, NULL }
 	};
 
@@ -565,7 +563,7 @@ int main ( int argc, char * argv[] )
 	}
 
 	// detection shared memory
-	if ( getSharedMem ( ( void ** ) &detection, sizeof ( *detection ), memKey ) )
+	if ( getSharedMem ( ( void ** ) &(robot1.detection), sizeof ( *(robot1.detection) ), robot1.memKey ) )
 	{
 		return ( __LINE__ );
 	}
@@ -589,6 +587,7 @@ int main ( int argc, char * argv[] )
 		tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
 	}
 	razAsserv();
+	GPIO_init_gpio();
 	while ( 1 )
 	{
 		calculPosition ( motorBoard, &robot1 );		
@@ -619,8 +618,11 @@ int main ( int argc, char * argv[] )
 		{
 			logVerbose ("BLOCAGE : %d  ", detectBlocage ( &robot1, 100 ) );
 		}
-		//printf("%f %f %f %f %f %f %f\n",robot1.vitesseGauche,robot1.vitesseDroite,
-		//	robot1.xRobot,robot1.yRobot,robot1.orientationRobot,robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend);
+		/*printf("%f %f %f %f %f %f %f\n",robot1.xRobot,
+			robot1.yRobot,robot1.cible.xCible,
+			robot1.cible.yCible,robot1.orientationRobot,
+			robot1.vitesseGaucheToSend, 
+			robot1.vitesseDroiteToSend);*/
 		
 		if ( !flagAction.noDrive &&
 

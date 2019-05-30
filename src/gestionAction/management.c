@@ -229,7 +229,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		case TYPE_ATTENTE_DYNA:
 		{ // done
 			//id:param0 value:param1
-			if ( abs ( getPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ] ) ) - atoi ( listAction[ indiceAction ].params[ 1 ] ) ) < 3 )
+			if ( abs ( getPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ] ) ) - atoi ( listAction[ indiceAction ].params[ 1 ] ) ) < 5 )
 			{
 				listAction[indiceAction].isDone = 1;
 			}
@@ -272,6 +272,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 			{
 				listAction[indiceAction].isDone = 1;
 			}
+				
 			break;
 		}
 		case TYPE_AND:
@@ -300,6 +301,8 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 				{
 					//Orientation Robot
 					robot->orientationRobot = atoi ( listAction[ indiceAction ].params[ 1 ] );
+					robot->orientationVisee = atoi ( listAction[ indiceAction ].params[ 1 ] );
+
 					listAction[indiceAction].isDone = 1;
 					break;
 				}
