@@ -180,6 +180,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 				robot->vitesseGaucheDefault = 0.;
 				robot->vitesseDroiteDefault = 0.;
 				resetBlocage();
+
 				robot->cible.xCible = atoi ( listAction[ indiceAction ].params[ 0 ] );
 				robot->cible.yCible = atoi ( listAction[ indiceAction ].params[ 1 ] );
 				robot->cible.vitesseMax = atoi ( listAction[ indiceAction ].params[ 2 ] );
@@ -189,7 +190,6 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 				robot->cible.precision = atoi ( listAction[ indiceAction ].params[ 6 ] );
 				robot->cible.distanceFreinage = atoi ( listAction[ indiceAction ].params[ 7 ] );
 				robot->setDetection = atoi ( listAction[ indiceAction ].params[ 8 ] );
-
 				premierAppel ( robot );
 			}
 			else if ( calculDeplacement ( robot )==1 )
@@ -284,6 +284,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		{
 			if(GPIORead(atoi ( listAction[ indiceAction ].params[ 0 ] )) == atoi ( listAction[ indiceAction ].params[ 1 ] ))
 			{
+
 				listAction[indiceAction].isDone = 1;
 			}
 				
@@ -323,6 +324,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 				case 3:
 				{
 					//Vitesse Linéaire
+					exit(0);
 					robot->vitesseGaucheDefault = atoi ( listAction[ indiceAction ].params[ 1 ] );
 					robot->vitesseDroiteDefault = atoi ( listAction[ indiceAction ].params[ 1 ] );
 					listAction[indiceAction].isDone = 1;
@@ -451,7 +453,10 @@ int updateActionEnCours ( Action* listAction, int nbAction, Robot* robot )
 			( ( int )( now.tv_sec * 1000000 + now.tv_usec - listAction[ numAction ].heureCreation ) > ( listAction[ numAction ].timeout * 1000 ) ) )
 		{ // end by timeout
 			logDebug ("Done by timeout %d %d\n", listAction[ numAction ].timeout,  now.tv_sec * 1000000 + now.tv_usec - listAction[ numAction ].heureCreation );
-
+			if(listAction[ numAction ].type == TYPE_POSITION)
+			{
+				_management_newDeplacement = 1;
+			}
 			if ( !listAction[ numAction ].listTimeOut )
 			{ // no timeout list provided
 			}

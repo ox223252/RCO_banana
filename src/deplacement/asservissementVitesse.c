@@ -32,6 +32,11 @@ void initAsservissementVitesse(const float _coeffPG,const float _coeffIG,const f
   _asservissementVitesse_maxSpeed = _maxSpeed;
 }
 
+void arreteTesMoteursSimone()
+{
+  envoiOrdreMoteur ( 0, 0, 0 );
+}
+
 int asservirVitesseGaucheDroite(const int16_t consigneGauche,const int16_t consigneDroite,const int16_t vitesseGauche,const int16_t vitesseDroite)
 {
   int16_t diffErreurGauche;

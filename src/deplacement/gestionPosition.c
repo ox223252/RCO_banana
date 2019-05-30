@@ -18,6 +18,7 @@ double pytagor ( double x, double y );
 
 void premierAppel ( Robot* robot )
 {
+	resetBlocage();
 	premierAppelTenirAngle ( robot );
 	_gestionPosition_distanceCiblePre = pytagor ( dX, dY );
 	robot->orientationVisee = acos ( ( robot->cible.xCible - robot->xRobot ) / _gestionPosition_distanceCiblePre ) * 360. / ( 2. * M_PI );
@@ -39,6 +40,7 @@ void premierAppel ( Robot* robot )
 
 void premierAppelTenirAngle ( Robot* robot )
 {
+	resetBlocage();
 	_gestionPosition_pourcentageVitesse = 0.;
 	gettimeofday ( &_gestionPosition_pre,  NULL );
 	_gestionPosition_erreurAnglePre = minimumErreur2Angles ( robot->orientationRobot,robot->orientationVisee );
@@ -118,8 +120,7 @@ int calculDeplacement ( Robot* robot )
 			_gestionPosition_pourcentageVitesse = 100;
 		}
 	}
-	printf("Detection : %f\n",robot->detection->distance);
-
+	
 	if(robot->setDetection == 1)
 	{
 		if(robot->detection->distance <= 350 && robot->detection->distance >= 180)
