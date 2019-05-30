@@ -6,7 +6,11 @@
 #include <string.h>
 #include <assert.h>
 #include <stdint.h>
-
+#include <netdb.h> 
+#include <sys/types.h> 
+#include <netinet/in.h> 
+#include <sys/socket.h> 
+#include <unistd.h>
 #include "management.h"
 #include "../lib/log/log.h"
 #include "../lib/freeOnExit/freeOnExit.h"
@@ -15,7 +19,7 @@
 #include "../lib/pca9685/pca9685.h"
 #include "../lib/GPIO/gpio.h"
 #include "../lib/mcp23017/mcp23017.h"
-
+#define PORT 12345
 static char* _management_listActionEnCours = NULL;
 static ActionFlag *_management_flagAction = NULL;
 static int8_t _management_newDeplacement = 1;
@@ -33,6 +37,9 @@ void managementAfterAll ( void * arg )
 	jsonFree ( &_management_json, _management_jsonLength );
 }
 #pragma GCC diagnostic pop
+int sockfd;
+struct hostent *he;
+struct sockaddr_in their_addr;
 
 int initAction ( ActionFlag *flag )
 {
@@ -59,7 +66,12 @@ int initAction ( ActionFlag *flag )
 		setExecAfterAllOnExit ( managementAfterAll, NULL );
 
 		sprintf ( _management_listActionEnCours, "0;" );
-
+		he=gethostbyname("192.168.43.47");
+		sockfd = socket(AF_INET, SOCK_STREAM, 0);
+		their_addr.sin_family = AF_INET;      /* host byte order */
+        their_addr.sin_port = htons(PORT);    /* short, network byte order */
+        their_addr.sin_addr = *((struct in_addr *)he->h_addr);
+        bzero(&(their_addr.sin_zero), 8);
 		return ( 0 );
 	}
 	else
@@ -176,6 +188,8 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 				robot->cible.sens = atoi ( listAction[ indiceAction ].params[ 5 ] );
 				robot->cible.precision = atoi ( listAction[ indiceAction ].params[ 6 ] );
 				robot->cible.distanceFreinage = atoi ( listAction[ indiceAction ].params[ 7 ] );
+				robot->setDetection = atoi ( listAction[ indiceAction ].params[ 8 ] );
+
 				premierAppel ( robot );
 			}
 			else if ( calculDeplacement ( robot )==1 )
@@ -270,6 +284,7 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		{
 			if(GPIORead(atoi ( listAction[ indiceAction ].params[ 0 ] )) == atoi ( listAction[ indiceAction ].params[ 1 ] ))
 			{
+				connect(sockfd, (struct sockaddr *)&their_addr,sizeof(struct sockaddr));
 				listAction[indiceAction].isDone = 1;
 			}
 				

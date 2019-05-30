@@ -42,6 +42,8 @@ typedef struct Robot
 
 	float distanceParcourue;
 
+	float setDetection;
+
 	float coeffLongG;
 	float coeffLongD;
 	float coeffAngleG;

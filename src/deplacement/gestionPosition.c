@@ -71,10 +71,10 @@ int calculDeplacement ( Robot* robot )
 	{
 		if(robot->orientationVisee > 0)
 		{
-				robot->orientationVisee-=180.;
+			robot->orientationVisee-=180.;
 		}else
 		{
-				robot->orientationVisee+=180.;
+			robot->orientationVisee+=180.;
 		}
 	}
 
@@ -119,15 +119,25 @@ int calculDeplacement ( Robot* robot )
 		}
 	}
 	printf("Detection : %f\n",robot->detection->distance);
-	if(robot->detection->distance <= 350 && robot->detection->distance >= 180)
+
+	if(robot->setDetection == 1)
 	{
-		robot->vitesseDroiteToSend = 0;
-		robot->vitesseGaucheToSend = 0;
-		razAsserv();
-	}else if(robot->detection->distance <= 550 && robot->detection->distance >= 350)
-	{
-		_gestionPosition_pourcentageVitesse /= 2;
-		
+		if(robot->detection->distance <= 350 && robot->detection->distance >= 180)
+		{
+			robot->vitesseDroiteToSend = 0;
+			robot->vitesseGaucheToSend = 0;
+			razAsserv();
+		}else if(robot->detection->distance <= 550 && robot->detection->distance >= 350)
+		{
+			_gestionPosition_pourcentageVitesse /= 2;
+			
+		}else
+		{
+			robot->vitesseGaucheToSend *= ( _gestionPosition_pourcentageVitesse / 100 );
+			robot->vitesseDroiteToSend *= ( _gestionPosition_pourcentageVitesse / 100 );
+			robot->vitesseDroiteToSend -= 5.0*erreurAngle;
+			robot->vitesseGaucheToSend += 5.0*erreurAngle;
+		}
 	}else
 	{
 		robot->vitesseGaucheToSend *= ( _gestionPosition_pourcentageVitesse / 100 );
@@ -135,6 +145,7 @@ int calculDeplacement ( Robot* robot )
 		robot->vitesseDroiteToSend -= 5.0*erreurAngle;
 		robot->vitesseGaucheToSend += 5.0*erreurAngle;
 	}
+	
 	
 	
 
@@ -203,29 +214,29 @@ static float minimumErreur2Angles ( float angle1, float angle2 )
 	erreur4 = complementAngle1 - complementAngle2;
 
 	if ( ( fabs ( erreur1 ) <= fabs ( erreur2 ) ) &&
-	( fabs ( erreur1 ) <= fabs ( erreur3 ) ) &&
-	( fabs ( erreur1 ) <= fabs ( erreur4 ) ) )
+		( fabs ( erreur1 ) <= fabs ( erreur3 ) ) &&
+		( fabs ( erreur1 ) <= fabs ( erreur4 ) ) )
 	{
 		returnValue = erreur1;
 	}
 
 	if ( ( fabs ( erreur2 ) <= fabs ( erreur1 ) ) &&
-	( fabs ( erreur2 ) <= fabs ( erreur3 ) ) &&
-	( fabs ( erreur2 ) <= fabs ( erreur4 ) ) )
+		( fabs ( erreur2 ) <= fabs ( erreur3 ) ) &&
+		( fabs ( erreur2 ) <= fabs ( erreur4 ) ) )
 	{
 		returnValue = erreur2;
 	}
 
 	if ( ( fabs ( erreur3 ) <= fabs ( erreur1 ) ) &&
-	( fabs ( erreur3 ) <= fabs ( erreur2 ) ) &&
-	( fabs ( erreur3 ) <= fabs ( erreur4 ) ) )
+		( fabs ( erreur3 ) <= fabs ( erreur2 ) ) &&
+		( fabs ( erreur3 ) <= fabs ( erreur4 ) ) )
 	{
 		returnValue = erreur3;
 	}
 
 	if ( ( fabs ( erreur4 ) <= fabs ( erreur1 ) ) &&
-	( fabs ( erreur4 ) <= fabs ( erreur2 ) ) &&
-	( fabs ( erreur4 ) <= fabs ( erreur3 ) ) )
+		( fabs ( erreur4 ) <= fabs ( erreur2 ) ) &&
+		( fabs ( erreur4 ) <= fabs ( erreur3 ) ) )
 	{
 		returnValue = erreur4;
 	}

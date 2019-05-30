@@ -176,7 +176,7 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 			else if ( strcmp ( type,"position" ) == 0 )
 			{
 				tabActionTotal[ indiceActionEnCours ].type = TYPE_POSITION;
-				tabActionTotal[ indiceActionEnCours ].params = malloc ( 8 * sizeof ( char* ) );
+				tabActionTotal[ indiceActionEnCours ].params = malloc ( 9 * sizeof ( char* ) );
 				setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params );
 
 				tabActionTotal[ indiceActionEnCours ].params[ 0 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "x" ) ) + 1 );
@@ -210,6 +210,10 @@ Action* ouvrirXML ( int * nbAction, const char * restrict file )
 				tabActionTotal[ indiceActionEnCours ].params[ 7 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "distFreinage" ) ) + 1 );
 				setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params[ 7 ] );
 				strcpy(tabActionTotal[ indiceActionEnCours ].params[ 7 ], ( char* ) mxmlElementGetAttr ( nodeBis, "distFreinage" ) );
+
+				tabActionTotal[ indiceActionEnCours ].params[ 8 ] = malloc ( strlen ( mxmlElementGetAttr ( nodeBis, "detection" ) ) + 1 );
+				setFreeOnExit ( tabActionTotal[ indiceActionEnCours ].params[ 8 ] );
+				strcpy(tabActionTotal[ indiceActionEnCours ].params[ 8 ], ( char* ) mxmlElementGetAttr ( nodeBis, "detection" ) );
 
 				logDebug ( "Position x: %s y: %s vitesse: %s acc: %s dec: %s sens: %s preci: %s distanceFreinage %s\n",
 					tabActionTotal[ indiceActionEnCours ].params[ 0 ],tabActionTotal[ indiceActionEnCours ].params[ 1 ],
