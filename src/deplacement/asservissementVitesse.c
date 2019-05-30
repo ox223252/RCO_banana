@@ -40,7 +40,6 @@ int asservirVitesseGaucheDroite(const int16_t consigneGauche,const int16_t consi
   int16_t vitesseDToSend = 0;
   int16_t erreurGauche = consigneGauche - vitesseGauche;
   int16_t erreurDroite = consigneDroite - vitesseDroite;
-
   if(_asservissementVitesse_erreurPreGauche != -1000 &&
      _asservissementVitesse_erreurPreDroite != -1000)
   {
@@ -66,6 +65,6 @@ int asservirVitesseGaucheDroite(const int16_t consigneGauche,const int16_t consi
                     _asservissementVitesse_coeffID * _asservissementVitesse_sommeErreurDroite +
                     _asservissementVitesse_coeffDD * diffErreurDroite;
 
-  
+
   return envoiOrdreMoteur ( vitesseGToSend, vitesseDToSend, _asservissementVitesse_maxSpeed );
 }

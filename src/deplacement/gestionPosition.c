@@ -113,8 +113,8 @@ int calculDeplacement ( Robot* robot )
 	
 	robot->vitesseGaucheToSend *= ( _gestionPosition_pourcentageVitesse / 100 );
 	robot->vitesseDroiteToSend *= ( _gestionPosition_pourcentageVitesse / 100 );
-	robot->vitesseDroiteToSend += 1.5*erreurAngle;
-	robot->vitesseGaucheToSend -= 1.5*erreurAngle;
+	robot->vitesseDroiteToSend -= 2.0*erreurAngle;
+	robot->vitesseGaucheToSend += 2.0*erreurAngle;
 	/*printf("distCible : %f, pcvitesse : %f, VG : %f, VD:%f \n",
 		distanceCible,
 		_gestionPosition_pourcentageVitesse,
@@ -150,8 +150,8 @@ int tenirAngle ( Robot* robot )
 //	_gestionPosition_tempsEcoule = ( _gestionPosition_now. tv_sec * 1000000 + _gestionPosition_now. tv_usec ) - ( _gestionPosition_pre. tv_sec * 1000000 + _gestionPosition_pre. tv_usec );
 
 
-	robot->vitesseDroiteToSend = +1.5*erreurAngle;
-	robot->vitesseGaucheToSend = -1.5*erreurAngle;
+	robot->vitesseDroiteToSend = -2.0*erreurAngle;
+	robot->vitesseGaucheToSend = +2.0*erreurAngle;
 
 	return 0;
 }

@@ -591,12 +591,10 @@ int main ( int argc, char * argv[] )
 	{
 		tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
 	}
-
+	razAsserv();
 	while ( 1 )
 	{
-		calculPosition ( motorBoard, &robot1 );
-
-		printf("%ld %ld\n",robot1.codeurGauche,robot1.codeurDroit);
+		calculPosition ( motorBoard, &robot1 );		
 
 		logVerbose ( "\e[2K\rVGauche : %.3f VDroite : %.3f\n\e[A",
 					 robot1.vitesseGauche,
@@ -608,12 +606,14 @@ int main ( int argc, char * argv[] )
 		robot1.vitesseGaucheToSend = robot1.vitesseGaucheDefault;
 		robot1.vitesseDroiteToSend = robot1.vitesseDroiteDefault;
 
+
+		
+		
+		tenirAngle(&robot1);
+
 		if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
 		{
 			logVerbose ( "no more action remaining\n" );
-			robot1.vitesseGaucheToSend = 0;
-			robot1.vitesseDroiteToSend = 0;
-
 			break;
 		}
 
@@ -622,8 +622,11 @@ int main ( int argc, char * argv[] )
 		{
 			logVerbose ("BLOCAGE : %d  ", detectBlocage ( &robot1, 100 ) );
 		}
-
+		//printf("%f %f %f %f %f %f %f\n",robot1.vitesseGauche,robot1.vitesseDroite,
+		//	robot1.xRobot,robot1.yRobot,robot1.orientationRobot,robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend);
+		
 		if ( !flagAction.noDrive &&
+
 				asservirVitesseGaucheDroite ( robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend, robot1.vitesseGauche, robot1.vitesseDroite ) )
 		{ // error occured
 			logVerbose ( "%s\n ", strerror ( errno ) );
