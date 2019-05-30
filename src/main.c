@@ -489,7 +489,7 @@ int main ( int argc, char * argv[] )
 			logVerbose ( " - dyna : %s\n", dynamixelsPath );
 			logVerbose ( "   - Device Name : %s\n", dynamixelsPath );
 
-			logVerbose ( " Baudrate : %d \n", dynamixelUartSpeed );
+			logVerbose ( "   - Baudrate : %d \n", dynamixelUartSpeed );
 			setPortNum ( dynaPortNum );
 			if ( !setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
 			{
@@ -511,24 +511,29 @@ int main ( int argc, char * argv[] )
 			setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
 		}
 
+		printf ( "fuck %d\n", mcp23017Addr );
 		if ( mcp23017Addr )
 		{
 			logVerbose ( "   - mcp23017 : %d\n", mcp23017Addr );
-			if ( openMCP23017 ( i2cPortName, mcp23017Addr, &mcp23017Fd ) )
+			int err = 0;
+			if ( err = openMCP23017 ( i2cPortName, mcp23017Addr, &mcp23017Fd ), err )
 			{
+				logVerbose ( "   - error : %d\n", err );
+				logVerbose ( "%s\n", strerror ( errno ) );
 				return ( __LINE__ );
 			}
 
 			if ( setCloseOnExit ( mcp23017Fd ) )
 			{
+				logVerbose ( "%s\n", strerror ( errno ) );
 				close ( mcp23017Fd );
 				return ( __LINE__ );
 			}
 
-			gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_INPUT );
-			gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_INPUT );
-			gpioSet ( mcp23017Fd, 'A', 0, 0 );
-			gpioSet ( mcp23017Fd, 'A', 1, 0 );
+			gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_OUTPUT );
+			gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_OUTPUT );
+			gpioSet ( mcp23017Fd, 'A', 0, 1 );
+			gpioSet ( mcp23017Fd, 'A', 1, 1 );
 		}
 
 		if ( pca9685Addr )
