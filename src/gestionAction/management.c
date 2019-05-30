@@ -284,7 +284,6 @@ void gestionAction ( Action* listAction, Robot* robot, int indiceAction )
 		{
 			if(GPIORead(atoi ( listAction[ indiceAction ].params[ 0 ] )) == atoi ( listAction[ indiceAction ].params[ 1 ] ))
 			{
-				connect(sockfd, (struct sockaddr *)&their_addr,sizeof(struct sockaddr));
 				listAction[indiceAction].isDone = 1;
 			}
 				
