@@ -10,24 +10,27 @@ PATH_DYNA=/dev/ttyACM1
 PATH_MOTOR_BOARD=/dev/ttyACM0
 PATH_MOTOR_BOARD_UART_SPEED=115200
 
+# I2C interface where chip are plugged
+I2C_PORT_NAME=/dev/i2c-1
+
 # PCA9685 address
 # default 64
 PCA9695_ADDR=0
 
+# addr of MCP23017 GPIO expander module
+# set to 0 to deactivate
+# default value (0x20)
+MCP23017_ADDR=32
+
 # XML file path
 # xml file used to define strategy
-XML_INIT_PATH=res/temp.xml
 XML_ACTION_PATH=res/temp.xml
 
-# game duration
-# default 99 (max - 1)
-GLOBAL_TIME=100
-
 # odometrie coef
-COEF_LINEAR_LEFT=0.0489441484
-COEF_LINEAR_RIGHT=-0.0489296636
-COEF_ANGLE_LEFT=0.0108754758
-COEF_ANGLE_RIGHT=-0.0108584183
+COEF_LINEAR_RIGHT=-0.033550613
+COEF_LINEAR_LEFT=0.034084823
+COEF_ANGLE_LEFT=-0.006445269
+COEF_ANGLE_RIGHT=0.006344253
 
 # battery control
 # delay min between two read of battery delay during engin control (µs)
@@ -36,15 +39,17 @@ BATTERY_DELAY=5000000
 VOLATGE_MAX=12.0
 # minimum voltage that should provide systeme too engine (V)
 VOLATGE_MIN=10.0
-
+# maximum volatge that boost request should provide to engine (V)
 BOOST_VOLTAGE=14.0
+# maximum delay of boost request
 BOOST_TIME=1000000
 
-COEFF_PG_VITESSE=2.0
-COEFF_IG_VITESSE=0.01
+COEFF_PG_VITESSE=6.0
+COEFF_IG_VITESSE=0.1
 COEFF_DG_VITESSE=0.
-COEFF_PD_VITESSE=2.0
-COEFF_ID_VITESSE=0.01
+COEFF_PD_VITESSE=6.0
+COEFF_ID_VITESSE=0.1
 COEFF_DD_VITESSE=0.
 
+# shared memory key used to communicate with detection swoftware
 SHARED_MEM_KEY=356698410
