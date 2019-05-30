@@ -148,79 +148,79 @@ int main ( int argc, char * argv[] )
 			logTerm:1;      //             0x80
 		uint8_t logFile:1,  // &flag + 1 : 0x01
 			verbose:1;      //             0x02
-	}
-	flag = { 0 };
+		}
+		flag = { 0 };
 
-	ActionFlag flagAction = { 0 };
+		ActionFlag flagAction = { 0 };
 
-	param_el paramList[] =
-	{
-		{ "--help", 	"-h",	0x08, 	cT ( bool ), ((uint8_t * )&flag), "this window" },
-		{ "--yellow", 	"-Y",	0x01, 	cT ( bool ), ((uint8_t * )&flag), "launch the yellow prog" },
-		{ "--purple", 	"-P",	0x02, 	cT ( bool ), ((uint8_t * )&flag), "launch the purple prog" },
-		{ "--quiet", 	"-q",	0x10, 	cT ( bool ), ((uint8_t * )&flag), "hide all trace point" },
-		{ "--verbose", 	"-v",	0x02, 	cT ( bool ), ((uint8_t * )&flag + 1), "set verbose mode" },
-		{ "--debug", 	"-d",	0x20, 	cT ( bool ), ((uint8_t * )&flag), "display many trace point" },
-		{ "--color", 	"-c",	0x40, 	cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
-		{ "--term", 	"-lT",	0x80, 	cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
-		{ "--file", 	"-lF",	0x01, 	cT ( bool ), ((uint8_t * )&flag + 1), "add color to debug traces" },
-		{ "--noArm", 	"-nA",	0x01, 	cT ( bool ), ((uint8_t * )&flagAction), "use it to disable servo motor" },
-		{ "--armWait", 	NULL,	0x02, 	cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
-		{ "--armScan", 	NULL,	0x04, 	cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
-		{ "--armDone", 	NULL,	0x08, 	cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
-		{ "--noDrive", 	"-nD",	0x10, 	cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
-		{ "--driveWait", NULL,	0x20, 	cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
-		{ "--driveScan", NULL,	0x40, 	cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
-		{ "--driveDone", NULL,	0x80, 	cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
-		{ "--MaxSpeed", "-Ms",	1, 		cT ( int16_t ), &maxSpeed, "set max speed [ 1 ; 32767 ]" },
-		{ "--xml", 		"-x",	1, 		cT ( str ), xmlActionPath, "xml action file path" },
-		{ "--linear_left", "-ll", 1, 	cT ( float ), &robot1.coeffLongG, "linear coef for left wheel" },
-		{ "--linear_right", "-lr", 1, 	cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
-		{ "--angle_left", "-al",1,  	cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
-		{ "--angle_right", "-ar", 1, 	cT ( float ), &robot1.coeffAngleD, "angular coef for right wheel" },
-		{ "--Vmax", 	"-vM",	1, 		cT ( float ), &Vmax, "maximum voltage that should provide systeme to engine" },
-		{ "--Vmin", 	"-vm",	1, 		cT ( float ), &Vmin, "minimum voltage that should provide systeme to engine" },
-		{ "--Vboost", 	"-vB",	1, 		cT ( float ), &Vboost, "maximum voltage that should provide systeme to engine during boost mode" },
-		{ "--tBoost", 	"-tB",	1, 		cT ( uint32_t ), &tBoost, "maximum delay for boost mode" },
-		{ "--i2cPortName", "-iN", 1, 	cT ( str ), i2cPortName, "i2c port name" },
-		{ "--pcaAddr", 	"-p",	1, 		cT ( uint8_t ), &pca9685Addr, "pca9685 board i2c addr"},
-		{ "--mcpAddr",	"-m",	1, 		cT ( uint8_t ), &mcp23017Addr, "mcp23017 board i2c addr"},
-		{ "--memKey",	"-k", 	1, 		cT ( uint32_t ), &(robot1.memKey), "shared memory key" },
-		{ NULL, NULL, 0, 0, NULL, NULL }
-	};
+		param_el paramList[] =
+		{
+			{ "--help", 	"-h",	0x08, 	cT ( bool ), ((uint8_t * )&flag), "this window" },
+			{ "--yellow", 	"-Y",	0x01, 	cT ( bool ), ((uint8_t * )&flag), "launch the yellow prog" },
+			{ "--purple", 	"-P",	0x02, 	cT ( bool ), ((uint8_t * )&flag), "launch the purple prog" },
+			{ "--quiet", 	"-q",	0x10, 	cT ( bool ), ((uint8_t * )&flag), "hide all trace point" },
+			{ "--verbose", 	"-v",	0x02, 	cT ( bool ), ((uint8_t * )&flag + 1), "set verbose mode" },
+			{ "--debug", 	"-d",	0x20, 	cT ( bool ), ((uint8_t * )&flag), "display many trace point" },
+			{ "--color", 	"-c",	0x40, 	cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
+			{ "--term", 	"-lT",	0x80, 	cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
+			{ "--file", 	"-lF",	0x01, 	cT ( bool ), ((uint8_t * )&flag + 1), "add color to debug traces" },
+			{ "--noArm", 	"-nA",	0x01, 	cT ( bool ), ((uint8_t * )&flagAction), "use it to disable servo motor" },
+			{ "--armWait", 	NULL,	0x02, 	cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
+			{ "--armScan", 	NULL,	0x04, 	cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
+			{ "--armDone", 	NULL,	0x08, 	cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
+			{ "--noDrive", 	"-nD",	0x10, 	cT ( bool ), ((uint8_t * )&flagAction), "use it to disable drive power" },
+			{ "--driveWait", NULL,	0x20, 	cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
+			{ "--driveScan", NULL,	0x40, 	cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
+			{ "--driveDone", NULL,	0x80, 	cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
+			{ "--MaxSpeed", "-Ms",	1, 		cT ( int16_t ), &maxSpeed, "set max speed [ 1 ; 32767 ]" },
+			{ "--xml", 		"-x",	1, 		cT ( str ), xmlActionPath, "xml action file path" },
+			{ "--linear_left", "-ll", 1, 	cT ( float ), &robot1.coeffLongG, "linear coef for left wheel" },
+			{ "--linear_right", "-lr", 1, 	cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
+			{ "--angle_left", "-al",1,  	cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
+			{ "--angle_right", "-ar", 1, 	cT ( float ), &robot1.coeffAngleD, "angular coef for right wheel" },
+			{ "--Vmax", 	"-vM",	1, 		cT ( float ), &Vmax, "maximum voltage that should provide systeme to engine" },
+			{ "--Vmin", 	"-vm",	1, 		cT ( float ), &Vmin, "minimum voltage that should provide systeme to engine" },
+			{ "--Vboost", 	"-vB",	1, 		cT ( float ), &Vboost, "maximum voltage that should provide systeme to engine during boost mode" },
+			{ "--tBoost", 	"-tB",	1, 		cT ( uint32_t ), &tBoost, "maximum delay for boost mode" },
+			{ "--i2cPortName", "-iN", 1, 	cT ( str ), i2cPortName, "i2c port name" },
+			{ "--pcaAddr", 	"-p",	1, 		cT ( uint8_t ), &pca9685Addr, "pca9685 board i2c addr"},
+			{ "--mcpAddr",	"-m",	1, 		cT ( uint8_t ), &mcp23017Addr, "mcp23017 board i2c addr"},
+			{ "--memKey",	"-k", 	1, 		cT ( uint32_t ), &(robot1.memKey), "shared memory key" },
+			{ NULL, NULL, 0, 0, NULL, NULL }
+		};
 
-	config_el configList[] =
-	{
-		{ "PATH_DYNA", cT ( str ), dynamixelsPath, "PATH to access to dynamixels"},
-		{ "PATH_MOTOR_BOARD", cT ( str ), motorBoadPath, "PATH to access to dynamixels"},
-		{ "PATH_MOTOR_BOARD_UART_SPEED", cT ( uint32_t ), &motorBoardUartSpeed, "UART speed for robocloaw board" },
-		{ "XML_ACTION_PATH", cT ( str ), xmlActionPath, "xml action file path"},
-		{ "COEF_LINEAR_LEFT", cT ( float ), &robot1.coeffLongG, "linear coef for left wheel" },
-		{ "COEF_LINEAR_RIGHT", cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
-		{ "COEF_ANGLE_LEFT", cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
-		{ "COEF_ANGLE_RIGHT", cT ( float ), &robot1.coeffAngleD, "angular coef for right wheel" },
-		{ "BATTERY_DELAY", cT ( uint32_t ), &readDelay, "delay min between two read of battery delay during engin control" },
-		{ "VOLATGE_MAX", cT ( float ), &Vmax, "maximum voltage that should provide systeme too engine" },
-		{ "VOLATGE_MIN", cT ( float ), &Vmin, "minimum voltage that should provide systeme too engine" },
-		{ "BOOST_VOLTAGE", cT ( float ), &Vboost, "maximum voltage that should provide systeme to engine during boost mode" },
-		{ "BOOST_TIME", cT ( uint32_t ), &tBoost, "maximum delay for boost mode" },
-		{ "COEFF_PG_VITESSE", cT ( float ), &speedAsservPG, "G proportionnel coefficient for speed asservissment" },
-		{ "COEFF_IG_VITESSE", cT ( float ), &speedAsservIG, "G Integral coefficient for speed asservissment" },
-		{ "COEFF_DG_VITESSE", cT ( float ), &speedAsservDG, "G derivative coefficient for speed asservissment" },
-		{ "COEFF_PD_VITESSE", cT ( float ), &speedAsservPD, "D proportionnel coefficient for speed asservissment" },
-		{ "COEFF_ID_VITESSE", cT ( float ), &speedAsservID, "D Integral coefficient for speed asservissment" },
-		{ "COEFF_DD_VITESSE", cT ( float ), &speedAsservDD, "D derivative coefficient for speed asservissment" },
-		{ "I2C_PORT_NAME", cT ( str ), i2cPortName, "i2c port name" },
-		{ "PCA9685_ADDR", cT ( uint8_t ), &pca9685Addr, "pca9685 board i2c addr"},
-		{ "MCP23017_ADDR", cT ( uint8_t ), &mcp23017Addr, "mcp23017 board i2c addr"},
-		{ "SHARED_MEM_KEY",	cT ( uint32_t ), &(robot1.memKey), "shared memory key" },
-		{ NULL, 0, NULL, NULL }
-	};
+		config_el configList[] =
+		{
+			{ "PATH_DYNA", cT ( str ), dynamixelsPath, "PATH to access to dynamixels"},
+			{ "PATH_MOTOR_BOARD", cT ( str ), motorBoadPath, "PATH to access to dynamixels"},
+			{ "PATH_MOTOR_BOARD_UART_SPEED", cT ( uint32_t ), &motorBoardUartSpeed, "UART speed for robocloaw board" },
+			{ "XML_ACTION_PATH", cT ( str ), xmlActionPath, "xml action file path"},
+			{ "COEF_LINEAR_LEFT", cT ( float ), &robot1.coeffLongG, "linear coef for left wheel" },
+			{ "COEF_LINEAR_RIGHT", cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
+			{ "COEF_ANGLE_LEFT", cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
+			{ "COEF_ANGLE_RIGHT", cT ( float ), &robot1.coeffAngleD, "angular coef for right wheel" },
+			{ "BATTERY_DELAY", cT ( uint32_t ), &readDelay, "delay min between two read of battery delay during engin control" },
+			{ "VOLATGE_MAX", cT ( float ), &Vmax, "maximum voltage that should provide systeme too engine" },
+			{ "VOLATGE_MIN", cT ( float ), &Vmin, "minimum voltage that should provide systeme too engine" },
+			{ "BOOST_VOLTAGE", cT ( float ), &Vboost, "maximum voltage that should provide systeme to engine during boost mode" },
+			{ "BOOST_TIME", cT ( uint32_t ), &tBoost, "maximum delay for boost mode" },
+			{ "COEFF_PG_VITESSE", cT ( float ), &speedAsservPG, "G proportionnel coefficient for speed asservissment" },
+			{ "COEFF_IG_VITESSE", cT ( float ), &speedAsservIG, "G Integral coefficient for speed asservissment" },
+			{ "COEFF_DG_VITESSE", cT ( float ), &speedAsservDG, "G derivative coefficient for speed asservissment" },
+			{ "COEFF_PD_VITESSE", cT ( float ), &speedAsservPD, "D proportionnel coefficient for speed asservissment" },
+			{ "COEFF_ID_VITESSE", cT ( float ), &speedAsservID, "D Integral coefficient for speed asservissment" },
+			{ "COEFF_DD_VITESSE", cT ( float ), &speedAsservDD, "D derivative coefficient for speed asservissment" },
+			{ "I2C_PORT_NAME", cT ( str ), i2cPortName, "i2c port name" },
+			{ "PCA9685_ADDR", cT ( uint8_t ), &pca9685Addr, "pca9685 board i2c addr"},
+			{ "MCP23017_ADDR", cT ( uint8_t ), &mcp23017Addr, "mcp23017 board i2c addr"},
+			{ "SHARED_MEM_KEY",	cT ( uint32_t ), &(robot1.memKey), "shared memory key" },
+			{ NULL, 0, NULL, NULL }
+		};
 
 	// manage ending signals
-	signalHandling signal =
-	{
-		.flag = {
+		signalHandling signal =
+		{
+			.flag = {
 			.Int = 1, //ctrl+C
 			.Term = 1, // kill
 		},
@@ -263,8 +263,8 @@ int main ( int argc, char * argv[] )
 	}
 
 	if ( readConfigFile ( "res/config.rco", configList ) ||
-		 readConfigArgs ( argc, argv, configList ) ||
-		 readParamArgs ( argc, argv, paramList ) )
+		readConfigArgs ( argc, argv, configList ) ||
+		readParamArgs ( argc, argv, paramList ) )
 	{
 		printf ( "no config file\n" );
 		return ( __LINE__ );
@@ -306,24 +306,24 @@ int main ( int argc, char * argv[] )
 
 	if ( !flagAction.noDrive )
 	{ // if engine wasn't disabled
-		robot1.blocageVoulu = false;
-		initDetectionBlocage();
+robot1.blocageVoulu = false;
+initDetectionBlocage();
 		// init motor
-		if ( initEngine ( motorBoadPath, motorBoardUartSpeed, Vmax, Vmin, readDelay, &motorBoard ) )
-		{
-			logVerbose ( "can't open robo claw bus at %s\n", motorBoadPath );
-			logVerbose ( "%s\n", strerror ( errno ) );
-			return ( __LINE__ );
-		}
+if ( initEngine ( motorBoadPath, motorBoardUartSpeed, Vmax, Vmin, readDelay, &motorBoard ) )
+{
+	logVerbose ( "can't open robo claw bus at %s\n", motorBoadPath );
+	logVerbose ( "%s\n", strerror ( errno ) );
+	return ( __LINE__ );
+}
 
-		initBoost ( Vboost, tBoost );
+initBoost ( Vboost, tBoost );
 
-		initOdometrie ( motorBoard, &robot1 );
+initOdometrie ( motorBoard, &robot1 );
 
-		initAsservissementVitesse ( speedAsservPG, speedAsservIG, speedAsservDG, maxSpeed, speedAsservPD, speedAsservID, speedAsservDD );
-	}
+initAsservissementVitesse ( speedAsservPG, speedAsservIG, speedAsservDG, maxSpeed, speedAsservPD, speedAsservID, speedAsservDD );
+}
 
-	while ( !( flag.yellow ^ flag.purple ) )
+while ( !( flag.yellow ^ flag.purple ) )
 	{ // if no color or both colors set
 		switch ( menu ( 0, menuItems, NULL ) )
 		{
@@ -343,121 +343,121 @@ int main ( int argc, char * argv[] )
 			{ // manual drive of robot zqsd / wasd / UP/LEFT/DOWN/RIGHT
 				switch ( menu ( 0, manualMenuItems, "  >", "   ", NULL ) )
 				{
-				case MENU_MANUAL_controller:
-				{
-					joystick = open ( "/dev/input/js0", O_RDONLY | O_NONBLOCK );
-
-					if ( joystick < 0 )
+					case MENU_MANUAL_controller:
 					{
-						logVerbose ( "%s\n", strerror ( errno ) );
-						break;
-					}
+						joystick = open ( "/dev/input/js0", O_RDONLY | O_NONBLOCK );
 
-					getStatus360 ( joystick, &pad, true );
-					do
-					{
-						if ( pad.back )
+						if ( joystick < 0 )
 						{
+							logVerbose ( "%s\n", strerror ( errno ) );
 							break;
 						}
 
-						envoiOrdreMoteur ( pad.Y1 >> 4, pad.Y2 >> 2, maxSpeed );
-					}
-					while ( getStatus360 ( joystick, &pad, false ) );
+						getStatus360 ( joystick, &pad, true );
+						do
+						{
+							if ( pad.back )
+							{
+								break;
+							}
 
-					close ( joystick );
-					joystick = -1;
-					break;
-				}
-				case MENU_MANUAL_keyboard:
-				{
-					uint8_t continusFlag = 1;
-					do
+							envoiOrdreMoteur ( pad.Y1 >> 4, pad.Y2 >> 2, maxSpeed );
+						}
+						while ( getStatus360 ( joystick, &pad, false ) );
+
+						close ( joystick );
+						joystick = -1;
+						break;
+					}
+					case MENU_MANUAL_keyboard:
 					{
-						printf ( "%4d %4d\r", moteur.left, moteur.right );
-						if ( motorBoard )
+						uint8_t continusFlag = 1;
+						do
 						{
-							envoiOrdreMoteur ( moteur.left * 30, moteur.right * 30, maxSpeed );
-						}
+							printf ( "%4d %4d\r", moteur.left, moteur.right );
+							if ( motorBoard )
+							{
+								envoiOrdreMoteur ( moteur.left * 30, moteur.right * 30, maxSpeed );
+							}
 
-						switch ( getMovePad ( true ) )
-						{
-							case 	KEYCODE_ESCAPE:
+							switch ( getMovePad ( true ) )
 							{
-								moteur.left = 0;
-								moteur.right = 0;
-								continusFlag = 0;
-								break;
-							}
-							case KEYCODE_UP:
-							{
-								if ( moteur.left < maxSpeed )
+								case 	KEYCODE_ESCAPE:
 								{
-									moteur.left += speedStep;
+									moteur.left = 0;
+									moteur.right = 0;
+									continusFlag = 0;
+									break;
 								}
-								if ( moteur.right < maxSpeed )
+								case KEYCODE_UP:
 								{
-									moteur.right += speedStep;
+									if ( moteur.left < maxSpeed )
+									{
+										moteur.left += speedStep;
+									}
+									if ( moteur.right < maxSpeed )
+									{
+										moteur.right += speedStep;
+									}
+									break;
 								}
-								break;
-							}
-							case KEYCODE_LEFT:
-							{
-								if ( moteur.left > -maxSpeed )
+								case KEYCODE_LEFT:
 								{
-									moteur.left -= speedStep / 2;
+									if ( moteur.left > -maxSpeed )
+									{
+										moteur.left -= speedStep / 2;
+									}
+									if ( moteur.right < maxSpeed )
+									{
+										moteur.right += speedStep / 2;
+									}
+									break;
 								}
-								if ( moteur.right < maxSpeed )
+								case KEYCODE_DOWN:
 								{
-									moteur.right += speedStep / 2;
+									if ( moteur.left > -maxSpeed )
+									{
+										moteur.left -= speedStep;
+									}
+									if ( moteur.right > -maxSpeed )
+									{
+										moteur.right -= speedStep;
+									}
+									break;
 								}
-								break;
-							}
-							case KEYCODE_DOWN:
-							{
-								if ( moteur.left > -maxSpeed )
+								case KEYCODE_RIGHT:
 								{
-									moteur.left -= speedStep;
+									if ( moteur.left < maxSpeed )
+									{
+										moteur.left += speedStep / 2;
+									}
+									if ( moteur.right > -maxSpeed )
+									{
+										moteur.right -= speedStep / 2;
+									}
+									break;
 								}
-								if ( moteur.right > -maxSpeed )
+								case KEYCODE_SPACE:
 								{
-									moteur.right -= speedStep;
+									moteur.left = 0;
+									moteur.right = 0;
+									break;
 								}
-								break;
-							}
-							case KEYCODE_RIGHT:
-							{
-								if ( moteur.left < maxSpeed )
+								default:
 								{
-									moteur.left += speedStep / 2;
+									break;
 								}
-								if ( moteur.right > -maxSpeed )
-								{
-									moteur.right -= speedStep / 2;
-								}
-								break;
-							}
-							case KEYCODE_SPACE:
-							{
-								moteur.left = 0;
-								moteur.right = 0;
-								break;
-							}
-							default:
-							{
-								break;
 							}
 						}
+						while ( continusFlag );
+
+						break;
 					}
-					while ( continusFlag );
-
-					break;
-				}
-				default:
-				case MENU_MANUAL_exit:
-				{
-					break;
-				}
+					default:
+					case MENU_MANUAL_exit:
+					{
+						break;
+					}
 				}
 				break;
 			}
@@ -477,77 +477,76 @@ int main ( int argc, char * argv[] )
 		packetHandler ( );
 		if ( !openPort ( dynaPortNum ) )
 		{ // can't open port
-			flagAction.noArm = 0;
-			logVerbose ( " - dyna : \e[31m%s\e[0m (open failure)\n", dynamixelsPath );
-		}
-		else
-		{
-			logVerbose ( " - dyna : %s\n", dynamixelsPath );
-			logVerbose ( "   - Device Name : %s\n", dynamixelsPath );
+	flagAction.noArm = 0;
+	logVerbose ( " - dyna : \e[31m%s\e[0m (open failure)\n", dynamixelsPath );
+}
+else
+{
+	logVerbose ( " - dyna : %s\n", dynamixelsPath );
+	logVerbose ( "   - Device Name : %s\n", dynamixelsPath );
 
-			logVerbose ( "   - Baudrate : %d \n", dynamixelUartSpeed );
-			setPortNum ( dynaPortNum );
-			if ( !setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
-			{
-				logVerbose ( "   - Baudratesetting failed, stay with last value\n" );
-			}
-			else
-			{
-				logVerbose ( "   - Baudrate	: %d\n", getBaudRate ( dynaPortNum ) );
-			}
-
-			for ( uint8_t i = 40; i < 44; i++ )
-			{
-				write1ByteTxRx ( dynaPortNum, PROTOCOL_VERSION, i, ADDR_MX_TORQUE_ENABLE, 1 );
-			}
-			for ( uint8_t i = 50; i < 55; i++ )
-			{
-				write1ByteTxRx ( dynaPortNum, PROTOCOL_VERSION, i, ADDR_MX_TORQUE_ENABLE, 1 );
-			}
-			setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
-		}
-
-		printf ( "fuck %d\n", mcp23017Addr );
-		if ( mcp23017Addr )
-		{
-			logVerbose ( "   - mcp23017 : %d\n", mcp23017Addr );
-			int err = 0;
-			if ( err = openMCP23017 ( i2cPortName, mcp23017Addr, &mcp23017Fd ), err )
-			{
-				logVerbose ( "   - error : %d\n", err );
-				logVerbose ( "%s\n", strerror ( errno ) );
-				return ( __LINE__ );
-			}
-
-			if ( setCloseOnExit ( mcp23017Fd ) )
-			{
-				logVerbose ( "%s\n", strerror ( errno ) );
-				close ( mcp23017Fd );
-				return ( __LINE__ );
-			}
-
-			gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_OUTPUT );
-			gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_OUTPUT );
-			gpioSet ( mcp23017Fd, 'A', 0, 1 );
-			gpioSet ( mcp23017Fd, 'A', 1, 1 );
-		}
-
-		if ( pca9685Addr )
-		{
-			logVerbose ( "   - pca9685 : %d\n", pca9685Addr );
-			if ( openPCA9685 ( i2cPortName, pca9685Addr, &pca9685Fd ) )
-			{
-				return ( __LINE__ );
-			}
-
-			if ( setCloseOnExit ( pca9685Fd ) )
-			{
-				close ( pca9685Fd );
-				return ( __LINE__ );
-			}
-		}
+	logVerbose ( "   - Baudrate : %d \n", dynamixelUartSpeed );
+	setPortNum ( dynaPortNum );
+	if ( !setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
+	{
+		logVerbose ( "   - Baudratesetting failed, stay with last value\n" );
 	}
 	else
+	{
+		logVerbose ( "   - Baudrate	: %d\n", getBaudRate ( dynaPortNum ) );
+	}
+
+	for ( uint8_t i = 40; i < 44; i++ )
+	{
+		write1ByteTxRx ( dynaPortNum, PROTOCOL_VERSION, i, ADDR_MX_TORQUE_ENABLE, 1 );
+	}
+	for ( uint8_t i = 50; i < 55; i++ )
+	{
+		write1ByteTxRx ( dynaPortNum, PROTOCOL_VERSION, i, ADDR_MX_TORQUE_ENABLE, 1 );
+	}
+	setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
+}
+
+if ( mcp23017Addr )
+{
+	logVerbose ( "   - mcp23017 : %d\n", mcp23017Addr );
+	int err = 0;
+	if ( err = openMCP23017 ( i2cPortName, mcp23017Addr, &mcp23017Fd ), err )
+	{
+		logVerbose ( "   - error : %d\n", err );
+		logVerbose ( "%s\n", strerror ( errno ) );
+		return ( __LINE__ );
+	}
+
+	if ( setCloseOnExit ( mcp23017Fd ) )
+	{
+		logVerbose ( "%s\n", strerror ( errno ) );
+		close ( mcp23017Fd );
+		return ( __LINE__ );
+	}
+
+	gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_OUTPUT );
+	gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_OUTPUT );
+	gpioSet ( mcp23017Fd, 'A', 0, 1 );
+	gpioSet ( mcp23017Fd, 'A', 1, 1 );
+}
+
+if ( pca9685Addr )
+{
+	logVerbose ( "   - pca9685 : %d\n", pca9685Addr );
+	if ( openPCA9685 ( i2cPortName, pca9685Addr, &pca9685Fd ) )
+	{
+		return ( __LINE__ );
+	}
+
+	if ( setCloseOnExit ( pca9685Fd ) )
+	{
+		close ( pca9685Fd );
+		return ( __LINE__ );
+	}
+}
+}
+else
 	{ // arm disabled
 		logVerbose ( " - dyna : \e[31m%s\e[0m\n", dynamixelsPath );
 		logVerbose ( " - mcp23017 : \e[31m%d\e[0m (GPIO)\n", mcp23017Addr );
@@ -596,8 +595,8 @@ int main ( int argc, char * argv[] )
 		calculPosition ( motorBoard, &robot1 );		
 
 		logVerbose ( "\e[2K\rVGauche : %.3f VDroite : %.3f\n\e[A",
-					 robot1.vitesseGauche,
-					 robot1.vitesseDroite );
+			robot1.vitesseGauche,
+			robot1.vitesseDroite );
 
 		// Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
 		// Comme ça, si on a pas d'actions influant sur les moteurs, on arrête la bête.
@@ -616,42 +615,46 @@ int main ( int argc, char * argv[] )
 			break;
 		}
 
-		if ( !flagAction.noDrive &&
-			 ( robot1.blocageVoulu == false ) )
-		{
-			logVerbose ("BLOCAGE : %d  ", detectBlocage ( &robot1, 100 ) );
-		}
+		
 		/*printf("%f %f %f %f %f %f %f\n",robot1.xRobot,
 			robot1.yRobot,robot1.cible.xCible,
 			robot1.cible.yCible,robot1.orientationRobot,
 			robot1.vitesseGaucheToSend, 
 			robot1.vitesseDroiteToSend);*/
-		
-		if ( !flagAction.noDrive &&
+
+		if(detectBlocage ( &robot1, 1000 ) == 1)
+		{
+			arreteTesMoteursSimone();
+		}else
+		{
+			if ( !flagAction.noDrive &&
 
 				asservirVitesseGaucheDroite ( robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend, robot1.vitesseGauche, robot1.vitesseDroite ) )
-		{ // error occured
-			logVerbose ( "%s\n ", strerror ( errno ) );
-		}
-		else if ( flagAction.driveScan &&
-				  _kbhit ( ) &&
-				  getchar ( ) )
-		{
-			robot1.xRobot = robot1.cible.xCible;
-			robot1.yRobot = robot1.cible.yCible;
-			robot1.orientationRobot = robot1.orientationVisee;
-		}
-		else if ( flagAction.driveWait )
-		{
-			// wait timeout
-		}
-		else
-		{
+			{ // error occured
+				logVerbose ( "%s\n ", strerror ( errno ) );
+			}
+			else if ( flagAction.driveScan &&
+				_kbhit ( ) &&
+				getchar ( ) )
+			{
+				robot1.xRobot = robot1.cible.xCible;
+				robot1.yRobot = robot1.cible.yCible;
+				robot1.orientationRobot = robot1.orientationVisee;
+			}
+			else if ( flagAction.driveWait )
+			{
+				// wait timeout
+			}
+			else
+			{
 			
+			}
 		}
+
+
 
 		usleep ( 1000*10 );
 	}
 
-	return ( 0 );
+return ( 0 );
 }
