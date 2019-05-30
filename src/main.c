@@ -37,8 +37,8 @@ static Robot robot1 = { 0 };
 
 enum
 {
-	MENU_purple,
 	MENU_yellow,
+	MENU_purple,
 	MENU_manual,
 	MENU_exit
 };
@@ -68,6 +68,7 @@ void proccessNormalEnd ( void * arg )
 
 int main ( int argc, char * argv[] )
 {
+	int err = 0;
 	void * tmp = NULL;
 
 	struct timeval start;
@@ -263,8 +264,8 @@ int main ( int argc, char * argv[] )
 	}
 
 	if ( readConfigFile ( "res/config.rco", configList ) ||
-		 readConfigArgs ( argc, argv, configList ) ||
-		 readParamArgs ( argc, argv, paramList ) )
+		readConfigArgs ( argc, argv, configList ) ||
+		readParamArgs ( argc, argv, paramList ) )
 	{
 		printf ( "no config file\n" );
 		return ( __LINE__ );
@@ -343,133 +344,137 @@ int main ( int argc, char * argv[] )
 			{ // manual drive of robot zqsd / wasd / UP/LEFT/DOWN/RIGHT
 				switch ( menu ( 0, manualMenuItems, "  >", "   ", NULL ) )
 				{
-				case MENU_MANUAL_controller:
-				{
-					joystick = open ( "/dev/input/js0", O_RDONLY | O_NONBLOCK );
-
-					if ( joystick < 0 )
+					case MENU_MANUAL_controller:
 					{
-						logVerbose ( "%s\n", strerror ( errno ) );
-						break;
-					}
+						joystick = open ( "/dev/input/js0", O_RDONLY | O_NONBLOCK );
 
-					getStatus360 ( joystick, &pad, true );
-					do
-					{
-						if ( pad.back )
+						if ( joystick < 0 )
 						{
+							logVerbose ( "%s\n", strerror ( errno ) );
 							break;
 						}
 
-						envoiOrdreMoteur ( pad.Y1 >> 4, pad.Y2 >> 2, maxSpeed );
-					}
-					while ( getStatus360 ( joystick, &pad, false ) );
+						getStatus360 ( joystick, &pad, true );
+						do
+						{
+							if ( pad.back )
+							{
+								break;
+							}
 
-					close ( joystick );
-					joystick = -1;
-					break;
-				}
-				case MENU_MANUAL_keyboard:
-				{
-					uint8_t continusFlag = 1;
-					do
+							envoiOrdreMoteur ( pad.Y1 >> 4, pad.Y2 >> 2, maxSpeed );
+						}
+						while ( getStatus360 ( joystick, &pad, false ) );
+
+						close ( joystick );
+						joystick = -1;
+						break;
+					}
+					case MENU_MANUAL_keyboard:
 					{
-						printf ( "%4d %4d\r", moteur.left, moteur.right );
-						if ( motorBoard )
+						uint8_t continusFlag = 1;
+						do
 						{
-							envoiOrdreMoteur ( moteur.left * 30, moteur.right * 30, maxSpeed );
-						}
+							printf ( "%4d %4d\r", moteur.left, moteur.right );
+							if ( motorBoard )
+							{
+								envoiOrdreMoteur ( moteur.left * 30, moteur.right * 30, maxSpeed );
+							}
 
-						switch ( getMovePad ( true ) )
-						{
-							case 	KEYCODE_ESCAPE:
+							switch ( getMovePad ( true ) )
 							{
-								moteur.left = 0;
-								moteur.right = 0;
-								continusFlag = 0;
-								break;
-							}
-							case KEYCODE_UP:
-							{
-								if ( moteur.left < maxSpeed )
+								case 	KEYCODE_ESCAPE:
 								{
-									moteur.left += speedStep;
+									moteur.left = 0;
+									moteur.right = 0;
+									continusFlag = 0;
+									break;
 								}
-								if ( moteur.right < maxSpeed )
+								case KEYCODE_UP:
 								{
-									moteur.right += speedStep;
+									if ( moteur.left < maxSpeed )
+									{
+										moteur.left += speedStep;
+									}
+									if ( moteur.right < maxSpeed )
+									{
+										moteur.right += speedStep;
+									}
+									break;
 								}
-								break;
-							}
-							case KEYCODE_LEFT:
-							{
-								if ( moteur.left > -maxSpeed )
+								case KEYCODE_LEFT:
 								{
-									moteur.left -= speedStep / 2;
+									if ( moteur.left > -maxSpeed )
+									{
+										moteur.left -= speedStep / 2;
+									}
+									if ( moteur.right < maxSpeed )
+									{
+										moteur.right += speedStep / 2;
+									}
+									break;
 								}
-								if ( moteur.right < maxSpeed )
+								case KEYCODE_DOWN:
 								{
-									moteur.right += speedStep / 2;
+									if ( moteur.left > -maxSpeed )
+									{
+										moteur.left -= speedStep;
+									}
+									if ( moteur.right > -maxSpeed )
+									{
+										moteur.right -= speedStep;
+									}
+									break;
 								}
-								break;
-							}
-							case KEYCODE_DOWN:
-							{
-								if ( moteur.left > -maxSpeed )
+								case KEYCODE_RIGHT:
 								{
-									moteur.left -= speedStep;
+									if ( moteur.left < maxSpeed )
+									{
+										moteur.left += speedStep / 2;
+									}
+									if ( moteur.right > -maxSpeed )
+									{
+										moteur.right -= speedStep / 2;
+									}
+									break;
 								}
-								if ( moteur.right > -maxSpeed )
+								case KEYCODE_SPACE:
 								{
-									moteur.right -= speedStep;
+									moteur.left = 0;
+									moteur.right = 0;
+									break;
 								}
-								break;
-							}
-							case KEYCODE_RIGHT:
-							{
-								if ( moteur.left < maxSpeed )
+								default:
 								{
-									moteur.left += speedStep / 2;
+									break;
 								}
-								if ( moteur.right > -maxSpeed )
-								{
-									moteur.right -= speedStep / 2;
-								}
-								break;
-							}
-							case KEYCODE_SPACE:
-							{
-								moteur.left = 0;
-								moteur.right = 0;
-								break;
-							}
-							default:
-							{
-								break;
 							}
 						}
+						while ( continusFlag );
+
+						break;
 					}
-					while ( continusFlag );
-
-					break;
-				}
-				default:
-				case MENU_MANUAL_exit:
-				{
-					break;
-				}
+					default:
+					case MENU_MANUAL_exit:
+					{
+						break;
+					}
 				}
 				break;
 			}
 			case MENU_exit:
 			default:
 			{
+				logVerbose ( " - keyboard exit\n" );
 				return ( __LINE__ );
 			}
 		}
 	}
 
+	sprintf ( xmlActionPath, "%s-%s.xml", xmlActionPath, ( flag.yellow )? "yellow" : "purple" );
 	printf ( "run %s\n", ( flag.yellow )? "\e[1;33myellow\e[0m" : "\e[1;35mpurple\e[0m" );
+	printf ( "   use %s\n", xmlActionPath );
+
 
 	if ( !flagAction.noArm )
 	{ // arm enabled
@@ -507,21 +512,20 @@ int main ( int argc, char * argv[] )
 			setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
 		}
 
-		printf ( "fuck %d\n", mcp23017Addr );
 		if ( mcp23017Addr )
 		{
 			logVerbose ( "   - mcp23017 : %d\n", mcp23017Addr );
-			int err = 0;
 			if ( err = openMCP23017 ( i2cPortName, mcp23017Addr, &mcp23017Fd ), err )
 			{
 				logVerbose ( "   - error : %d\n", err );
-				logVerbose ( "%s\n", strerror ( errno ) );
+				logVerbose ( "     %s\n", strerror ( errno ) );
 				return ( __LINE__ );
 			}
 
-			if ( setCloseOnExit ( mcp23017Fd ) )
+			if ( err = setCloseOnExit ( mcp23017Fd ), err )
 			{
-				logVerbose ( "%s\n", strerror ( errno ) );
+				logVerbose ( "   - error : %d\n", err );
+				logVerbose ( "     %s\n", strerror ( errno ) );
 				close ( mcp23017Fd );
 				return ( __LINE__ );
 			}
@@ -535,13 +539,17 @@ int main ( int argc, char * argv[] )
 		if ( pca9685Addr )
 		{
 			logVerbose ( "   - pca9685 : %d\n", pca9685Addr );
-			if ( openPCA9685 ( i2cPortName, pca9685Addr, &pca9685Fd ) )
+			if ( err = openPCA9685 ( i2cPortName, pca9685Addr, &pca9685Fd ), err )
 			{
+				logVerbose ( "   - error : %d\n", err );
+				logVerbose ( "     %s\n", strerror ( errno ) );
 				return ( __LINE__ );
 			}
 
-			if ( setCloseOnExit ( pca9685Fd ) )
+			if ( err = setCloseOnExit ( pca9685Fd ), err )
 			{
+				logVerbose ( "   - error : %d\n", err );
+				logVerbose ( "     %s\n", strerror ( errno ) );
 				close ( pca9685Fd );
 				return ( __LINE__ );
 			}
@@ -566,8 +574,10 @@ int main ( int argc, char * argv[] )
 	}
 
 	// detection shared memory
-	if ( getSharedMem ( ( void ** ) &(robot1.detection), sizeof ( *(robot1.detection) ), robot1.memKey ) )
+	if ( err = getSharedMem ( ( void ** ) &(robot1.detection), sizeof ( *(robot1.detection) ), robot1.memKey ), err )
 	{
+		logVerbose ( " - shared mem error %d\n", err );
+		logVerbose ( "   %s\n", strerror ( errno ) );
 		return ( __LINE__ );
 	}
 
@@ -577,7 +587,8 @@ int main ( int argc, char * argv[] )
 	tabActionTotal = ouvrirXML ( &nbAction, xmlActionPath );
 	if ( !tabActionTotal )
 	{
-		logVerbose ( "xml loading failed: -%s-\n %s\n", xmlActionPath, strerror ( errno ) );
+		logVerbose ( " - xml loading failed: -%s-\n", xmlActionPath );
+		logVerbose ( "   %s\n", strerror ( errno ) );
 		return ( __LINE__ );
 	}
 	setFreeOnExit ( tabActionTotal );
@@ -591,6 +602,7 @@ int main ( int argc, char * argv[] )
 	}
 	razAsserv();
 	GPIO_init_gpio();
+
 	while ( 1 )
 	{
 		calculPosition ( motorBoard, &robot1 );		
@@ -652,6 +664,8 @@ int main ( int argc, char * argv[] )
 
 		usleep ( 1000*10 );
 	}
+
+	logVerbose ( "normal end\n" );
 
 	return ( 0 );
 }
