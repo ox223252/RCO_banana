@@ -19,6 +19,7 @@ void initDetectionBlocage()
 void resetBlocage()
 {
   indiceTab = 0;
+  printf("RESET TAMERE\n");
   for(int i=0;i<200;i++)
   {
     tabVitesseGauche[i]=200;
@@ -32,19 +33,20 @@ int detectBlocage(Robot* robot, int seuilDetection)
   tabVitesseDroite[indiceTab] = robot->vitesseDroite;
   indiceTab++;
   int indiceToCheck;
+  int toRet = 1;
   if(indiceTab == 200)indiceTab=0;
 
-  for(int i=0;i<seuilDetection/10;i++)
+  for(int i=1;i<seuilDetection/10;i++)
   {
     indiceToCheck = indiceTab - i;
     if(indiceToCheck<0)indiceToCheck+=200;
 
-    if(robot->vitesseDroiteToSend == 0 || tabVitesseDroite[indiceToCheck] > 20
-        || robot->vitesseGaucheToSend == 0 || tabVitesseGauche[indiceToCheck] > 20)
+    if(robot->vitesseDroiteToSend == 0 || abs(tabVitesseDroite[indiceToCheck]) > 15
+        || robot->vitesseGaucheToSend == 0 || abs(tabVitesseGauche[indiceToCheck]) > 15)
     {
-      resetBlocage();
-      return 0;
+
+      toRet=0;
     }
   }  
-    return 1;
+    return toRet;
 }

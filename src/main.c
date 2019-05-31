@@ -314,6 +314,7 @@ int main ( int argc, char * argv[] )
 	{ // if engine wasn't disabled
 		robot1.blocageVoulu = false;
 		initDetectionBlocage();
+				
 		// init motor
 		if ( initEngine ( motorBoadPath, motorBoardUartSpeed, Vmax, Vmin, readDelay, &motorBoard ) )
 		{
@@ -536,7 +537,6 @@ int main ( int argc, char * argv[] )
 			gpioSet ( mcp23017Fd, 'A', 1, 1 );
 		}
 
-
 		// init pwm epander
 		if ( pca9685Addr )
 		{
@@ -612,17 +612,14 @@ int main ( int argc, char * argv[] )
 		calculPosition ( motorBoard, &robot1 );		
 
 		logVerbose ( "\e[2K\rVGauche : %.3f VDroite : %.3f\n\e[A",
-					 robot1.vitesseGauche,
-					 robot1.vitesseDroite );
+			robot1.vitesseGauche,
+			robot1.vitesseDroite );
 
 		// Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
 		// Comme ça, si on a pas d'actions influant sur les moteurs, on arrête la bête.
 
 		robot1.vitesseGaucheToSend = robot1.vitesseGaucheDefault;
 		robot1.vitesseDroiteToSend = robot1.vitesseDroiteDefault;
-
-
-		
 		
 		tenirAngle(&robot1);
 
@@ -633,12 +630,12 @@ int main ( int argc, char * argv[] )
 		}
 
 		if ( !flagAction.noDrive &&
-			 ( robot1.blocageVoulu == false ) )
-		{ // braking detection
-			logVerbose ("BLOCAGE : %d  ", detectBlocage ( &robot1, 100 ) );
+			detectBlocage ( &robot1, 1000 ) )
+		{ // if engines are set to value and braking detected
+			logVerbose ("BLOCAGE\n" );
+			arreteTesMoteursSimone ( );
 		}
-		
-		if ( !flagAction.noDrive &&
+		else if ( !flagAction.noDrive &&
 			asservirVitesseGaucheDroite ( robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend, robot1.vitesseGauche, robot1.vitesseDroite ) )
 		{ // error occured
 			logVerbose ( "%s\n ", strerror ( errno ) );
@@ -657,9 +654,8 @@ int main ( int argc, char * argv[] )
 		}
 		else
 		{
-			// nothing to be done		
+			// nothing to be done yet
 		}
-
 		usleep ( 1000*10 );
 	}
 

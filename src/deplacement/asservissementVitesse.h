@@ -36,4 +36,11 @@ void initAsservissementVitesse(const float _coeffPG,const float _coeffIG,const f
 ////////////////////////////////////////////////////////////////////////////////
 int asservirVitesseGaucheDroite(const int16_t consigneGauche,const int16_t consigneDroite,const int16_t vitesseGauche,const int16_t vitesseDroite);
 
+////////////////////////////////////////////////////////////////////////////////
+/// \fn void arreteTesMoteursSimone (  );
+/// Bien nommée.
+////////////////////////////////////////////////////////////////////////////////
+void arreteTesMoteursSimone();
+
+
 #endif //__ASSERVISSEMENTVITESSE_H__
