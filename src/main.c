@@ -605,6 +605,8 @@ int main ( int argc, char * argv[] )
 	razAsserv();
 	GPIO_init_gpio();
 
+	printf ( "\e[3;33m--> Don't forget to start detection\e[0m\n" );
+
 	while ( 1 )
 	{
 		calculPosition ( motorBoard, &robot1 );		
