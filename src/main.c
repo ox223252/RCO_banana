@@ -68,33 +68,34 @@ void proccessNormalEnd ( void * arg )
 
 int main ( int argc, char * argv[] )
 {
-	int err = 0;
-	void * tmp = NULL;
+	int err = 0;                       // var used to stor error of init function
+	void * tmp = NULL;                 // tmp pointer used for initialisation only
 
-	struct timeval start;
+	struct timeval start;              // used to determination of action beginning and timeout
 
 	char dynamixelsPath[ 128 ] = { 0 }; // dynamixel acces point /dev/dyna
-	uint32_t dynamixelUartSpeed = 1000000; // uart speed
-	long int dynaPortNum = 0;
+	uint32_t dynamixelUartSpeed = 1000000; // dynamixel uart speed
+	long int dynaPortNum = 0;          // dynamixel file descriptor
+
 	char motorBoadPath[ 128 ] = { 0 }; // roboclaw access point /dev/roboclaw
-	struct roboclaw *motorBoard = NULL;
+	struct roboclaw *motorBoard = NULL; // roboclaw file descriptor
 
 	uint32_t motorBoardUartSpeed = 115200; // uart speed
 
-	int joystick = 0;
-	Xbox360Controller pad = { 0 };
+	int joystick = 0;                  // joystick file descriptor used to drive robot by Controler
+	Xbox360Controller pad = { 0 };     // xbox 360 controler
 
-	int16_t maxSpeed = 32767; // motor max speed, ti neved should cross this limit
-	char xmlActionPath[ 128 ] = { 0 };
+	int16_t maxSpeed = 32767;          // motor max speed, ti neved should cross this limit
+	char xmlActionPath[ 128 ] = { 0 }; // xmlAction base path concatened with color chossen
 
-	robot1.memKey = 123456;
+	robot1.memKey = 123456;            // memory key used to shared data with detection woftware
 
 	// battery management
-	uint32_t readDelay = 5000000;
-	float Vmax = 12.0;
-	float Vmin = 10.0;
-	float Vboost = 14.0;
-	uint32_t tBoost = 1000000;
+	uint32_t readDelay = 5000000;      // delay between two read of data from roboclaw to manage battery
+	float Vmax = 12.0;                 // maximum voltage that should provide to engnie
+	float Vmin = 10.0;                 // minimum voltage needded to start engine
+	float Vboost = 14.0;               // voltage authorized in boost mode
+	uint32_t tBoost = 1000000;         // duration of boost mode
 
 	//Speed PID management
 	float speedAsservPG = 1.;
@@ -106,23 +107,23 @@ int main ( int argc, char * argv[] )
 
 	char i2cPortName[ 64 ] = "/dev/i2c-1";
 
-	uint8_t pca9685Addr = 0; // servo driver addr (i2c)
-	int pca9685Fd = 0;
+	uint8_t pca9685Addr = 0;           // servo driver addr (i2c)
+	int pca9685Fd = 0;                 // pca9685 file descriptor
 
-	uint8_t mcp23017Addr = 0; // gpio direr addr
-	int mcp23017Fd = 0;
+	uint8_t mcp23017Addr = 0;          // gpio direr addr (i2c)
+	int mcp23017Fd = 0;                // mcp23017 file descriptor
 
-	Action* tabActionTotal = NULL;
-	int nbAction = 0;
+	Action* tabActionTotal = NULL;     // array used to manage action
+	int nbAction = 0;                  // current  action running
 
 	struct
 	{
 		int8_t left;
 		int8_t right;
 	}
-	moteur = { 0 };
+	moteur = { 0 };                    // struct used to manage engine with keyboad
 
-	char *menuItems[] = {
+	char *menuItems[] = {              // menu items used to select strategy
 		"run \e[1;33mYELLOW\e[0m",
 		"run \e[1;35mPURPLE\e[0m",
 		"manual mode",
@@ -130,7 +131,7 @@ int main ( int argc, char * argv[] )
 		NULL
 	};
 
-	char *manualMenuItems[] = {
+	char *manualMenuItems[] = {        // in case of manual strategy, permit to select methode
 		"controller",
 		"keyboard",
 		"exit",
@@ -139,8 +140,8 @@ int main ( int argc, char * argv[] )
 
 	struct
 	{
-		uint8_t yellow:1,    // &flag + 0 : 0x01
-			purple:1,          //             0x02
+		uint8_t yellow:1,   // &flag + 0 : 0x01
+			purple:1,       //             0x02
 			un2:1,          //             0x04
 			help:1,         //             0x08
 			quiet:1,        //             0x10
@@ -150,12 +151,12 @@ int main ( int argc, char * argv[] )
 		uint8_t logFile:1,  // &flag + 1 : 0x01
 			verbose:1;      //             0x02
 	}
-	flag = { 0 };
+	flag = { 0 };                      // some flags used to set verbosity
 
 	ActionFlag flagAction = { 0 };
 
 	param_el paramList[] =
-	{
+	{ // paramter list used in parsin of arg cmd line
 		{ "--help", 	"-h",	0x08, 	cT ( bool ), ((uint8_t * )&flag), "this window" },
 		{ "--yellow", 	"-Y",	0x01, 	cT ( bool ), ((uint8_t * )&flag), "launch the yellow prog" },
 		{ "--purple", 	"-P",	0x02, 	cT ( bool ), ((uint8_t * )&flag), "launch the purple prog" },
@@ -191,7 +192,7 @@ int main ( int argc, char * argv[] )
 	};
 
 	config_el configList[] =
-	{
+	{ // config els list used in parsing of cmd line and config file
 		{ "PATH_DYNA", cT ( str ), dynamixelsPath, "PATH to access to dynamixels"},
 		{ "PATH_MOTOR_BOARD", cT ( str ), motorBoadPath, "PATH to access to dynamixels"},
 		{ "PATH_MOTOR_BOARD_UART_SPEED", cT ( uint32_t ), &motorBoardUartSpeed, "UART speed for robocloaw board" },
@@ -244,6 +245,7 @@ int main ( int argc, char * argv[] )
 		return ( __LINE__ );
 	}
 
+	// set function to restore terminal before the end of software
 	tmp = NULL;
 	if ( getTermStatus ( &tmp ) )
 	{
@@ -263,6 +265,8 @@ int main ( int argc, char * argv[] )
 		return ( __LINE__ );
 	}
 
+
+	// get config file
 	if ( readConfigFile ( "res/config.rco", configList ) ||
 		readConfigArgs ( argc, argv, configList ) ||
 		readParamArgs ( argc, argv, paramList ) )
@@ -295,6 +299,7 @@ int main ( int argc, char * argv[] )
 		logSetOutput ( ( !flag.logFile ) ? 1 : flag.logTerm, flag.logFile );
 	}
 
+	// in case of help requested
 	if ( flag.help )
 	{
 		printf ( "build date: %s\n", DATE_BUILD );
@@ -471,6 +476,7 @@ int main ( int argc, char * argv[] )
 		}
 	}
 
+
 	sprintf ( xmlActionPath, "%s-%s.xml", xmlActionPath, ( flag.yellow )? "yellow" : "purple" );
 	printf ( "run %s\n", ( flag.yellow )? "\e[1;33myellow\e[0m" : "\e[1;35mpurple\e[0m" );
 	printf ( "   use %s\n", xmlActionPath );
@@ -478,6 +484,7 @@ int main ( int argc, char * argv[] )
 
 	if ( !flagAction.noArm )
 	{ // arm enabled
+		// init dynamixel
 		dynaPortNum = portHandler ( dynamixelsPath );
 		packetHandler ( );
 		if ( !openPort ( dynaPortNum ) )
@@ -512,6 +519,7 @@ int main ( int argc, char * argv[] )
 			setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
 		}
 
+		// init gpio expander
 		if ( mcp23017Addr )
 		{
 			logVerbose ( "   - mcp23017 : %d\n", mcp23017Addr );
@@ -536,6 +544,8 @@ int main ( int argc, char * argv[] )
 			gpioSet ( mcp23017Fd, 'A', 1, 1 );
 		}
 
+
+		// init pwm epander
 		if ( pca9685Addr )
 		{
 			logVerbose ( "   - pca9685 : %d\n", pca9685Addr );
@@ -630,25 +640,19 @@ int main ( int argc, char * argv[] )
 
 		if ( !flagAction.noDrive &&
 			 ( robot1.blocageVoulu == false ) )
-		{
+		{ // braking detection
 			logVerbose ("BLOCAGE : %d  ", detectBlocage ( &robot1, 100 ) );
 		}
-		/*printf("%f %f %f %f %f %f %f\n",robot1.xRobot,
-			robot1.yRobot,robot1.cible.xCible,
-			robot1.cible.yCible,robot1.orientationRobot,
-			robot1.vitesseGaucheToSend, 
-			robot1.vitesseDroiteToSend);*/
 		
 		if ( !flagAction.noDrive &&
-
-				asservirVitesseGaucheDroite ( robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend, robot1.vitesseGauche, robot1.vitesseDroite ) )
+			asservirVitesseGaucheDroite ( robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend, robot1.vitesseGauche, robot1.vitesseDroite ) )
 		{ // error occured
 			logVerbose ( "%s\n ", strerror ( errno ) );
 		}
 		else if ( flagAction.driveScan &&
-				  _kbhit ( ) &&
-				  getchar ( ) )
-		{
+			_kbhit ( ) &&
+			getchar ( ) )
+		{ // if we select action manageùent mode were we can set next action by keyboard key bressed
 			robot1.xRobot = robot1.cible.xCible;
 			robot1.yRobot = robot1.cible.yCible;
 			robot1.orientationRobot = robot1.orientationVisee;
@@ -659,7 +663,7 @@ int main ( int argc, char * argv[] )
 		}
 		else
 		{
-			
+			// nothing to be done		
 		}
 
 		usleep ( 1000*10 );
