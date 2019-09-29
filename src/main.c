@@ -12,6 +12,7 @@
 #include "lib/log/log.h"
 #include "lib/signalHandler/signalHandler.h"
 #include "lib/termRequest/request.h"
+#include "lib/termRequest/menu.h"
 #include "lib/timer/timer.h"
 #include "lib/roboclaw/roboclaw.h"
 #include "lib/parserXML/loadXML.h"
