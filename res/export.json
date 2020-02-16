@@ -1,0 +1,134 @@
+{
+    "Strategie": [
+        {
+            "TauxArray": [
+                {
+                    "condition": 0,
+                    "param": 0,
+                    "taux": 0,
+                    "valeur": 0
+                }
+            ],
+            "arraySequence": [
+                {
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 2
+                        }
+                    ],
+                    "arrayParam": [
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 0,
+                    "nomAction": "Départ"
+                },
+                {
+                    "indice": 1,
+                    "nomAction": "Fin"
+                },
+                {
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 1
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "Id"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "Value"
+                        },
+                        {
+                            "defaultValue": "80",
+                            "nomParam": "Vitesse"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 2,
+                    "nomAction": "SetDyna"
+                }
+            ],
+            "color": "#ff0000",
+            "dateMax": 21,
+            "deadline": 22,
+            "nbPoints": 1,
+            "nomEtape": "VerreRouge",
+            "tempsMax": 20,
+            "tempsMoyen": 16,
+            "xEtape": 130,
+            "yEtape": 216
+        },
+        {
+            "TauxArray": [
+                {
+                    "condition": 0,
+                    "param": 1,
+                    "taux": 0,
+                    "valeur": 0
+                }
+            ],
+            "arraySequence": [
+                {
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 502
+                        }
+                    ],
+                    "arrayParam": [
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 0,
+                    "nomAction": "Départ"
+                },
+                {
+                    "indice": 501,
+                    "nomAction": "Fin"
+                },
+                {
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 501
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "Id"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "Value"
+                        },
+                        {
+                            "defaultValue": "80",
+                            "nomParam": "Vitesse"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 502,
+                    "nomAction": "SetDyna"
+                }
+            ],
+            "color": "#00ff00",
+            "dateMax": 0,
+            "deadline": 0,
+            "nbPoints": 1,
+            "nomEtape": "VerreVert",
+            "tempsMax": 0,
+            "tempsMoyen": 0,
+            "xEtape": 133,
+            "yEtape": 448
+        }
+    ]
+}
