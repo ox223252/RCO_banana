@@ -150,7 +150,8 @@ int main ( int argc, char * argv[] )
 			color:1,        //             0x40
 			logTerm:1;      //             0x80
 		uint8_t logFile:1,  // &flag + 1 : 0x01
-			verbose:1;      //             0x02
+			verbose:1,      //             0x02
+			test:1;         //             0x04
 	}
 	flag = { 0 };                      // some flags used to set verbosity
 
@@ -167,6 +168,7 @@ int main ( int argc, char * argv[] )
 		{ "--color", 	"-c",	0x40, 	cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
 		{ "--term", 	"-lT",	0x80, 	cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
 		{ "--file", 	"-lF",	0x01, 	cT ( bool ), ((uint8_t * )&flag + 1), "add color to debug traces" },
+		{ "--test",		"-t", 	0x04, 	cT ( bool ), ((uint8_t * )&flag + 1), "testAction" },
 		{ "--noArm", 	"-nA",	0x01, 	cT ( bool ), ((uint8_t * )&flagAction), "use it to disable servo motor" },
 		{ "--armWait", 	NULL,	0x02, 	cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
 		{ "--armScan", 	NULL,	0x04, 	cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
@@ -308,6 +310,12 @@ int main ( int argc, char * argv[] )
 		helpParamArgs ( paramList );
 		printf ( "\n\e[4mparameter available in res/config.rco file:\e[0m\n" );
 		helpConfigArgs ( configList );
+		return ( 0 );
+	}
+
+	if ( flag.test )
+	{
+		initActionNew ( );
 		return ( 0 );
 	}
 
