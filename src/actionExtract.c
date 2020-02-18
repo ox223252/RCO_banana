@@ -202,7 +202,9 @@ int getNextActions ( const json_el * const data, const uint32_t stepId,  const u
 int getActionParams ( const json_el * const data, const uint32_t actionId, json_el ** out, uint32_t * outLength )
 {
 
-	if ( !data )
+	if ( !data ||
+		!outLength ||
+		*outLength )
 	{ // if data provided then clean all static vars
 		errno = EINVAL;
 		return ( __LINE__ );

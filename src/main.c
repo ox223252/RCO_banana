@@ -27,12 +27,14 @@
 #include "struct/structAction.h"
 #include "struct/structDetection.h"
 
-#include "gestionAction/management.h"
-#include "gestionAction/action.h"
+// #include "gestionAction/management.h"
+// #include "gestionAction/action.h"
 #include "deplacement/odometrie.h"
 #include "deplacement/controleMoteur.h"
 #include "deplacement/asservissementVitesse.h"
 #include "deplacement/detectionBlocage.h"
+
+#include "action.h"
 
 static Robot robot1 = { 0 };
 
@@ -53,6 +55,12 @@ enum
 
 const uint8_t speedStep = 10;
 
+void actionClose ( void * arg )
+{
+	logSetVerbose ( "clean\n" );
+	actionManagerDeInit ( );
+}
+
 void dynamixelClose ( void * arg )
 {
 	closePort ( ( long ) arg );
@@ -72,22 +80,22 @@ int main ( int argc, char * argv[] )
 	int err = 0;                       // var used to stor error of init function
 	void * tmp = NULL;                 // tmp pointer used for initialisation only
 
-	struct timeval start;              // used to determination of action beginning and timeout
+	// struct timeval start;              // used to determination of action beginning and timeout
 
 	char dynamixelsPath[ 128 ] = { 0 }; // dynamixel acces point /dev/dyna
-	uint32_t dynamixelUartSpeed = 1000000; // dynamixel uart speed
-	long int dynaPortNum = 0;          // dynamixel file descriptor
+	// uint32_t dynamixelUartSpeed = 1000000; // dynamixel uart speed
+	// long int dynaPortNum = 0;          // dynamixel file descriptor
 
 	char motorBoadPath[ 128 ] = { 0 }; // roboclaw access point /dev/roboclaw
 	struct roboclaw *motorBoard = NULL; // roboclaw file descriptor
 
 	uint32_t motorBoardUartSpeed = 115200; // uart speed
 
-	int joystick = 0;                  // joystick file descriptor used to drive robot by Controler
-	Xbox360Controller pad = { 0 };     // xbox 360 controler
+	// int joystick = 0;                  // joystick file descriptor used to drive robot by Controler
+	// Xbox360Controller pad = { 0 };     // xbox 360 controler
 
 	int16_t maxSpeed = 32767;          // motor max speed, ti neved should cross this limit
-	char xmlActionPath[ 128 ] = { 0 }; // xmlAction base path concatened with color chossen
+	char jsonActionPath[ 128 ] = { 0 }; // xmlAction base path concatened with color chossen
 
 	robot1.memKey = 123456;            // memory key used to shared data with detection woftware
 
@@ -109,13 +117,13 @@ int main ( int argc, char * argv[] )
 	char i2cPortName[ 64 ] = "/dev/i2c-1";
 
 	uint8_t pca9685Addr = 0;           // servo driver addr (i2c)
-	int pca9685Fd = 0;                 // pca9685 file descriptor
+	// int pca9685Fd = 0;                 // pca9685 file descriptor
 
 	uint8_t mcp23017Addr = 0;          // gpio direr addr (i2c)
-	int mcp23017Fd = 0;                // mcp23017 file descriptor
+	// int mcp23017Fd = 0;                // mcp23017 file descriptor
 
-	Action* tabActionTotal = NULL;     // array used to manage action
-	int nbAction = 0;                  // current  action running
+	// Action* tabActionTotal = NULL;     // array used to manage action
+	// int nbAction = 0;                  // current  action running
 
 	struct
 	{
@@ -124,20 +132,20 @@ int main ( int argc, char * argv[] )
 	}
 	moteur = { 0 };                    // struct used to manage engine with keyboad
 
-	char *menuItems[] = {              // menu items used to select strategy
-		"run \e[1;33mYELLOW\e[0m",
-		"run \e[1;35mPURPLE\e[0m",
-		"manual mode",
-		"exit",
-		NULL
-	};
+	// char *menuItems[] = {              // menu items used to select strategy
+	// 	"run \e[1;33mYELLOW\e[0m",
+	// 	"run \e[1;35mPURPLE\e[0m",
+	// 	"manual mode",
+	// 	"exit",
+	// 	NULL
+	// };
 
-	char *manualMenuItems[] = {        // in case of manual strategy, permit to select methode
-		"controller",
-		"keyboard",
-		"exit",
-		NULL
-	};
+	// char *manualMenuItems[] = {        // in case of manual strategy, permit to select methode
+	// 	"controller",
+	// 	"keyboard",
+	// 	"exit",
+	// 	NULL
+	// };
 
 	struct
 	{
@@ -178,7 +186,7 @@ int main ( int argc, char * argv[] )
 		{ "--driveScan", NULL,	0x40, 	cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
 		{ "--driveDone", NULL,	0x80, 	cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
 		{ "--MaxSpeed", "-Ms",	1, 		cT ( int16_t ), &maxSpeed, "set max speed [ 1 ; 32767 ]" },
-		{ "--xml", 		"-x",	1, 		cT ( str ), xmlActionPath, "xml action file path" },
+		{ "--json", 	"-j",	1, 		cT ( str ), jsonActionPath, "json action file path" },
 		{ "--linear_left", "-ll", 1, 	cT ( float ), &robot1.coeffLongG, "linear coef for left wheel" },
 		{ "--linear_right", "-lr", 1, 	cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
 		{ "--angle_left", "-al",1,  	cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
@@ -199,7 +207,7 @@ int main ( int argc, char * argv[] )
 		{ "PATH_DYNA", cT ( str ), dynamixelsPath, "PATH to access to dynamixels"},
 		{ "PATH_MOTOR_BOARD", cT ( str ), motorBoadPath, "PATH to access to dynamixels"},
 		{ "PATH_MOTOR_BOARD_UART_SPEED", cT ( uint32_t ), &motorBoardUartSpeed, "UART speed for robocloaw board" },
-		{ "XML_ACTION_PATH", cT ( str ), xmlActionPath, "xml action file path"},
+		{ "JSON_ACTION_PATH", cT ( str ), jsonActionPath, "json action file path"},
 		{ "COEF_LINEAR_LEFT", cT ( float ), &robot1.coeffLongG, "linear coef for left wheel" },
 		{ "COEF_LINEAR_RIGHT", cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
 		{ "COEF_ANGLE_LEFT", cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
@@ -315,7 +323,9 @@ int main ( int argc, char * argv[] )
 
 	if ( flag.test )
 	{
-		initActionNew ( );
+		actionManagerInit ( jsonActionPath );
+		actionManagerPrint ( );
+		actionManagerDeInit ( );
 		return ( 0 );
 	}
 
@@ -339,334 +349,352 @@ int main ( int argc, char * argv[] )
 		initAsservissementVitesse ( speedAsservPG, speedAsservIG, speedAsservDG, maxSpeed, speedAsservPD, speedAsservID, speedAsservDD );
 	}
 
-	while ( !( flag.yellow ^ flag.purple ) )
-	{ // if no color or both colors set
-		switch ( menu ( 0, menuItems, NULL ) )
-		{
-			case MENU_purple:
-			{
-				flag.purple = 1;
-				flag.yellow = 0;
-				break;
-			}
-			case MENU_yellow:
-			{
-				flag.yellow = 1;
-				flag.purple = 0;
-				break;
-			}
-			case MENU_manual:
-			{ // manual drive of robot zqsd / wasd / UP/LEFT/DOWN/RIGHT
-				switch ( menu ( 0, manualMenuItems, "  >", "   ", NULL ) )
-				{
-					case MENU_MANUAL_controller:
-					{
-						joystick = open ( "/dev/input/js0", O_RDONLY | O_NONBLOCK );
+	// while ( !( flag.yellow ^ flag.purple ) )
+	// { // if no color or both colors set
+	// 	switch ( menu ( 0, menuItems, NULL ) )
+	// 	{
+	// 		case MENU_purple:
+	// 		{
+	// 			flag.purple = 1;
+	// 			flag.yellow = 0;
+	// 			break;
+	// 		}
+	// 		case MENU_yellow:
+	// 		{
+	// 			flag.yellow = 1;
+	// 			flag.purple = 0;
+	// 			break;
+	// 		}
+	// 		case MENU_manual:
+	// 		{ // manual drive of robot zqsd / wasd / UP/LEFT/DOWN/RIGHT
+	// 			switch ( menu ( 0, manualMenuItems, "  >", "   ", NULL ) )
+	// 			{
+	// 				case MENU_MANUAL_controller:
+	// 				{
+	// 					joystick = open ( "/dev/input/js0", O_RDONLY | O_NONBLOCK );
 
-						if ( joystick < 0 )
-						{
-							logVerbose ( "%s\n", strerror ( errno ) );
-							break;
-						}
+	// 					if ( joystick < 0 )
+	// 					{
+	// 						logVerbose ( "%s\n", strerror ( errno ) );
+	// 						break;
+	// 					}
 
-						getStatus360 ( joystick, &pad, true );
-						do
-						{
-							if ( pad.back )
-							{
-								break;
-							}
+	// 					getStatus360 ( joystick, &pad, true );
+	// 					do
+	// 					{
+	// 						if ( pad.back )
+	// 						{
+	// 							break;
+	// 						}
 
-							envoiOrdreMoteur ( pad.Y1 >> 4, pad.Y2 >> 2, maxSpeed );
-						}
-						while ( getStatus360 ( joystick, &pad, false ) );
+	// 						envoiOrdreMoteur ( pad.Y1 >> 4, pad.Y2 >> 2, maxSpeed );
+	// 					}
+	// 					while ( getStatus360 ( joystick, &pad, false ) );
 
-						close ( joystick );
-						joystick = -1;
-						break;
-					}
-					case MENU_MANUAL_keyboard:
-					{
-						uint8_t continusFlag = 1;
-						do
-						{
-							printf ( "%4d %4d\r", moteur.left, moteur.right );
-							if ( motorBoard )
-							{
-								envoiOrdreMoteur ( moteur.left * 30, moteur.right * 30, maxSpeed );
-							}
+	// 					close ( joystick );
+	// 					joystick = -1;
+	// 					break;
+	// 				}
+	// 				case MENU_MANUAL_keyboard:
+	// 				{
+	// 					uint8_t continusFlag = 1;
+	// 					do
+	// 					{
+	// 						printf ( "%4d %4d\r", moteur.left, moteur.right );
+	// 						if ( motorBoard )
+	// 						{
+	// 							envoiOrdreMoteur ( moteur.left * 30, moteur.right * 30, maxSpeed );
+	// 						}
 
-							switch ( getMovePad ( true ) )
-							{
-								case 	KEYCODE_ESCAPE:
-								{
-									moteur.left = 0;
-									moteur.right = 0;
-									continusFlag = 0;
-									break;
-								}
-								case KEYCODE_UP:
-								{
-									if ( moteur.left < maxSpeed )
-									{
-										moteur.left += speedStep;
-									}
-									if ( moteur.right < maxSpeed )
-									{
-										moteur.right += speedStep;
-									}
-									break;
-								}
-								case KEYCODE_LEFT:
-								{
-									if ( moteur.left > -maxSpeed )
-									{
-										moteur.left -= speedStep / 2;
-									}
-									if ( moteur.right < maxSpeed )
-									{
-										moteur.right += speedStep / 2;
-									}
-									break;
-								}
-								case KEYCODE_DOWN:
-								{
-									if ( moteur.left > -maxSpeed )
-									{
-										moteur.left -= speedStep;
-									}
-									if ( moteur.right > -maxSpeed )
-									{
-										moteur.right -= speedStep;
-									}
-									break;
-								}
-								case KEYCODE_RIGHT:
-								{
-									if ( moteur.left < maxSpeed )
-									{
-										moteur.left += speedStep / 2;
-									}
-									if ( moteur.right > -maxSpeed )
-									{
-										moteur.right -= speedStep / 2;
-									}
-									break;
-								}
-								case KEYCODE_SPACE:
-								{
-									moteur.left = 0;
-									moteur.right = 0;
-									break;
-								}
-								default:
-								{
-									break;
-								}
-							}
-						}
-						while ( continusFlag );
+	// 						switch ( getMovePad ( true ) )
+	// 						{
+	// 							case 	KEYCODE_ESCAPE:
+	// 							{
+	// 								moteur.left = 0;
+	// 								moteur.right = 0;
+	// 								continusFlag = 0;
+	// 								break;
+	// 							}
+	// 							case KEYCODE_UP:
+	// 							{
+	// 								if ( moteur.left < maxSpeed )
+	// 								{
+	// 									moteur.left += speedStep;
+	// 								}
+	// 								if ( moteur.right < maxSpeed )
+	// 								{
+	// 									moteur.right += speedStep;
+	// 								}
+	// 								break;
+	// 							}
+	// 							case KEYCODE_LEFT:
+	// 							{
+	// 								if ( moteur.left > -maxSpeed )
+	// 								{
+	// 									moteur.left -= speedStep / 2;
+	// 								}
+	// 								if ( moteur.right < maxSpeed )
+	// 								{
+	// 									moteur.right += speedStep / 2;
+	// 								}
+	// 								break;
+	// 							}
+	// 							case KEYCODE_DOWN:
+	// 							{
+	// 								if ( moteur.left > -maxSpeed )
+	// 								{
+	// 									moteur.left -= speedStep;
+	// 								}
+	// 								if ( moteur.right > -maxSpeed )
+	// 								{
+	// 									moteur.right -= speedStep;
+	// 								}
+	// 								break;
+	// 							}
+	// 							case KEYCODE_RIGHT:
+	// 							{
+	// 								if ( moteur.left < maxSpeed )
+	// 								{
+	// 									moteur.left += speedStep / 2;
+	// 								}
+	// 								if ( moteur.right > -maxSpeed )
+	// 								{
+	// 									moteur.right -= speedStep / 2;
+	// 								}
+	// 								break;
+	// 							}
+	// 							case KEYCODE_SPACE:
+	// 							{
+	// 								moteur.left = 0;
+	// 								moteur.right = 0;
+	// 								break;
+	// 							}
+	// 							default:
+	// 							{
+	// 								break;
+	// 							}
+	// 						}
+	// 					}
+	// 					while ( continusFlag );
 
-						break;
-					}
-					default:
-					case MENU_MANUAL_exit:
-					{
-						break;
-					}
-				}
-				break;
-			}
-			case MENU_exit:
-			default:
-			{
-				logVerbose ( " - keyboard exit\n" );
-				return ( __LINE__ );
-			}
-		}
-	}
+	// 					break;
+	// 				}
+	// 				default:
+	// 				case MENU_MANUAL_exit:
+	// 				{
+	// 					break;
+	// 				}
+	// 			}
+	// 			break;
+	// 		}
+	// 		case MENU_exit:
+	// 		default:
+	// 		{
+	// 			logVerbose ( " - keyboard exit\n" );
+	// 			return ( __LINE__ );
+	// 		}
+	// 	}
+	// }
+
+	// sprintf ( jsonActionPath, "%s-%s.xml", jsonActionPath, ( flag.yellow )? "yellow" : "purple" );
+	// printf ( "run %s\n", ( flag.yellow )? "\e[1;33myellow\e[0m" : "\e[1;35mpurple\e[0m" );
+	// printf ( "   use %s\n", jsonActionPath );
 
 
-	sprintf ( xmlActionPath, "%s-%s.xml", xmlActionPath, ( flag.yellow )? "yellow" : "purple" );
-	printf ( "run %s\n", ( flag.yellow )? "\e[1;33myellow\e[0m" : "\e[1;35mpurple\e[0m" );
-	printf ( "   use %s\n", xmlActionPath );
+	// if ( !flagAction.noArm )
+	// { // arm enabled
+	// 	// init dynamixel
+	// 	dynaPortNum = portHandler ( dynamixelsPath );
+	// 	packetHandler ( );
+	// 	if ( !openPort ( dynaPortNum ) )
+	// 	{ // can't open port
+	// 		flagAction.noArm = 0;
+	// 		logVerbose ( " - dyna : \e[31m%s\e[0m (open failure)\n", dynamixelsPath );
+	// 	}
+	// 	else
+	// 	{
+	// 		logVerbose ( " - dyna : %s\n", dynamixelsPath );
+	// 		logVerbose ( "   - Device Name : %s\n", dynamixelsPath );
+
+	// 		logVerbose ( "   - Baudrate : %d \n", dynamixelUartSpeed );
+	// 		setPortNum ( dynaPortNum );
+	// 		if ( !setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
+	// 		{
+	// 			logVerbose ( "   - Baudratesetting failed, stay with last value\n" );
+	// 		}
+	// 		else
+	// 		{
+	// 			logVerbose ( "   - Baudrate	: %d\n", getBaudRate ( dynaPortNum ) );
+	// 		}
+
+	// 		setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
+	// 	}
+
+	// 	// init gpio expander
+	// 	if ( mcp23017Addr )
+	// 	{
+	// 		logVerbose ( "   - mcp23017 : %d\n", mcp23017Addr );
+	// 		if ( err = openMCP23017 ( i2cPortName, mcp23017Addr, &mcp23017Fd ), err )
+	// 		{
+	// 			logVerbose ( "   - error : %d\n", err );
+	// 			logVerbose ( "     %s\n", strerror ( errno ) );
+	// 			return ( __LINE__ );
+	// 		}
+
+	// 		if ( err = setCloseOnExit ( mcp23017Fd ), err )
+	// 		{
+	// 			logVerbose ( "   - error : %d\n", err );
+	// 			logVerbose ( "     %s\n", strerror ( errno ) );
+	// 			close ( mcp23017Fd );
+	// 			return ( __LINE__ );
+	// 		}
+
+	// 		gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_OUTPUT );
+	// 		gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_OUTPUT );
+	// 		gpioSet ( mcp23017Fd, 'A', 0, 1 );
+	// 		gpioSet ( mcp23017Fd, 'A', 1, 1 );
+	// 	}
+
+	// 	// init pwm epander
+	// 	if ( pca9685Addr )
+	// 	{
+	// 		logVerbose ( "   - pca9685 : %d\n", pca9685Addr );
+	// 		if ( err = openPCA9685 ( i2cPortName, pca9685Addr, &pca9685Fd ), err )
+	// 		{
+	// 			logVerbose ( "   - error : %d\n", err );
+	// 			logVerbose ( "     %s\n", strerror ( errno ) );
+	// 			return ( __LINE__ );
+	// 		}
+
+	// 		if ( err = setCloseOnExit ( pca9685Fd ), err )
+	// 		{
+	// 			logVerbose ( "   - error : %d\n", err );
+	// 			logVerbose ( "     %s\n", strerror ( errno ) );
+	// 			close ( pca9685Fd );
+	// 			return ( __LINE__ );
+	// 		}
+	// 	}
+	// }
+	// else
+	// { // arm disabled
+	// 	logVerbose ( " - dyna : \e[31m%s\e[0m\n", dynamixelsPath );
+	// 	logVerbose ( " - mcp23017 : \e[31m%d\e[0m (GPIO)\n", mcp23017Addr );
+	// 	logVerbose ( " - pca9685 : \e[31m%d\e[0m (PWM)\n", pca9685Addr );
+	// 	setArmDesabledState ( flagAction.noArm );
+	// }
+
+	// // only for display
+	// if ( !flagAction.noDrive )
+	// { // engine enabled
+	// 	logVerbose ( " - robotclaw : %s\n", motorBoadPath );
+	// }
+	// else
+	// { // engne disabled
+	// 	logVerbose ( " - robotclaw : \e[31m%s\e[0m\n", motorBoadPath );
+	// }
+
+	// // detection shared memory
+	// if ( err = getSharedMem ( ( void ** ) &(robot1.detection), sizeof ( *(robot1.detection) ), robot1.memKey ), err )
+	// {
+	// 	logVerbose ( " - shared mem error %d\n", err );
+	// 	logVerbose ( "   %s\n", strerror ( errno ) );
+	// 	return ( __LINE__ );
+	// }
 
 
-	if ( !flagAction.noArm )
-	{ // arm enabled
-		// init dynamixel
-		dynaPortNum = portHandler ( dynamixelsPath );
-		packetHandler ( );
-		if ( !openPort ( dynaPortNum ) )
-		{ // can't open port
-			flagAction.noArm = 0;
-			logVerbose ( " - dyna : \e[31m%s\e[0m (open failure)\n", dynamixelsPath );
-		}
-		else
-		{
-			logVerbose ( " - dyna : %s\n", dynamixelsPath );
-			logVerbose ( "   - Device Name : %s\n", dynamixelsPath );
-
-			logVerbose ( "   - Baudrate : %d \n", dynamixelUartSpeed );
-			setPortNum ( dynaPortNum );
-			if ( !setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
-			{
-				logVerbose ( "   - Baudratesetting failed, stay with last value\n" );
-			}
-			else
-			{
-				logVerbose ( "   - Baudrate	: %d\n", getBaudRate ( dynaPortNum ) );
-			}
-
-			setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
-		}
-
-		// init gpio expander
-		if ( mcp23017Addr )
-		{
-			logVerbose ( "   - mcp23017 : %d\n", mcp23017Addr );
-			if ( err = openMCP23017 ( i2cPortName, mcp23017Addr, &mcp23017Fd ), err )
-			{
-				logVerbose ( "   - error : %d\n", err );
-				logVerbose ( "     %s\n", strerror ( errno ) );
-				return ( __LINE__ );
-			}
-
-			if ( err = setCloseOnExit ( mcp23017Fd ), err )
-			{
-				logVerbose ( "   - error : %d\n", err );
-				logVerbose ( "     %s\n", strerror ( errno ) );
-				close ( mcp23017Fd );
-				return ( __LINE__ );
-			}
-
-			gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_OUTPUT );
-			gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_OUTPUT );
-			gpioSet ( mcp23017Fd, 'A', 0, 1 );
-			gpioSet ( mcp23017Fd, 'A', 1, 1 );
-		}
-
-		// init pwm epander
-		if ( pca9685Addr )
-		{
-			logVerbose ( "   - pca9685 : %d\n", pca9685Addr );
-			if ( err = openPCA9685 ( i2cPortName, pca9685Addr, &pca9685Fd ), err )
-			{
-				logVerbose ( "   - error : %d\n", err );
-				logVerbose ( "     %s\n", strerror ( errno ) );
-				return ( __LINE__ );
-			}
-
-			if ( err = setCloseOnExit ( pca9685Fd ), err )
-			{
-				logVerbose ( "   - error : %d\n", err );
-				logVerbose ( "     %s\n", strerror ( errno ) );
-				close ( pca9685Fd );
-				return ( __LINE__ );
-			}
-		}
-	}
-	else
-	{ // arm disabled
-		logVerbose ( " - dyna : \e[31m%s\e[0m\n", dynamixelsPath );
-		logVerbose ( " - mcp23017 : \e[31m%d\e[0m (GPIO)\n", mcp23017Addr );
-		logVerbose ( " - pca9685 : \e[31m%d\e[0m (PWM)\n", pca9685Addr );
-		setArmDesabledState ( flagAction.noArm );
-	}
-
-	// only for display
-	if ( !flagAction.noDrive )
-	{ // engine enabled
-		logVerbose ( " - robotclaw : %s\n", motorBoadPath );
-	}
-	else
-	{ // engne disabled
-		logVerbose ( " - robotclaw : \e[31m%s\e[0m\n", motorBoadPath );
-	}
-
-	// detection shared memory
-	if ( err = getSharedMem ( ( void ** ) &(robot1.detection), sizeof ( *(robot1.detection) ), robot1.memKey ), err )
-	{
-		logVerbose ( " - shared mem error %d\n", err );
-		logVerbose ( "   %s\n", strerror ( errno ) );
-		return ( __LINE__ );
-	}
 
 	//
 	// open actions xml
 	//
-	tabActionTotal = ouvrirXML ( &nbAction, xmlActionPath );
-	if ( !tabActionTotal )
+
+	// actionSetFd ( pca9685Fd , mcp23017Fd );
+
+	// gettimeofday ( &start, NULL );
+	// if ( nbAction > 0 )
+	// {
+	// 	tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
+	// }
+	// razAsserv();
+	// GPIO_init_gpio();
+
+	// printf ( "\e[3;33m--> Don't forget to start detection\e[0m\n" );
+
+
+		// if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
+		// {
+		// 	logVerbose ( "no more action remaining\n" );
+		// 	break;
+		// }
+
+		// if ( !flagAction.noDrive &&
+		// 	detectBlocage ( &robot1, 1000 ) )
+		// { // if engines are set to value and braking detected
+		// 	logVerbose ("BLOCAGE\n" );
+		// 	arreteTesMoteursSimone ( );
+		// }
+		// else if ( !flagAction.noDrive &&
+		// 	asservirVitesseGaucheDroite ( robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend, robot1.vitesseGauche, robot1.vitesseDroite ) )
+		// { // error occured
+		// 	logVerbose ( "%s\n ", strerror ( errno ) );
+		// }
+		// else if ( flagAction.driveScan &&
+		// 	_kbhit ( ) &&
+		// 	getchar ( ) )
+		// { // if we select action manageùent mode were we can set next action by keyboard key bressed
+		// 	robot1.xRobot = robot1.cible.xCible;
+		// 	robot1.yRobot = robot1.cible.yCible;
+		// 	robot1.orientationRobot = robot1.orientationVisee;
+		// }
+		// else if ( flagAction.driveWait )
+		// {
+		// 	// wait timeout
+		// }
+		// else
+		// {
+		// 	// nothing to be done yet
+		// }
+
+	if ( actionManagerInit ( jsonActionPath ) )
 	{
-		logVerbose ( " - xml loading failed: -%s-\n", xmlActionPath );
-		logVerbose ( "   %s\n", strerror ( errno ) );
+		logDebug ( "\n" );
 		return ( __LINE__ );
 	}
-	setFreeOnExit ( tabActionTotal );
-	initAction ( &flagAction );
-	actionSetFd ( pca9685Fd , mcp23017Fd );
 
-	gettimeofday ( &start, NULL );
-	if ( nbAction > 0 )
+	setExecAfterAllOnExit ( actionClose, NULL );
+
+	int step = actionStartStep ( );
+	actionManagerPrintCurrent ( );
+	int i = 0;
+	do 
 	{
-		tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
+		static int nb = 0;
+		if ( nb != actionManagerCurrentNumber ( step ) )
+		{
+			nb = actionManagerCurrentNumber ( step );
+			actionManagerPrintCurrent ( );
+		}
+
+		// if no action remainig for this step, search next available step
+		if ( !actionManagerCurrentNumber ( step ) )
+		{
+			// TODO calcul de la prochaine etape dans la strategie
+			step = actionStartStep ( );
+			
+			if ( step < 0 )
+			{
+				logDebug ( "\n" );
+				break;
+			}
+		}
+
+		if ( actionManagerUpdate ( ) )
+		{
+
+		}
+
+		usleep ( 1000*100 );
 	}
-	razAsserv();
-	GPIO_init_gpio();
-
-	printf ( "\e[3;33m--> Don't forget to start detection\e[0m\n" );
-
-	while ( 1 )
-	{
-		calculPosition ( motorBoard, &robot1 );		
-
-		logVerbose ( "\e[2K\rVGauche : %.3f VDroite : %.3f\n\e[A",
-			robot1.vitesseGauche,
-			robot1.vitesseDroite );
-
-		// Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
-		// Comme ça, si on a pas d'actions influant sur les moteurs, on arrête la bête.
-
-		robot1.vitesseGaucheToSend = robot1.vitesseGaucheDefault;
-		robot1.vitesseDroiteToSend = robot1.vitesseDroiteDefault;
-		
-		tenirAngle(&robot1);
-
-		if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
-		{
-			logVerbose ( "no more action remaining\n" );
-			break;
-		}
-
-		if ( !flagAction.noDrive &&
-			detectBlocage ( &robot1, 1000 ) )
-		{ // if engines are set to value and braking detected
-			logVerbose ("BLOCAGE\n" );
-			arreteTesMoteursSimone ( );
-		}
-		else if ( !flagAction.noDrive &&
-			asservirVitesseGaucheDroite ( robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend, robot1.vitesseGauche, robot1.vitesseDroite ) )
-		{ // error occured
-			logVerbose ( "%s\n ", strerror ( errno ) );
-		}
-		else if ( flagAction.driveScan &&
-			_kbhit ( ) &&
-			getchar ( ) )
-		{ // if we select action manageùent mode were we can set next action by keyboard key bressed
-			robot1.xRobot = robot1.cible.xCible;
-			robot1.yRobot = robot1.cible.yCible;
-			robot1.orientationRobot = robot1.orientationVisee;
-		}
-		else if ( flagAction.driveWait )
-		{
-			// wait timeout
-		}
-		else
-		{
-			// nothing to be done yet
-		}
-		usleep ( 1000*10 );
-	}
+	while ( true );
 
 	logVerbose ( "normal end\n" );
 
