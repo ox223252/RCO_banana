@@ -190,15 +190,15 @@ static void delCurrent ( uint32_t step, uint32_t action )
 				exchange = 1;
 			}
 
+			if ( _action_current[ i ].params[ j ] )
+			{
+				jsonFree ( &_action_current[ i ].params[ j ], 1 );
+			}
+
 			if ( !exchange ||
 				j >= ( _action_current[ i ].length - exchange ) )
 			{
 				continue;
-			}
-
-			if ( _action_current[ i ].params[ j ] )
-			{
-				jsonFree ( &_action_current[ i ].params[ j ], 1 );
 			}
 			
 			_action_current[ i ].actionsId[ j ] = _action_current[ i ].actionsId[ j + 1 ];

@@ -663,7 +663,6 @@ int main ( int argc, char * argv[] )
 	setExecAfterAllOnExit ( actionClose, NULL );
 
 	int step = actionStartStep ( );
-	actionManagerPrintCurrent ( );
 	int i = 0;
 	do 
 	{
