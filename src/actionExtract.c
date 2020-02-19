@@ -122,7 +122,7 @@ int getActionId ( const json_el * const data, const uint32_t stepId, uint32_t * 
 	return ( -1 );
 }
 
-int getNextActions ( const json_el * const data, const uint32_t stepId,  const uint32_t actionId,
+int getNextActions ( const json_el * const data, const uint32_t actionId,
 	uint32_t ** const out, uint32_t * const length, bool timeout )
 {
 	if ( !data ||
@@ -179,11 +179,11 @@ int getNextActions ( const json_el * const data, const uint32_t stepId,  const u
 		sprintf ( search, "indiceTimeout" ); 
 	}
 
-	for ( int i = 0; i < data[ *fils ].length; i++ )
+	for ( uint32_t i = 0; i < data[ *fils ].length; i++ )
 	{
 		double *id = NULL;
 
-		if( !jsonGet ( data, *(uint32_t*)data[ *fils ].value[ i ], search, &id, &type ) )
+		if( !jsonGet ( data, *(uint32_t*)data[ *fils ].value[ i ], search, (void**)&id, &type ) )
 		{
 			logDebug ( "\n" ); // error il manque l'action suivante
 			return ( __LINE__ );

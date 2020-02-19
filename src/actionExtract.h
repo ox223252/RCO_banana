@@ -32,11 +32,10 @@ int getActionId ( const json_el * const data, const uint32_t stepId,
 	uint32_t * const actionId );
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \fn int getNextActions ( const json_el * const data, const uint32_t stepId,  
+/// \fn int getNextActions ( const json_el * const data, 
 ///     const uint32_t actionId, uint32_t ** const out, uint32_t * const length, 
 ///     bool timeout );
 /// \param[in] data : json element where you search
-/// \param[in] stepId : step index in the main data array
 /// \param[in] actionId : action index in the data main array
 /// \param[out] out : table of id of next els
 /// \param[out] length : size of table in elements
@@ -45,9 +44,8 @@ int getActionId ( const json_el * const data, const uint32_t stepId,
 /// \note don't forget to free out table after use
 /// \return 0 : ok, -1 : no data remaining, else error see errno
 ////////////////////////////////////////////////////////////////////////////////
-int getNextActions ( const json_el * const data, const uint32_t stepId,  
-	const uint32_t actionId, uint32_t ** const out, uint32_t * const length, 
-	bool timeout );
+int getNextActions ( const json_el * const data, const uint32_t actionId, 
+	uint32_t ** const out, uint32_t * const length, bool timeout );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int getActionParams ( const json_el * const data, const uint32_t action,

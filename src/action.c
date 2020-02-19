@@ -268,7 +268,7 @@ static int actionNameToId ( const char * __restrict__ const  key )
 
 ////////////////////////////////////////////////////////////////////////////////
 /// init part
-int actionManagerInit ( const char * const file )
+int actionManagerInit ( const char * __restrict__ const file )
 {
 	actionManagerDeInit ( );
 
@@ -441,7 +441,7 @@ int actionManagerUpdate ( void )
 			uint32_t l = 0;
 
 			// on recupère la liste des actions filles / timeout
-			switch( getNextActions ( _action_json, _action_current[ i ].stepId, _action_current[ i ].actionsId[ j ], &next, &l, timeout ) )
+			switch( getNextActions ( _action_json, _action_current[ i ].actionsId[ j ], &next, &l, timeout ) )
 			{
 				case -1:
 				{ // nothing more to be done
@@ -474,7 +474,7 @@ int actionManagerUpdate ( void )
 	return ( 0 );
 }
 
-int actionManagerCurrentNumber ( uint32_t step )
+int actionManagerCurrentNumber ( const uint32_t step )
 {
 	for ( uint32_t i = 0; i < _action_currentLength; i++ )
 	{
@@ -929,7 +929,7 @@ void actionManagerPrint ( void )
 			uint32_t *tableNext = NULL;
 			uint32_t length = 0;
 
-			switch ( getNextActions ( _action_json, stepId, actionId, &tableNext, &length, true ) )
+			switch ( getNextActions ( _action_json, actionId, &tableNext, &length, true ) )
 			{
 				case -1:
 				{
@@ -953,7 +953,7 @@ void actionManagerPrint ( void )
 				}
 			}
 
-			switch ( getNextActions ( _action_json, stepId, actionId, &tableNext, &length, false ) )
+			switch ( getNextActions ( _action_json, actionId, &tableNext, &length, false ) )
 			{
 				case -1:
 				{
