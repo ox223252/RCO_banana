@@ -7,7 +7,10 @@
 
 enum {
 	ACTION_TYPE_none,
+	ACTION_TYPE_set_var,
 	ACTION_TYPE_servo,
+	ACTION_TYPE_get_var,
+	ACTION_TYPE_pause,
 	ACTION_TYPE_dyna,
 	ACTION_TYPE_CAPTEUR,
 	ACTION_TYPE_MOTEUR,
@@ -18,7 +21,6 @@ enum {
 	ACTION_TYPE_ENTREE,
 	ACTION_TYPE_ATTENTE_SERVO,
 	ACTION_TYPE_ATTENTE_DYNA,
-	ACTION_TYPE_ATTENTE_TEMPS,
 	ACTION_TYPE_RETOUR_DEPLACEMENT,
 	ACTION_TYPE_RETOUR_ORIENTATION,
 	ACTION_TYPE_RETOUR_POSITION,
@@ -30,8 +32,6 @@ enum {
 	ACTION_TYPE_ATTENTE_BLOCAGE,
 	ACTION_TYPE_DEPLACEMENT,
 	ACTION_TYPE_FIN,
-	ACTION_TYPE_set_var,
-	ACTION_TYPE_get_var,
 	ACTION_TYPE_last
 };
 
@@ -68,12 +68,27 @@ int actionStartStep ( void );
 int actionManagerUpdate ( void );
 
 ////////////////////////////////////////////////////////////////////////////////
+/// \fn int actionManagerCurrentIndex ( void );
+/// \biref return a value that change on each change of the environement
+////////////////////////////////////////////////////////////////////////////////
+uint32_t actionManagerCurrentIndex ( void );
+
+////////////////////////////////////////////////////////////////////////////////
 /// \fn int actionManagerCurrentNumber ( uint32_t step );
 /// \param [in] step : step for what we want to know size ( provided by
 ///     actionStartStep )
 /// \retrun the number of action remainig for the deffined step
 ////////////////////////////////////////////////////////////////////////////////
 int actionManagerCurrentNumber ( const uint32_t step );
+
+////////////////////////////////////////////////////////////////////////////////
+/// \fn void actionManagerSetFd ( const int mcpFd, const int pcaFd, 
+///     const int dynaFd );
+/// \param [ in ] mcpFd
+/// \param [ in ] pcaFd
+/// \param [ in ] dynaFd
+////////////////////////////////////////////////////////////////////////////////
+void actionManagerSetFd ( const int mcpFd, const int pcaFd, const int dynaFd );
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int actionManagerExec ( void );

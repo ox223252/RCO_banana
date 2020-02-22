@@ -27,30 +27,21 @@
 #include "struct/structAction.h"
 #include "struct/structDetection.h"
 
-// #include "gestionAction/management.h"
-// #include "gestionAction/action.h"
 #include "deplacement/odometrie.h"
 #include "deplacement/controleMoteur.h"
 #include "deplacement/asservissementVitesse.h"
 #include "deplacement/detectionBlocage.h"
 
+#include "utils.h"
 #include "action.h"
 
 static Robot robot1 = { 0 };
 
 enum
 {
-	MENU_yellow,
-	MENU_purple,
-	MENU_manual,
+	MENU_green,
+	MENU_red,
 	MENU_exit
-};
-
-enum
-{
-	MENU_MANUAL_controller,
-	MENU_MANUAL_keyboard,
-	MENU_MANUAL_exit
 };
 
 const uint8_t speedStep = 10;
@@ -83,16 +74,13 @@ int main ( int argc, char * argv[] )
 	// struct timeval start;              // used to determination of action beginning and timeout
 
 	char dynamixelsPath[ 128 ] = { 0 }; // dynamixel acces point /dev/dyna
-	// uint32_t dynamixelUartSpeed = 1000000; // dynamixel uart speed
-	// long int dynaPortNum = 0;          // dynamixel file descriptor
+	uint32_t dynamixelUartSpeed = 1000000; // dynamixel uart speed
+	long int dynaPortNum = 0;          // dynamixel file descriptor
 
 	char motorBoadPath[ 128 ] = { 0 }; // roboclaw access point /dev/roboclaw
 	struct roboclaw *motorBoard = NULL; // roboclaw file descriptor
 
 	uint32_t motorBoardUartSpeed = 115200; // uart speed
-
-	// int joystick = 0;                  // joystick file descriptor used to drive robot by Controler
-	// Xbox360Controller pad = { 0 };     // xbox 360 controler
 
 	int16_t maxSpeed = 32767;          // motor max speed, ti neved should cross this limit
 	char jsonActionPath[ 128 ] = { 0 }; // xmlAction base path concatened with color chossen
@@ -117,13 +105,10 @@ int main ( int argc, char * argv[] )
 	char i2cPortName[ 64 ] = "/dev/i2c-1";
 
 	uint8_t pca9685Addr = 0;           // servo driver addr (i2c)
-	// int pca9685Fd = 0;                 // pca9685 file descriptor
+	int pca9685Fd = 0;                 // pca9685 file descriptor
 
 	uint8_t mcp23017Addr = 0;          // gpio direr addr (i2c)
-	// int mcp23017Fd = 0;                // mcp23017 file descriptor
-
-	// Action* tabActionTotal = NULL;     // array used to manage action
-	// int nbAction = 0;                  // current  action running
+	int mcp23017Fd = 0;                // mcp23017 file descriptor
 
 	struct
 	{
@@ -132,25 +117,18 @@ int main ( int argc, char * argv[] )
 	}
 	moteur = { 0 };                    // struct used to manage engine with keyboad
 
-	// char *menuItems[] = {              // menu items used to select strategy
-	// 	"run \e[1;33mYELLOW\e[0m",
-	// 	"run \e[1;35mPURPLE\e[0m",
-	// 	"manual mode",
-	// 	"exit",
-	// 	NULL
-	// };
-
-	// char *manualMenuItems[] = {        // in case of manual strategy, permit to select methode
-	// 	"controller",
-	// 	"keyboard",
-	// 	"exit",
-	// 	NULL
-	// };
+	char *menuItems[] = {              // menu items used to select strategy
+		"run \e[1;32mGREEN\e[0m",
+		"run \e[1;31mRED\e[0m",
+		"manual mode",
+		"exit",
+		NULL
+	};
 
 	struct
 	{
-		uint8_t yellow:1,   // &flag + 0 : 0x01
-			purple:1,       //             0x02
+		uint8_t green:1,   // &flag + 0 : 0x01
+			red:1,       //             0x02
 			un2:1,          //             0x04
 			help:1,         //             0x08
 			quiet:1,        //             0x10
@@ -168,14 +146,15 @@ int main ( int argc, char * argv[] )
 	param_el paramList[] =
 	{ // paramter list used in parsin of arg cmd line
 		{ "--help", 	"-h",	0x08, 	cT ( bool ), ((uint8_t * )&flag), "this window" },
-		{ "--yellow", 	"-Y",	0x01, 	cT ( bool ), ((uint8_t * )&flag), "launch the yellow prog" },
-		{ "--purple", 	"-P",	0x02, 	cT ( bool ), ((uint8_t * )&flag), "launch the purple prog" },
+		{ "--green", 	"-G",	0x01, 	cT ( bool ), ((uint8_t * )&flag), "launch the \e[32mgreen\e[0m prog" },
+		{ "--red", 		"-R",	0x02, 	cT ( bool ), ((uint8_t * )&flag), "launch the \e[31mred\e[0m prog" },
 		{ "--quiet", 	"-q",	0x10, 	cT ( bool ), ((uint8_t * )&flag), "hide all trace point" },
 		{ "--verbose", 	"-v",	0x02, 	cT ( bool ), ((uint8_t * )&flag + 1), "set verbose mode" },
 		{ "--debug", 	"-d",	0x20, 	cT ( bool ), ((uint8_t * )&flag), "display many trace point" },
 		{ "--color", 	"-c",	0x40, 	cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
 		{ "--term", 	"-lT",	0x80, 	cT ( bool ), ((uint8_t * )&flag), "add color to debug traces" },
 		{ "--file", 	"-lF",	0x01, 	cT ( bool ), ((uint8_t * )&flag + 1), "add color to debug traces" },
+		{ "--json", 	"-j",	1, 		cT ( str ), jsonActionPath, "json action file path" },
 		{ "--test",		"-t", 	0x04, 	cT ( bool ), ((uint8_t * )&flag + 1), "testAction" },
 		{ "--noArm", 	"-nA",	0x01, 	cT ( bool ), ((uint8_t * )&flagAction), "use it to disable servo motor" },
 		{ "--armWait", 	NULL,	0x02, 	cT ( bool ), ((uint8_t * )&flagAction), "wait end of timeout before set action to done" },
@@ -186,7 +165,6 @@ int main ( int argc, char * argv[] )
 		{ "--driveScan", NULL,	0x40, 	cT ( bool ), ((uint8_t * )&flagAction), "wait a key pressed to action to done" },
 		{ "--driveDone", NULL,	0x80, 	cT ( bool ), ((uint8_t * )&flagAction), "automaticaly set action to done (default)" },
 		{ "--MaxSpeed", "-Ms",	1, 		cT ( int16_t ), &maxSpeed, "set max speed [ 1 ; 32767 ]" },
-		{ "--json", 	"-j",	1, 		cT ( str ), jsonActionPath, "json action file path" },
 		{ "--linear_left", "-ll", 1, 	cT ( float ), &robot1.coeffLongG, "linear coef for left wheel" },
 		{ "--linear_right", "-lr", 1, 	cT ( float ), &robot1.coeffLongD, "linear coef for right wheel" },
 		{ "--angle_left", "-al",1,  	cT ( float ), &robot1.coeffAngleG, "angular coef for right wheel" },
@@ -285,30 +263,20 @@ int main ( int argc, char * argv[] )
 		printf ( "no config file\n" );
 		return ( __LINE__ );
 	}
-	else
+	
+	logSetQuiet ( flag.quiet );
+	logSetColor ( flag.color );
+	logSetDebug ( flag.debug );
+	logSetVerbose ( flag.verbose );
+
+	logDebug ( "log File %s\n", flag.logFile ? "true" : "false" );
+	if ( flag.logFile )
 	{
-		if ( maxSpeed < 0 )
-		{
-			maxSpeed = -maxSpeed;
-		}
-		else if ( maxSpeed == 0 )
-		{
-			maxSpeed = 1;
-		}
-
-		logSetQuiet ( flag.quiet );
-		logSetColor ( flag.color );
-		logSetDebug ( flag.debug );
-		logSetVerbose ( flag.verbose );
-
-		logDebug ( "log File %s\n", flag.logFile ? "true" : "false" );
-		if ( flag.logFile )
-		{
-			flag.logFile = ( logSetFileName ( "log.txt" ) == 0 );
-		}
-
-		logSetOutput ( ( !flag.logFile ) ? 1 : flag.logTerm, flag.logFile );
+		flag.logFile = ( logSetFileName ( "log.txt" ) == 0 );
 	}
+
+	logSetOutput ( ( !flag.logFile ) ? 1 : flag.logTerm, flag.logFile );
+	
 
 	// in case of help requested
 	if ( flag.help )
@@ -321,13 +289,16 @@ int main ( int argc, char * argv[] )
 		return ( 0 );
 	}
 
+
 	if ( flag.test )
 	{
+		logVerbose ( "### TEST ###\n" );
 		actionManagerInit ( jsonActionPath );
 		actionManagerPrint ( );
 		actionManagerDeInit ( );
 		return ( 0 );
 	}
+
 
 	if ( !flagAction.noDrive )
 	{ // if engine wasn't disabled
@@ -349,277 +320,195 @@ int main ( int argc, char * argv[] )
 		initAsservissementVitesse ( speedAsservPG, speedAsservIG, speedAsservDG, maxSpeed, speedAsservPD, speedAsservID, speedAsservDD );
 	}
 
-	// while ( !( flag.yellow ^ flag.purple ) )
-	// { // if no color or both colors set
-	// 	switch ( menu ( 0, menuItems, NULL ) )
-	// 	{
-	// 		case MENU_purple:
-	// 		{
-	// 			flag.purple = 1;
-	// 			flag.yellow = 0;
-	// 			break;
-	// 		}
-	// 		case MENU_yellow:
-	// 		{
-	// 			flag.yellow = 1;
-	// 			flag.purple = 0;
-	// 			break;
-	// 		}
-	// 		case MENU_manual:
-	// 		{ // manual drive of robot zqsd / wasd / UP/LEFT/DOWN/RIGHT
-	// 			switch ( menu ( 0, manualMenuItems, "  >", "   ", NULL ) )
-	// 			{
-	// 				case MENU_MANUAL_controller:
-	// 				{
-	// 					joystick = open ( "/dev/input/js0", O_RDONLY | O_NONBLOCK );
 
-	// 					if ( joystick < 0 )
-	// 					{
-	// 						logVerbose ( "%s\n", strerror ( errno ) );
-	// 						break;
-	// 					}
+	while ( true )
+	{ // test du/des /fichiers de jeux
+		while ( !( flag.green ^ flag.red ) )
+		{ // if no color or both colors set
+			switch ( menu ( 0, menuItems, NULL ) )
+			{
+				case MENU_red:
+				{
+					flag.red = 1;
+					flag.green = 0;
+					break;
+				}
+				case MENU_green:
+				{
+					flag.green = 1;
+					flag.red = 0;
+					break;
+				}
+				case MENU_exit:
+				default:
+				{
+					logVerbose ( " - keyboard exit\n" );
+					return ( __LINE__ );
+				}
+			}
+		}
 
-	// 					getStatus360 ( joystick, &pad, true );
-	// 					do
-	// 					{
-	// 						if ( pad.back )
-	// 						{
-	// 							break;
-	// 						}
+		if ( strlen ( jsonActionPath ) == 0 )
+		{
+			printf ( "Saisir le nom du fichier de jeux : ");
+			scanf( "%115s", jsonActionPath );
+			while ( getchar ( ) != '\n' );
+		}
 
-	// 						envoiOrdreMoteur ( pad.Y1 >> 4, pad.Y2 >> 2, maxSpeed );
-	// 					}
-	// 					while ( getStatus360 ( joystick, &pad, false ) );
+		char tName[ 128 ];
+		bool green = 0;
+		if ( !flag.red || flag.green )
+		{
+			logDebug ( "test GREEN file status:\n" );
+			sprintf ( tName, "%s-green.json", jsonActionPath );
+			int tFile = open ( tName, O_RDONLY );
+			if ( tFile > 0 )
+			{
+				close ( tFile );
+				green = true;
+			}
+		}
 
-	// 					close ( joystick );
-	// 					joystick = -1;
-	// 					break;
-	// 				}
-	// 				case MENU_MANUAL_keyboard:
-	// 				{
-	// 					uint8_t continusFlag = 1;
-	// 					do
-	// 					{
-	// 						printf ( "%4d %4d\r", moteur.left, moteur.right );
-	// 						if ( motorBoard )
-	// 						{
-	// 							envoiOrdreMoteur ( moteur.left * 30, moteur.right * 30, maxSpeed );
-	// 						}
+		bool red = 0;
+		if ( !flag.green || flag.red )
+		{
+			logDebug ( "test RED file status:\n" );
+			sprintf ( tName, "%s-red.json", jsonActionPath );
+			int tFile = open ( tName, O_RDONLY );
+			if ( tFile > 0 )
+			{
+				close ( tFile );
+				red = true;
+			}
+		}
 
-	// 						switch ( getMovePad ( true ) )
-	// 						{
-	// 							case 	KEYCODE_ESCAPE:
-	// 							{
-	// 								moteur.left = 0;
-	// 								moteur.right = 0;
-	// 								continusFlag = 0;
-	// 								break;
-	// 							}
-	// 							case KEYCODE_UP:
-	// 							{
-	// 								if ( moteur.left < maxSpeed )
-	// 								{
-	// 									moteur.left += speedStep;
-	// 								}
-	// 								if ( moteur.right < maxSpeed )
-	// 								{
-	// 									moteur.right += speedStep;
-	// 								}
-	// 								break;
-	// 							}
-	// 							case KEYCODE_LEFT:
-	// 							{
-	// 								if ( moteur.left > -maxSpeed )
-	// 								{
-	// 									moteur.left -= speedStep / 2;
-	// 								}
-	// 								if ( moteur.right < maxSpeed )
-	// 								{
-	// 									moteur.right += speedStep / 2;
-	// 								}
-	// 								break;
-	// 							}
-	// 							case KEYCODE_DOWN:
-	// 							{
-	// 								if ( moteur.left > -maxSpeed )
-	// 								{
-	// 									moteur.left -= speedStep;
-	// 								}
-	// 								if ( moteur.right > -maxSpeed )
-	// 								{
-	// 									moteur.right -= speedStep;
-	// 								}
-	// 								break;
-	// 							}
-	// 							case KEYCODE_RIGHT:
-	// 							{
-	// 								if ( moteur.left < maxSpeed )
-	// 								{
-	// 									moteur.left += speedStep / 2;
-	// 								}
-	// 								if ( moteur.right > -maxSpeed )
-	// 								{
-	// 									moteur.right -= speedStep / 2;
-	// 								}
-	// 								break;
-	// 							}
-	// 							case KEYCODE_SPACE:
-	// 							{
-	// 								moteur.left = 0;
-	// 								moteur.right = 0;
-	// 								break;
-	// 							}
-	// 							default:
-	// 							{
-	// 								break;
-	// 							}
-	// 						}
-	// 					}
-	// 					while ( continusFlag );
+		if ( ( !flag.green || flag.red ) && !red )
+		{
+			printf ( "le fichier pour la couleur \e[1;31mRED\e[0m n'existe pas\n" );
+		}
 
-	// 					break;
-	// 				}
-	// 				default:
-	// 				case MENU_MANUAL_exit:
-	// 				{
-	// 					break;
-	// 				}
-	// 			}
-	// 			break;
-	// 		}
-	// 		case MENU_exit:
-	// 		default:
-	// 		{
-	// 			logVerbose ( " - keyboard exit\n" );
-	// 			return ( __LINE__ );
-	// 		}
-	// 	}
-	// }
+		if ( ( !flag.red || flag.green ) && !green )
+		{
+			printf ( "le fichier pour la couleur \e[1;32mGREEN\e[0m n'existe pas\n" );
+		}
 
-	// sprintf ( jsonActionPath, "%s-%s.xml", jsonActionPath, ( flag.yellow )? "yellow" : "purple" );
-	// printf ( "run %s\n", ( flag.yellow )? "\e[1;33myellow\e[0m" : "\e[1;35mpurple\e[0m" );
-	// printf ( "   use %s\n", jsonActionPath );
+		if ( green && red ||
+			green && flag.green ||
+			red && flag.red )
+		{ // le fichier est disponilble pour les deux couleurs ou 
+			// pour la couleur delectionné
+			logDebug ( "\n" );
+			break;
+		}
+		else
+		{
+			logDebug ( "\n" );
+			jsonActionPath[ 0 ] = 0;
+			continue;
+		}
+	}
+	
 
+	sprintf ( jsonActionPath, "%s-%s.json", jsonActionPath, ( flag.green )? "green" : "red" );
+	printf ( "%s\n", ( flag.green )? menuItems[ MENU_green ] : menuItems[ MENU_red ] );
+	printf ( "   use %s\n", jsonActionPath );
 
-	// if ( !flagAction.noArm )
-	// { // arm enabled
-	// 	// init dynamixel
-	// 	dynaPortNum = portHandler ( dynamixelsPath );
-	// 	packetHandler ( );
-	// 	if ( !openPort ( dynaPortNum ) )
-	// 	{ // can't open port
-	// 		flagAction.noArm = 0;
-	// 		logVerbose ( " - dyna : \e[31m%s\e[0m (open failure)\n", dynamixelsPath );
-	// 	}
-	// 	else
-	// 	{
-	// 		logVerbose ( " - dyna : %s\n", dynamixelsPath );
-	// 		logVerbose ( "   - Device Name : %s\n", dynamixelsPath );
+	if ( !flagAction.noArm )
+	{ // arm enabled
+		// init dynamixel
+		dynaPortNum = portHandler ( dynamixelsPath );
+		packetHandler ( );
+		if ( !openPort ( dynaPortNum ) )
+		{ // can't open port
+			flagAction.noArm = 0;
+			logVerbose ( " - dyna : \e[31m%s\e[0m (open failure)\n", dynamixelsPath );
+		}
+		else
+		{
+			logVerbose ( " - dyna : %s\n", dynamixelsPath );
+			logVerbose ( "   - Device Name : %s\n", dynamixelsPath );
 
-	// 		logVerbose ( "   - Baudrate : %d \n", dynamixelUartSpeed );
-	// 		setPortNum ( dynaPortNum );
-	// 		if ( !setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
-	// 		{
-	// 			logVerbose ( "   - Baudratesetting failed, stay with last value\n" );
-	// 		}
-	// 		else
-	// 		{
-	// 			logVerbose ( "   - Baudrate	: %d\n", getBaudRate ( dynaPortNum ) );
-	// 		}
+			logVerbose ( "   - Baudrate : %d \n", dynamixelUartSpeed );
+			setPortNum ( dynaPortNum );
+			if ( !setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
+			{
+				logVerbose ( "   - Baudratesetting failed, stay with last value\n" );
+			}
+			else
+			{
+				logVerbose ( "   - Baudrate	: %d\n", getBaudRate ( dynaPortNum ) );
+			}
 
-	// 		setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
-	// 	}
+			setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
+		}
 
-	// 	// init gpio expander
-	// 	if ( mcp23017Addr )
-	// 	{
-	// 		logVerbose ( "   - mcp23017 : %d\n", mcp23017Addr );
-	// 		if ( err = openMCP23017 ( i2cPortName, mcp23017Addr, &mcp23017Fd ), err )
-	// 		{
-	// 			logVerbose ( "   - error : %d\n", err );
-	// 			logVerbose ( "     %s\n", strerror ( errno ) );
-	// 			return ( __LINE__ );
-	// 		}
+		// init gpio expander
+		if ( mcp23017Addr )
+		{
+			logVerbose ( "   - mcp23017 : %d\n", mcp23017Addr );
+			if ( err = openMCP23017 ( i2cPortName, mcp23017Addr, &mcp23017Fd ), err )
+			{
+				logVerbose ( "      - error : %d\n", err );
+				logVerbose ( "         %s\n", strerror ( errno ) );
+				return ( __LINE__ );
+			}
 
-	// 		if ( err = setCloseOnExit ( mcp23017Fd ), err )
-	// 		{
-	// 			logVerbose ( "   - error : %d\n", err );
-	// 			logVerbose ( "     %s\n", strerror ( errno ) );
-	// 			close ( mcp23017Fd );
-	// 			return ( __LINE__ );
-	// 		}
+			if ( err = setCloseOnExit ( mcp23017Fd ), err )
+			{
+				logVerbose ( "       - error : %d\n", err );
+				logVerbose ( "         %s\n", strerror ( errno ) );
+				close ( mcp23017Fd );
+				return ( __LINE__ );
+			}
 
-	// 		gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_OUTPUT );
-	// 		gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_OUTPUT );
-	// 		gpioSet ( mcp23017Fd, 'A', 0, 1 );
-	// 		gpioSet ( mcp23017Fd, 'A', 1, 1 );
-	// 	}
+			gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_OUTPUT );
+			gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_OUTPUT );
+			gpioSet ( mcp23017Fd, 'A', 0, 1 );
+			gpioSet ( mcp23017Fd, 'A', 1, 1 );
+		}
 
-	// 	// init pwm epander
-	// 	if ( pca9685Addr )
-	// 	{
-	// 		logVerbose ( "   - pca9685 : %d\n", pca9685Addr );
-	// 		if ( err = openPCA9685 ( i2cPortName, pca9685Addr, &pca9685Fd ), err )
-	// 		{
-	// 			logVerbose ( "   - error : %d\n", err );
-	// 			logVerbose ( "     %s\n", strerror ( errno ) );
-	// 			return ( __LINE__ );
-	// 		}
+		// init pwm epander
+		if ( pca9685Addr )
+		{
+			logVerbose ( "   - pca9685 : %d\n", pca9685Addr );
+			if ( err = openPCA9685 ( i2cPortName, pca9685Addr, &pca9685Fd ), err )
+			{
+				logVerbose ( "   - error : %d\n", err );
+				logVerbose ( "     %s\n", strerror ( errno ) );
+				return ( __LINE__ );
+			}
 
-	// 		if ( err = setCloseOnExit ( pca9685Fd ), err )
-	// 		{
-	// 			logVerbose ( "   - error : %d\n", err );
-	// 			logVerbose ( "     %s\n", strerror ( errno ) );
-	// 			close ( pca9685Fd );
-	// 			return ( __LINE__ );
-	// 		}
-	// 	}
-	// }
-	// else
-	// { // arm disabled
-	// 	logVerbose ( " - dyna : \e[31m%s\e[0m\n", dynamixelsPath );
-	// 	logVerbose ( " - mcp23017 : \e[31m%d\e[0m (GPIO)\n", mcp23017Addr );
-	// 	logVerbose ( " - pca9685 : \e[31m%d\e[0m (PWM)\n", pca9685Addr );
-	// 	setArmDesabledState ( flagAction.noArm );
-	// }
+			if ( err = setCloseOnExit ( pca9685Fd ), err )
+			{
+				logVerbose ( "   - error : %d\n", err );
+				logVerbose ( "     %s\n", strerror ( errno ) );
+				close ( pca9685Fd );
+				return ( __LINE__ );
+			}
+		}
+	}
+	else
+	{ // arm disabled
+		logVerbose ( " - dyna : \e[31m%s\e[0m\n", dynamixelsPath );
+		logVerbose ( " - mcp23017 : \e[31m%d\e[0m (GPIO)\n", mcp23017Addr );
+		logVerbose ( " - pca9685 : \e[31m%d\e[0m (PWM)\n", pca9685Addr );
+		setArmDesabledState ( flagAction.noArm );
+	}
 
-	// // only for display
-	// if ( !flagAction.noDrive )
-	// { // engine enabled
-	// 	logVerbose ( " - robotclaw : %s\n", motorBoadPath );
-	// }
-	// else
-	// { // engne disabled
-	// 	logVerbose ( " - robotclaw : \e[31m%s\e[0m\n", motorBoadPath );
-	// }
+	// only for display
+	logVerbose ( " - robotclaw : %s%s\e[0m\n", (flagAction.noDrive)?"\e[31m":"", motorBoadPath );
 
-	// // detection shared memory
-	// if ( err = getSharedMem ( ( void ** ) &(robot1.detection), sizeof ( *(robot1.detection) ), robot1.memKey ), err )
-	// {
-	// 	logVerbose ( " - shared mem error %d\n", err );
-	// 	logVerbose ( "   %s\n", strerror ( errno ) );
-	// 	return ( __LINE__ );
-	// }
+	// detection shared memory
+	if ( err = getSharedMem ( ( void ** ) &(robot1.detection), sizeof ( *(robot1.detection) ), robot1.memKey ), err )
+	{
+		logVerbose ( " - shared mem error %d\n", err );
+		logVerbose ( "   %s\n", strerror ( errno ) );
+		return ( __LINE__ );
+	}
 
-
-
-	//
-	// open actions xml
-	//
-
-	// actionSetFd ( pca9685Fd , mcp23017Fd );
-
-	// gettimeofday ( &start, NULL );
-	// if ( nbAction > 0 )
-	// {
-	// 	tabActionTotal[0].heureCreation = start.tv_sec * 1000000 + start.tv_usec;
-	// }
-	// razAsserv();
-	// GPIO_init_gpio();
+	actionManagerSetFd ( mcp23017Fd, pca9685Fd, dynaPortNum );
 
 	// printf ( "\e[3;33m--> Don't forget to start detection\e[0m\n" );
-
-
 		// if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
 		// {
 		// 	logVerbose ( "no more action remaining\n" );
@@ -662,15 +551,22 @@ int main ( int argc, char * argv[] )
 
 	setExecAfterAllOnExit ( actionClose, NULL );
 
+	printf ( "\n" );
+
+	uint32_t start = getDateMs ( );
 	int step = actionStartStep ( );
 	int i = 0;
 	do 
 	{
-		static int nb = 0;
-		if ( nb != actionManagerCurrentNumber ( step ) )
+		logDebug ( "\n" ); 
+		printf ( "\e[A\e[KLOOP : %6d\n", getDateMs ( ) - start );
+
+		static uint32_t nb = 0;
+		if ( nb != actionManagerCurrentIndex ( ) )
 		{
-			nb = actionManagerCurrentNumber ( step );
+			nb = actionManagerCurrentIndex ( );
 			actionManagerPrintCurrent ( );
+			printf("\n");
 		}
 
 		// if no action remainig for this step, search next available step
@@ -688,7 +584,10 @@ int main ( int argc, char * argv[] )
 
 		if ( actionManagerUpdate ( ) )
 		{
+		}
 
+		if ( actionManagerExec ( ) )
+		{
 		}
 
 		usleep ( 1000*100 );
