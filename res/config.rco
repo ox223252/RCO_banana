@@ -3,11 +3,11 @@
 
 # path to dynamixels access point
 # value max length 63 bytes
-PATH_DYNA=/dev/ttyACM1
+PATH_DYNA=/dev/dyna
 
 # path to robotclaw board access point
 # value max length 63 bytes
-PATH_MOTOR_BOARD=/dev/ttyACM0
+PATH_MOTOR_BOARD=/dev/rclaw
 PATH_MOTOR_BOARD_UART_SPEED=115200
 
 # I2C interface where chip are plugged
@@ -24,7 +24,7 @@ MCP23017_ADDR=32
 
 # XML file path
 # xml file used to define strategy
-XML_ACTION_PATH=res/temp.xml
+JSON_ACTION_PATH=res/export
 
 # odometrie coef
 COEF_LINEAR_RIGHT=-0.033550613

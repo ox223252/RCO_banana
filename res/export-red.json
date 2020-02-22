@@ -66,7 +66,7 @@
                     ],
                     "arrayTimeout": [
                     ],
-                    "blocante": false,
+                    "blocante": true,
                     "indice": 2,
                     "nomAction": "Pause",
                     "xBloc": 702,
@@ -88,7 +88,7 @@
                     ],
                     "arrayTimeout": [
                     ],
-                    "blocante": false,
+                    "blocante": true,
                     "indice": 3,
                     "nomAction": "Pause",
                     "xBloc": 1046,
@@ -101,7 +101,7 @@
                     ],
                     "arrayParam": [
                         {
-                            "defaultValue": "5000",
+                            "defaultValue": "2500",
                             "nomParam": "Timeout"
                         },
                         {
@@ -131,7 +131,7 @@
                     ],
                     "arrayTimeout": [
                     ],
-                    "blocante": false,
+                    "blocante": true,
                     "indice": 4,
                     "nomAction": "Position",
                     "xBloc": 1049,
@@ -192,7 +192,7 @@
                     ],
                     "arrayTimeout": [
                     ],
-                    "blocante": false,
+                    "blocante": true,
                     "indice": 6,
                     "nomAction": "getDyna",
                     "xBloc": 1714,
@@ -360,7 +360,7 @@
             "tempsMax": 333,
             "tempsMoyen": 444,
             "xEtape": 132,
-            "yEtape": 213
+            "yEtape": 214
         }
     ]
 }
