@@ -829,10 +829,13 @@ int actionManagerExec ( void )
 				}
 				case aT(set_var):
 				{
+					logDebug ( "\n" );
+
 					char * name = NULL;
 					JSON_TYPE type = jT(undefined);
 
-					if ( !jsonGet ( _action_current[ i ].params[ j ], 0, "name", (void**)&name, &type ) )
+					// on recupère le nom
+					if ( !jsonGet ( _action_current[ i ].params[ j ], 0, "id", (void**)&name, &type ) )
 					{ // no key for variable in params
 						logDebug ( "\n" );
 						return ( __LINE__ );
@@ -843,74 +846,77 @@ int actionManagerExec ( void )
 						logDebug ( "\n" );
 						return ( __LINE__ );
 					}
-
-					char * op = NULL;
-					if ( !jsonGet ( _action_current[ i ].params[ j ], 0, "op", (void**)&op, &type ) )
-					{ // no key for variable in params
-						logDebug ( "\n" );
-						return ( __LINE__ );
-					}
-
-					if ( type != jT(str) )
-					{ // the key is no a string
-						logDebug ( "\n" );
-						return ( __LINE__ );
-					}
-
-					double * value = NULL;
-					if ( !jsonGet ( _action_current[ i ].params[ j ], 0, "value", (void**)&value, &type ) )
-					{ // no key for variable in params
-						logDebug ( "\n" );
-						return ( __LINE__ );
-					}
-
-					if ( type != jT(double) )
-					{ // the key is no a string
-						logDebug ( "\n" );
-						return ( __LINE__ );
-					}
-
+					
+					// on recupère la cible
 					double * target = NULL;
 					double tmp = 0.0;
-
-					if ( !jsonGet ( _action_current[ i ].params[ j ], 0, name, (void**)&target, &type ) )
+					if ( !jsonGet ( _action_var, 0, name, (void**)&target, &type ) )
 					{ // the var $name doesn't existe
 						target = &tmp;
 					}
-					
-					if ( type != jT(double) )
+					else if ( type != jT(double) )
 					{ // the var is not a number... not normal
 						logDebug ( "\n" );
 						return ( __LINE__ );
 					}
-					else
-					{
-						if ( !strcmp( op, "+" ) )
-						{
-							(*value) += (*target);
-						}
-						else if ( !strcmp( op, "*" ) )
-						{
-							(*value) *= (*target);
-						}
-						else if ( !strcmp( op, "/" ) )
-						{
-							(*value) = (*target) / (*value);
-						}
-						else if ( !strcmp( op, "-" ) )
-						{
-							(*value) = (*target) - (*value);
-						}
 
-						jsonGet ( _action_var, 0, name, (void**)&value, &type );
+					// le type d'action à faire
+					char * op = NULL;
+					if ( !jsonGet ( _action_current[ i ].params[ j ], 0, "condition", (void**)&op, &type ) )
+					{ // no key for variable in params
+						logDebug ( "\n" );
+						return ( __LINE__ );
 					}
+
+					if ( type != jT(str) )
+					{ // the key is no a string
+						logDebug ( "\n" );
+						return ( __LINE__ );
+					}
+
+					// l'operateur
+					char * t = NULL;
+					if ( !jsonGet ( _action_current[ i ].params[ j ], 0, "value", (void**)&t, &type ) )
+					{ // no key for variable in params
+						logDebug ( "\n" );
+						return ( __LINE__ );
+					}
+
+					if ( type != jT(str) )
+					{ // the key is no a string
+						logDebug ( "\n" );
+						return ( __LINE__ );
+					}
+					double value = atof ( t );
+					
+					// et puis on fini par faire le calcul
+					if ( !strcmp( op, "+" ) )
+					{
+						value += (*target);
+					}
+					else if ( !strcmp( op, "*" ) )
+					{
+						value *= (*target);
+					}
+					else if ( !strcmp( op, "/" ) &&
+						( (*target) != 0 ) )
+					{
+						value = (*target) / value;
+					}
+					else if ( !strcmp( op, "-" ) )
+					{
+						value = (*target) - value;
+					}
+
+					jsonSet ( _action_var, 0, name, (void*)&value, jT ( double ) );
+
 					break;
 				}
 				case aT(none):
 				case aT(last):
 				default:
 				{
-					logDebug ( "\e[33m unknow action %s\e[0m\n", actionName );
+					// logDebug ( "\e[33m unknow action %s\e[0m\n", actionName );
 					break;
 				}
 			}
@@ -1037,4 +1043,9 @@ void actionManagerPrintCurrent ( void )
 				(uint32_t)_action_current[ i ].timeout[ j ] );
 		}
 	}
+}
+
+void actionManagerPrintEnv ( void )
+{
+	jsonPrint ( _action_var, 0, 0 );
 }

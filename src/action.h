@@ -111,4 +111,6 @@ void actionManagerPrint ( void );
 ////////////////////////////////////////////////////////////////////////////////
 void actionManagerPrintCurrent ( void );
 
+void actionManagerPrintEnv ( void );
+
 #endif

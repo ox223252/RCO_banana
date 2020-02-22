@@ -566,6 +566,7 @@ int main ( int argc, char * argv[] )
 		{
 			nb = actionManagerCurrentIndex ( );
 			actionManagerPrintCurrent ( );
+			actionManagerPrintEnv ( );
 			printf("\n");
 		}
 
