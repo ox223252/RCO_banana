@@ -397,10 +397,12 @@ void broadcastPing1(int port_num)
   packetData[port_num].communication_result = COMM_NOT_AVAILABLE;
 }
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 uint8_t getBroadcastPingResult1(int port_num, int id)
 {
   return False;
 }
+#pragma GCC diagnostic pop
 
 void action1(int port_num, uint8_t id)
 {
@@ -413,11 +415,14 @@ void action1(int port_num, uint8_t id)
   txRxPacket1(port_num);
 }
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void reboot1(int port_num, uint8_t id)
 {
   packetData[port_num].communication_result = COMM_NOT_AVAILABLE;
 }
+#pragma GCC diagnostic pop
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void factoryReset1(int port_num, uint8_t id, uint8_t option)
 {
   packetData[port_num].tx_packet = (uint8_t *)realloc(packetData[port_num].tx_packet, 6);
@@ -429,6 +434,7 @@ void factoryReset1(int port_num, uint8_t id, uint8_t option)
 
   txRxPacket1(port_num);
 }
+#pragma GCC diagnostic pop
 
 void readTx1(int port_num, uint8_t id, uint16_t address, uint16_t length)
 {
@@ -724,10 +730,12 @@ void regWriteTxRx1(int port_num, uint8_t id, uint16_t address, uint16_t length)
   txRxPacket1(port_num);
 }
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void syncReadTx1(int port_num, uint16_t start_address, uint16_t data_length, uint16_t param_length)
 {
   packetData[port_num].communication_result = COMM_NOT_AVAILABLE;
 }
+#pragma GCC diagnostic pop
 
 void syncWriteTxOnly1(int port_num, uint16_t start_address, uint16_t data_length, uint16_t param_length)
 {
@@ -783,7 +791,9 @@ void bulkReadTx1(int port_num, uint16_t param_length)
   }
 }
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void bulkWriteTxOnly1(int port_num, uint16_t param_length)
 {
   packetData[port_num].communication_result = COMM_NOT_AVAILABLE;
 }
+#pragma GCC diagnostic pop
