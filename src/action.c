@@ -514,9 +514,10 @@ int actionManagerExec ( void )
 			JSON_TYPE type;
 			char * actionName = NULL;
 			if ( !jsonGet ( _action_json, _action_current[ i ].actionsId[ j ], "nomAction", (void**)&actionName, &type ) )
-			{
+			{ // si une action n'a pas de nom alors on la finie quoi qu'il arrive, ça evitera des bloquages plus tard
 				logDebug ( "\n\n" );
-				return ( __LINE__ );
+				jsonSet ( _action_current[ i ].params[ j ], 0, "status", &"done", jT ( str ) );
+				continue;
 			}
 
 			switch ( actionNameToId ( actionName ) )
@@ -682,7 +683,7 @@ int actionManagerExec ( void )
 					}
 					else
 					{
-						int temps = atoi ( t );
+						uint32_t temps = atoi ( t );
 						if ( getDateMs ( ) - _action_current[ i ].start[ j ] > temps )
 						{ // le temps est passé
 							jsonSet ( _action_current[ i ].params[ j ], 0, "status", &"done", jT ( str ) );
@@ -808,7 +809,7 @@ int actionManagerExec ( void )
 				case aT(get_var):
 				{
 					char * name = NULL;
-					JSON_TYPE type = jT(undefined);
+					type = jT(undefined);
 
 					if ( !jsonGet ( _action_current[ i ].params[ j ], 0, "key", (void**)&name, &type ) )
 					{ // no key for variable in params
@@ -832,7 +833,7 @@ int actionManagerExec ( void )
 					logDebug ( "\n" );
 
 					char * name = NULL;
-					JSON_TYPE type = jT(undefined);
+					type = jT(undefined);
 
 					// on recupère le nom
 					if ( !jsonGet ( _action_current[ i ].params[ j ], 0, "id", (void**)&name, &type ) )

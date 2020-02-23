@@ -15,7 +15,6 @@
 #include "lib/termRequest/menu.h"
 #include "lib/timer/timer.h"
 #include "lib/roboclaw/roboclaw.h"
-#include "lib/parserXML/loadXML.h"
 #include "lib/dynamixel_sdk/dynamixel_sdk.h"
 #include "lib/Xbox360-wireless/cXbox360.h"
 #include "lib/GPIO/gpio.h"
@@ -109,13 +108,6 @@ int main ( int argc, char * argv[] )
 
 	uint8_t mcp23017Addr = 0;          // gpio direr addr (i2c)
 	int mcp23017Fd = 0;                // mcp23017 file descriptor
-
-	struct
-	{
-		int8_t left;
-		int8_t right;
-	}
-	moteur = { 0 };                    // struct used to manage engine with keyboad
 
 	char *menuItems[] = {              // menu items used to select strategy
 		"run \e[1;32mGREEN\e[0m",
@@ -392,9 +384,9 @@ int main ( int argc, char * argv[] )
 			printf ( "le fichier pour la couleur \e[1;32mGREEN\e[0m n'existe pas\n" );
 		}
 
-		if ( green && red ||
-			green && flag.green ||
-			red && flag.red )
+		if ( ( green && red ) ||
+			( green && flag.green ) ||
+			( red && flag.red ) )
 		{ // le fichier est disponilble pour les deux couleurs ou 
 			// pour la couleur delectionné
 			logDebug ( "\n" );
@@ -429,7 +421,6 @@ int main ( int argc, char * argv[] )
 			logVerbose ( "   - Device Name : %s\n", dynamixelsPath );
 
 			logVerbose ( "   - Baudrate : %d \n", dynamixelUartSpeed );
-			setPortNum ( dynaPortNum );
 			if ( !setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
 			{
 				logVerbose ( "   - Baudratesetting failed, stay with last value\n" );
@@ -492,7 +483,6 @@ int main ( int argc, char * argv[] )
 		logVerbose ( " - dyna : \e[31m%s\e[0m\n", dynamixelsPath );
 		logVerbose ( " - mcp23017 : \e[31m%d\e[0m (GPIO)\n", mcp23017Addr );
 		logVerbose ( " - pca9685 : \e[31m%d\e[0m (PWM)\n", pca9685Addr );
-		setArmDesabledState ( flagAction.noArm );
 	}
 
 	// only for display
@@ -555,7 +545,6 @@ int main ( int argc, char * argv[] )
 
 	uint32_t start = getDateMs ( );
 	int step = actionStartStep ( );
-	int i = 0;
 	do 
 	{
 		logDebug ( "\n" ); 
