@@ -15,7 +15,6 @@
 #include "lib/termRequest/menu.h"
 #include "lib/roboclaw/roboclaw.h"
 #include "lib/dynamixel_sdk/dynamixel_sdk.h"
-#include "lib/Xbox360-wireless/cXbox360.h"
 #include "lib/GPIO/gpio.h"
 #include "lib/mcp23017/mcp23017.h"
 #include "lib/sharedMem/sharedMem.h"

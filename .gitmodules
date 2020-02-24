@@ -16,15 +16,9 @@
 [submodule "src/lib/log"]
 	path = src/lib/log
 	url = https://www.github.com/ox223252/log.git
-[submodule "src/lib/timer"]
-	path = src/lib/timer
-	url = https://github.com/ox223252/timer.git
 [submodule "src/lib/roboclaw"]
 	path = src/lib/roboclaw
 	url = https://github.com/ox223252/roboclaw.git
-[submodule "src/lib/Xbox360-wireless"]
-	path = src/lib/Xbox360-wireless
-	url = https://github.com/ox223252/Xbox360-wireless.git
 [submodule "src/lib/pca9685"]
 	path = src/lib/pca9685
 	url = https://github.com/ox223252/pca9685.git
