@@ -13,7 +13,6 @@
 #include "lib/signalHandler/signalHandler.h"
 #include "lib/termRequest/request.h"
 #include "lib/termRequest/menu.h"
-#include "lib/timer/timer.h"
 #include "lib/roboclaw/roboclaw.h"
 #include "lib/dynamixel_sdk/dynamixel_sdk.h"
 #include "lib/Xbox360-wireless/cXbox360.h"
@@ -45,11 +44,13 @@ enum
 
 const uint8_t speedStep = 10;
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void actionClose ( void * arg )
 {
 	logSetVerbose ( "clean\n" );
 	actionManagerDeInit ( );
 }
+#pragma GCC diagnostic pop
 
 void dynamixelClose ( void * arg )
 {
@@ -273,7 +274,6 @@ int main ( int argc, char * argv[] )
 	// in case of help requested
 	if ( flag.help )
 	{
-		printf ( "build date: %s\n", DATE_BUILD );
 		printf ( "\n\e[4mparameter available for cmd line:\e[0m\n" );
 		helpParamArgs ( paramList );
 		printf ( "\n\e[4mparameter available in res/config.rco file:\e[0m\n" );
