@@ -273,6 +273,422 @@ static int actionNameToId ( const char * __restrict__ const  key )
 	return ( -1 );
 }
 
+static int execOne ( const uint32_t step, const uint32_t action ) {
+	JSON_TYPE type;
+	char * actionName = NULL;
+	if ( !jsonGet ( _action_json, _action_current[ step ].actionsId[ action ], "nomAction", (void**)&actionName, &type ) )
+	{ // si une action n'a pas de nom alors on la finie quoi qu'il arrive, ça evitera des bloquages plus tard
+		logDebug ( "\n\n" );
+		jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+		return ( 0 );
+	}
+
+	logDebug ( "make %s\n", actionName );
+
+	switch ( actionNameToId ( actionName ) )
+	{
+		// case aT(servo):
+		// { // done
+		// 	//setPCA9685PWM ( atoi ( listAction[ indiceAction ].params[ 0 ] ), 0, 210 + atoi ( listAction[ indiceAction ].params[ 1 ] ) % 360, *_management_pca9685 );
+		// 	listAction[indiceAction].isDone = 1;
+		// 	break;
+		// }
+		// case aT(dyna):
+		// { // done
+		// 	if ( _management_flagAction->noArm )
+		// 	{
+		// 		if ( _management_flagAction->armScan )
+		// 		{
+		// 			while ( _kbhit ( ) )
+		// 			{
+		// 				listAction[indiceAction].isDone = 1;
+		// 			}
+		// 		}
+		// 		else if ( _management_flagAction->armWait )
+		// 		{ 
+		// 		}
+		// 		else
+		// 		{ // arm done
+		// 			listAction[indiceAction].isDone = 1;
+		// 		}
+		// 	}
+		// 	else
+		// 	{
+		// 		if ( setVitesseDyna ( atoi ( listAction[ indiceAction ].params[ 0 ]), ( int )( 10.23*atoi ( listAction[ indiceAction ].params[ 2 ] ) ) ) )
+		// 		{
+		// 			logVerbose ( "Erreur set vitesse dyna \n" );
+		// 		}
+		// 		if ( setPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ]), ( int )( atoi ( listAction[ indiceAction ].params[ 1 ] ) ) ) )
+		// 		{
+		// 			logVerbose ( "Erreur set angle dyna \n" );
+		// 		}
+		// 		logDebug ("Dyna : id %s, angle %s, vitesse %s\n",listAction[ indiceAction ].params[ 0 ],listAction[ indiceAction ].params[ 1 ],listAction[ indiceAction ].params[ 2 ]);
+		// 		listAction[indiceAction].isDone = 1;
+		// 	}
+		// 	break;
+		// }
+		// case TYPE_CAPTEUR:
+		// {
+		// 	break;
+		// }
+		// case TYPE_MOTEUR:
+		// { // done 
+		// 	if ( _management_flagAction->noDrive )
+		// 	{
+		// 		if ( _management_flagAction->driveScan )
+		// 		{
+		// 			while ( _kbhit ( ) )
+		// 			{
+		// 				listAction[indiceAction].isDone = 1;
+		// 			}
+		// 		}
+		// 		else if ( _management_flagAction->driveWait )
+		// 		{
+		// 		}
+		// 		else
+		// 		{ // drive done
+		// 			listAction[indiceAction].isDone = 1;
+		// 		}
+		// 	}
+		// 	else
+		// 	{
+
+		// 	}
+		// 	break;
+		// }
+		// case TYPE_AUTRE:
+		// {
+		// 	break;
+		// }
+		// case TYPE_POSITION:
+		// { // done
+		// 	if ( _management_newDeplacement == 1 )
+		// 	{
+		// 		_management_newDeplacement = 0;
+		// 		robot->vitesseGaucheDefault = 0.;
+		// 		robot->vitesseDroiteDefault = 0.;
+		// 		resetBlocage();
+
+		// 		robot->cible.xCible = atoi ( listAction[ indiceAction ].params[ 0 ] );
+		// 		robot->cible.yCible = atoi ( listAction[ indiceAction ].params[ 1 ] );
+		// 		robot->cible.vitesseMax = atoi ( listAction[ indiceAction ].params[ 2 ] );
+		// 		robot->cible.acc = atoi ( listAction[ indiceAction ].params[ 3 ] );
+		// 		robot->cible.dec = atoi ( listAction[ indiceAction ].params[ 4 ] );
+		// 		robot->cible.sens = atoi ( listAction[ indiceAction ].params[ 5 ] );
+		// 		robot->cible.precision = atoi ( listAction[ indiceAction ].params[ 6 ] );
+		// 		robot->cible.distanceFreinage = atoi ( listAction[ indiceAction ].params[ 7 ] );
+		// 		robot->setDetection = atoi ( listAction[ indiceAction ].params[ 8 ] );
+		// 		premierAppel ( robot );
+		// 	}
+		// 	else if ( calculDeplacement ( robot )==1 )
+		// 	{
+		// 		_management_newDeplacement = 1;
+		// 		listAction[indiceAction].isDone = 1;
+		// 		robot->vitesseGaucheDefault = 0.;
+		// 		robot->vitesseDroiteDefault = 0.;
+		// 	}
+
+		// 	break;
+		// }
+		// case TYPE_ORIENTATION:
+		// { // done
+		// 	if ( _management_newDeplacement == 1 )
+		// 	{
+		// 		_management_newDeplacement = 0;
+		// 		robot->vitesseGaucheDefault = 0.;
+		// 		robot->vitesseDroiteDefault = 0.;
+		// 		resetBlocage();
+		// 		robot->orientationVisee = atoi ( listAction[ indiceAction ].params[ 0 ] );
+		// 		robot->cible.vitesseMax = atoi ( listAction[ indiceAction ].params[ 1 ] );
+		// 		robot->cible.precision = atoi ( listAction[ indiceAction ].params[ 2 ] );
+		// 		premierAppelTenirAngle ( robot );
+		// 	}
+		// 	else
+		// 	{
+		// 		if ( tenirAngle ( robot )==1 )
+		// 		{
+		// 			_management_newDeplacement = 1;
+		// 			listAction[indiceAction].isDone = 1;
+		// 			robot->vitesseGaucheDefault = 0.;
+		// 			robot->vitesseDroiteDefault = 0.;
+		// 		}
+		// 	}
+		// 	break;
+		// }
+		// case TYPE_SEQUENCE:
+		// {
+		// 	break;
+		// }
+		// case TYPE_ENTREE:
+		// { // done
+		// 	listAction[indiceAction].isDone = 1;
+		// 	break;
+		// }
+		// case TYPE_ATTENTE_SERVO:
+		// {
+		// 	break;
+		// }
+		// case TYPE_ATTENTE_DYNA:
+		// { // done
+		// 	//id:param0 value:param1
+		// 	if ( abs ( getPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ] ) ) - atoi ( listAction[ indiceAction ].params[ 1 ] ) ) < 5 )
+		// 	{
+		// 		listAction[indiceAction].isDone = 1;
+		// 	}
+		// 	break;
+		// }
+		case aT(pause):
+		{ // done
+			char * t = NULL;
+			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "Temps", (void*)&t, &type ))
+			{
+				logDebug ( "ERROR param \"Temps\" not found\n" );
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				break;
+			}
+			else
+			{
+				uint32_t temps = atoi ( t );
+				if ( getDateMs ( ) - _action_current[ step ].start[ action ] > temps )
+				{ // le temps est passé
+					jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				}
+			}
+			break;
+		}
+		// case TYPE_RETOUR_DEPLACEMENT:
+		// {
+
+		// 	break;
+		// }
+		// case TYPE_RETOUR_ORIENTATION:
+		// {
+		// 	break;
+		// }
+		// case TYPE_RETOUR_POSITION:
+		// {
+		// 	break;
+		// }
+		// case TYPE_GPIO:
+		// {
+		// 	//printf("GPIO : %s %s %d\n",listAction[ indiceAction ].params[ 0 ],listAction[ indiceAction ].params[ 1 ],*(_management_mcp23017));
+		// 	gpioSet ( _management_mcp23017, 'A', atoi ( listAction[ indiceAction ].params[ 0 ] ), atoi ( listAction[ indiceAction ].params[ 1 ] ) != 1 );
+
+		// 	listAction[indiceAction].isDone = 1;
+		// 	break;
+		// }
+		// case TYPE_RETOUR_GPIO:
+		// {
+		// 	if(GPIORead(atoi ( listAction[ indiceAction ].params[ 0 ] )) == atoi ( listAction[ indiceAction ].params[ 1 ] ))
+		// 	{
+
+		// 		listAction[indiceAction].isDone = 1;
+		// 	}
+				
+		// 	break;
+		// }
+		// case TYPE_AND:
+		// {
+		// 	break;
+		// }
+		// case TYPE_SET_VALEUR: //fonction
+		// { // done
+		// 	switch ( atoi ( listAction[ indiceAction ].params[ 0 ] ) )
+		// 	{
+		// 		case 0:
+		// 		{
+		// 			//xRobot
+		// 			robot->xRobot = atoi ( listAction[ indiceAction ].params[ 1 ] );
+		// 			listAction[indiceAction].isDone = 1;
+		// 			break;
+		// 		}
+		// 		case 1:
+		// 		{
+		// 			//yRobot
+		// 			robot->yRobot = atoi ( listAction[ indiceAction ].params[ 1 ] );
+		// 			listAction[indiceAction].isDone = 1;
+		// 			break;
+		// 		}
+		// 		case 2:
+		// 		{
+		// 			//Orientation Robot
+		// 			robot->orientationRobot = atoi ( listAction[ indiceAction ].params[ 1 ] );
+		// 			robot->orientationVisee = atoi ( listAction[ indiceAction ].params[ 1 ] );
+
+		// 			listAction[indiceAction].isDone = 1;
+		// 			break;
+		// 		}
+		// 		case 3:
+		// 		{
+		// 			//Vitesse Linéaire
+		// 			exit(0);
+		// 			robot->vitesseGaucheDefault = atoi ( listAction[ indiceAction ].params[ 1 ] );
+		// 			robot->vitesseDroiteDefault = atoi ( listAction[ indiceAction ].params[ 1 ] );
+		// 			listAction[indiceAction].isDone = 1;
+		// 			break;
+		// 		}
+		// 		case 4:
+		// 		{
+		// 			//Vitesse Angulaire
+		// 			robot->vitesseGaucheDefault = -1.* atoi ( listAction[ indiceAction ].params[ 1 ] );
+		// 			robot->vitesseDroiteDefault = atoi ( listAction[ indiceAction ].params[ 1 ] );
+		// 			listAction[indiceAction].isDone = 1;
+		// 			break;
+		// 		}
+		// 	}
+		// 	break;
+		// }
+		// case TYPE_COURBE:
+		// {
+		// 	break;
+		// }
+		// case TYPE_ATTENTE_BLOCAGE:
+		// {
+		// 	break;
+		// }
+		// case TYPE_DEPLACEMENT:
+		// {
+		// 	break;
+		// }
+		// case TYPE_FIN:
+		// {
+		// 	listAction[indiceAction].isDone = 1;
+		// 	break;
+		// }
+		// case TYPE_SET_VARIABLE:
+		// {
+		// 	jsonSet ( _management_json, 0, listAction[ indiceAction ].params[ 0 ], listAction[ indiceAction ].params[ 1 ], jT ( str ) );
+		// 	listAction[indiceAction].isDone = 1;
+		// 	break;
+		// }
+		// case TYPE_GET_VARIABLE:
+		// {
+		// 	jsonGet ( _management_json, 0, listAction[ indiceAction ].params[ 0 ], (void **)&listAction[ indiceAction ].params[ 2 ], NULL );
+		// 	if ( !strcmp ( listAction[ indiceAction ].params[ 1 ], listAction[ indiceAction ].params[ 2 ] ) )
+		// 	{
+		// 		listAction[indiceAction].isDone = 1;
+		// 	}
+		// 	break;
+		// }
+
+		case aT(get_var):
+		{
+			char * name = NULL;
+			type = jT(undefined);
+
+			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "key", (void**)&name, &type ) )
+			{ // no key for variable in params
+				logDebug ( "\n" );
+				return ( __LINE__ );
+			}
+
+			if ( type != jT(str) )
+			{ // the key is no a string
+				logDebug ( "\n" );
+				return ( __LINE__ );
+			}
+
+			void * value = NULL;
+
+			jsonGet ( _action_var, 0, name, &value, &type );
+			break;
+		}
+		case aT(set_var):
+		{
+			logDebug ( "\n" );
+
+			char * name = NULL;
+			type = jT(undefined);
+
+			// on recupère le nom
+			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "id", (void**)&name, &type ) )
+			{ // no key for variable in params
+				logDebug ( "\n" );
+				return ( __LINE__ );
+			}
+
+			if ( type != jT(str) )
+			{ // the key is no a string
+				logDebug ( "\n" );
+				return ( __LINE__ );
+			}
+			
+			// on recupère la cible
+			double * target = NULL;
+			double tmp = 0.0;
+			if ( !jsonGet ( _action_var, 0, name, (void**)&target, &type ) )
+			{ // the var $name doesn't existe
+				target = &tmp;
+			}
+			else if ( type != jT(double) )
+			{ // the var is not a number... not normal
+				logDebug ( "\n" );
+				return ( __LINE__ );
+			}
+
+			// le type d'action à faire
+			char * op = NULL;
+			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "condition", (void**)&op, &type ) )
+			{ // no key for variable in params
+				logDebug ( "\n" );
+				return ( __LINE__ );
+			}
+
+			if ( type != jT(str) )
+			{ // the key is no a string
+				logDebug ( "\n" );
+				return ( __LINE__ );
+			}
+
+			// l'operateur
+			char * t = NULL;
+			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "value", (void**)&t, &type ) )
+			{ // no key for variable in params
+				logDebug ( "\n" );
+				return ( __LINE__ );
+			}
+
+			if ( type != jT(str) )
+			{ // the key is no a string
+				logDebug ( "\n" );
+				return ( __LINE__ );
+			}
+			double value = atof ( t );
+			
+			// et puis on fini par faire le calcul
+			if ( !strcmp( op, "+" ) )
+			{
+				value += (*target);
+			}
+			else if ( !strcmp( op, "*" ) )
+			{
+				value *= (*target);
+			}
+			else if ( !strcmp( op, "/" ) &&
+				( (*target) != 0 ) )
+			{
+				value = (*target) / value;
+			}
+			else if ( !strcmp( op, "-" ) )
+			{
+				value = (*target) - value;
+			}
+
+			jsonSet ( _action_var, 0, name, (void*)&value, jT ( double ) );
+
+			break;
+		}
+		case aT(none):
+		case aT(last):
+		default:
+		{
+			// logDebug ( "\e[33m unknow action %s\e[0m\n", actionName );
+			break;
+		}
+	}
+
+	return ( 0 );
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// init part
@@ -315,7 +731,7 @@ int actionManagerDeInit ( void )
 	{
 		for ( uint32_t j = 0; j < _action_current[ i ].length; j++ )
 		{
-			jsonFree ( &_action_current[ i ].params[j], 1 );
+			jsonFree ( &_action_current[ i ].params[ j ], 1 );
 		}
 		free ( _action_current[ i ].actionsId );
 		free ( _action_current[ i ].blocking );
@@ -387,12 +803,18 @@ int actionManagerUpdate ( void )
 	// pour toutes les etapes courrantes (normalement on ne devrait en avoir qu'une mais ça permet déviter un oubli)
 	for ( uint32_t i = 0; i < _action_currentLength; i++ )
 	{
+		#ifdef ONE_LEVEL_BY_LOOP
 		// on sauvegarde le nombre d'action en cours car s'il y en à de nouvelle opn les rajoutera à la suite donc il faut
 		/// eviter de rajouter une action et la retraiter aussitot ce qui nous empecherait d'executer l'action par la suite
 		uint32_t length = _action_current[ i ].length;
+		#endif
 		
 		// pour toutes les actions enregistrées dans le tableau
+		#ifdef ONE_LEVEL_BY_LOOP
 		for ( uint32_t j = 0; j < length; j++ )
+		#else
+		for ( uint32_t j = 0; _action_current && j < _action_current[ i ].length; j++ )
+		#endif
 		{
 			bool timeout = false;
 
@@ -413,7 +835,7 @@ int actionManagerUpdate ( void )
 				timeout = true;
 			}
 			else if ( _action_current[ i ].blocking[ j ] )
-			{ // s'il n'est pas passé, soit elle est blocante et on verifie son etat d'avancement
+			{ // s'il n'est pas passé,  on verifie son etat d'avancement
 				timeout = false;
 				char * status = NULL;
 				JSON_TYPE type = jT( undefined );
@@ -439,7 +861,12 @@ int actionManagerUpdate ( void )
 				}
 			}
 			else
-			{ // s'il n'y à pas de timeout et que l'action n'est pas bloquante ...
+			{ // si l'action n'est pas bloquante ...
+				#ifndef ONE_LEVEL_BY_LOOP
+				// sin on peut faire plusieurs niveau de l'arbre généalogique en une boucle
+				// alors on doit traiter les action à ce niveau
+				execOne ( i, j );
+				#endif
 			}
 			
 			uint32_t * next = NULL;
@@ -475,7 +902,9 @@ int actionManagerUpdate ( void )
 			_action_currentIndex++;
 
 			j--; // remove one element so need to take care about
+			#ifdef ONE_LEVEL_BY_LOOP
 			length--;
+			#endif
 		}
 	}
 	return ( 0 );
@@ -511,415 +940,10 @@ int actionManagerExec ( void )
 	{
 		for ( uint32_t j = 0; j < _action_current[ i ].length; j++ )
 		{
-			JSON_TYPE type;
-			char * actionName = NULL;
-			if ( !jsonGet ( _action_json, _action_current[ i ].actionsId[ j ], "nomAction", (void**)&actionName, &type ) )
-			{ // si une action n'a pas de nom alors on la finie quoi qu'il arrive, ça evitera des bloquages plus tard
-				logDebug ( "\n\n" );
-				jsonSet ( _action_current[ i ].params[ j ], 0, "status", &"done", jT ( str ) );
-				continue;
-			}
-
-			switch ( actionNameToId ( actionName ) )
+			int err = execOne ( i, j );
+			if ( err )
 			{
-				// case aT(servo):
-				// { // done
-				// 	//setPCA9685PWM ( atoi ( listAction[ indiceAction ].params[ 0 ] ), 0, 210 + atoi ( listAction[ indiceAction ].params[ 1 ] ) % 360, *_management_pca9685 );
-				// 	listAction[indiceAction].isDone = 1;
-				// 	break;
-				// }
-				// case aT(dyna):
-				// { // done
-				// 	if ( _management_flagAction->noArm )
-				// 	{
-				// 		if ( _management_flagAction->armScan )
-				// 		{
-				// 			while ( _kbhit ( ) )
-				// 			{
-				// 				listAction[indiceAction].isDone = 1;
-				// 			}
-				// 		}
-				// 		else if ( _management_flagAction->armWait )
-				// 		{ 
-				// 		}
-				// 		else
-				// 		{ // arm done
-				// 			listAction[indiceAction].isDone = 1;
-				// 		}
-				// 	}
-				// 	else
-				// 	{
-				// 		if ( setVitesseDyna ( atoi ( listAction[ indiceAction ].params[ 0 ]), ( int )( 10.23*atoi ( listAction[ indiceAction ].params[ 2 ] ) ) ) )
-				// 		{
-				// 			logVerbose ( "Erreur set vitesse dyna \n" );
-				// 		}
-				// 		if ( setPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ]), ( int )( atoi ( listAction[ indiceAction ].params[ 1 ] ) ) ) )
-				// 		{
-				// 			logVerbose ( "Erreur set angle dyna \n" );
-				// 		}
-				// 		logDebug ("Dyna : id %s, angle %s, vitesse %s\n",listAction[ indiceAction ].params[ 0 ],listAction[ indiceAction ].params[ 1 ],listAction[ indiceAction ].params[ 2 ]);
-				// 		listAction[indiceAction].isDone = 1;
-				// 	}
-				// 	break;
-				// }
-				// case TYPE_CAPTEUR:
-				// {
-				// 	break;
-				// }
-				// case TYPE_MOTEUR:
-				// { // done 
-				// 	if ( _management_flagAction->noDrive )
-				// 	{
-				// 		if ( _management_flagAction->driveScan )
-				// 		{
-				// 			while ( _kbhit ( ) )
-				// 			{
-				// 				listAction[indiceAction].isDone = 1;
-				// 			}
-				// 		}
-				// 		else if ( _management_flagAction->driveWait )
-				// 		{
-				// 		}
-				// 		else
-				// 		{ // drive done
-				// 			listAction[indiceAction].isDone = 1;
-				// 		}
-				// 	}
-				// 	else
-				// 	{
-
-				// 	}
-				// 	break;
-				// }
-				// case TYPE_AUTRE:
-				// {
-				// 	break;
-				// }
-				// case TYPE_POSITION:
-				// { // done
-				// 	if ( _management_newDeplacement == 1 )
-				// 	{
-				// 		_management_newDeplacement = 0;
-				// 		robot->vitesseGaucheDefault = 0.;
-				// 		robot->vitesseDroiteDefault = 0.;
-				// 		resetBlocage();
-
-				// 		robot->cible.xCible = atoi ( listAction[ indiceAction ].params[ 0 ] );
-				// 		robot->cible.yCible = atoi ( listAction[ indiceAction ].params[ 1 ] );
-				// 		robot->cible.vitesseMax = atoi ( listAction[ indiceAction ].params[ 2 ] );
-				// 		robot->cible.acc = atoi ( listAction[ indiceAction ].params[ 3 ] );
-				// 		robot->cible.dec = atoi ( listAction[ indiceAction ].params[ 4 ] );
-				// 		robot->cible.sens = atoi ( listAction[ indiceAction ].params[ 5 ] );
-				// 		robot->cible.precision = atoi ( listAction[ indiceAction ].params[ 6 ] );
-				// 		robot->cible.distanceFreinage = atoi ( listAction[ indiceAction ].params[ 7 ] );
-				// 		robot->setDetection = atoi ( listAction[ indiceAction ].params[ 8 ] );
-				// 		premierAppel ( robot );
-				// 	}
-				// 	else if ( calculDeplacement ( robot )==1 )
-				// 	{
-				// 		_management_newDeplacement = 1;
-				// 		listAction[indiceAction].isDone = 1;
-				// 		robot->vitesseGaucheDefault = 0.;
-				// 		robot->vitesseDroiteDefault = 0.;
-				// 	}
-
-				// 	break;
-				// }
-				// case TYPE_ORIENTATION:
-				// { // done
-				// 	if ( _management_newDeplacement == 1 )
-				// 	{
-				// 		_management_newDeplacement = 0;
-				// 		robot->vitesseGaucheDefault = 0.;
-				// 		robot->vitesseDroiteDefault = 0.;
-				// 		resetBlocage();
-				// 		robot->orientationVisee = atoi ( listAction[ indiceAction ].params[ 0 ] );
-				// 		robot->cible.vitesseMax = atoi ( listAction[ indiceAction ].params[ 1 ] );
-				// 		robot->cible.precision = atoi ( listAction[ indiceAction ].params[ 2 ] );
-				// 		premierAppelTenirAngle ( robot );
-				// 	}
-				// 	else
-				// 	{
-				// 		if ( tenirAngle ( robot )==1 )
-				// 		{
-				// 			_management_newDeplacement = 1;
-				// 			listAction[indiceAction].isDone = 1;
-				// 			robot->vitesseGaucheDefault = 0.;
-				// 			robot->vitesseDroiteDefault = 0.;
-				// 		}
-				// 	}
-				// 	break;
-				// }
-				// case TYPE_SEQUENCE:
-				// {
-				// 	break;
-				// }
-				// case TYPE_ENTREE:
-				// { // done
-				// 	listAction[indiceAction].isDone = 1;
-				// 	break;
-				// }
-				// case TYPE_ATTENTE_SERVO:
-				// {
-				// 	break;
-				// }
-				// case TYPE_ATTENTE_DYNA:
-				// { // done
-				// 	//id:param0 value:param1
-				// 	if ( abs ( getPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ] ) ) - atoi ( listAction[ indiceAction ].params[ 1 ] ) ) < 5 )
-				// 	{
-				// 		listAction[indiceAction].isDone = 1;
-				// 	}
-				// 	break;
-				// }
-				case aT(pause):
-				{ // done
-					char * t = NULL;
-					if ( !jsonGet ( _action_current[ i ].params[ j ], 0, "Temps", (void*)&t, &type ))
-					{
-						logDebug ( "ERROR param \"Temps\" not found\n" );
-						jsonSet ( _action_current[ i ].params[ j ], 0, "status", &"done", jT ( str ) );
-						break;
-					}
-					else
-					{
-						uint32_t temps = atoi ( t );
-						if ( getDateMs ( ) - _action_current[ i ].start[ j ] > temps )
-						{ // le temps est passé
-							jsonSet ( _action_current[ i ].params[ j ], 0, "status", &"done", jT ( str ) );
-						}
-					}
-					break;
-				}
-				// case TYPE_RETOUR_DEPLACEMENT:
-				// {
-
-				// 	break;
-				// }
-				// case TYPE_RETOUR_ORIENTATION:
-				// {
-				// 	break;
-				// }
-				// case TYPE_RETOUR_POSITION:
-				// {
-				// 	break;
-				// }
-				// case TYPE_GPIO:
-				// {
-				// 	//printf("GPIO : %s %s %d\n",listAction[ indiceAction ].params[ 0 ],listAction[ indiceAction ].params[ 1 ],*(_management_mcp23017));
-				// 	gpioSet ( _management_mcp23017, 'A', atoi ( listAction[ indiceAction ].params[ 0 ] ), atoi ( listAction[ indiceAction ].params[ 1 ] ) != 1 );
-
-				// 	listAction[indiceAction].isDone = 1;
-				// 	break;
-				// }
-				// case TYPE_RETOUR_GPIO:
-				// {
-				// 	if(GPIORead(atoi ( listAction[ indiceAction ].params[ 0 ] )) == atoi ( listAction[ indiceAction ].params[ 1 ] ))
-				// 	{
-
-				// 		listAction[indiceAction].isDone = 1;
-				// 	}
-						
-				// 	break;
-				// }
-				// case TYPE_AND:
-				// {
-				// 	break;
-				// }
-				// case TYPE_SET_VALEUR: //fonction
-				// { // done
-				// 	switch ( atoi ( listAction[ indiceAction ].params[ 0 ] ) )
-				// 	{
-				// 		case 0:
-				// 		{
-				// 			//xRobot
-				// 			robot->xRobot = atoi ( listAction[ indiceAction ].params[ 1 ] );
-				// 			listAction[indiceAction].isDone = 1;
-				// 			break;
-				// 		}
-				// 		case 1:
-				// 		{
-				// 			//yRobot
-				// 			robot->yRobot = atoi ( listAction[ indiceAction ].params[ 1 ] );
-				// 			listAction[indiceAction].isDone = 1;
-				// 			break;
-				// 		}
-				// 		case 2:
-				// 		{
-				// 			//Orientation Robot
-				// 			robot->orientationRobot = atoi ( listAction[ indiceAction ].params[ 1 ] );
-				// 			robot->orientationVisee = atoi ( listAction[ indiceAction ].params[ 1 ] );
-
-				// 			listAction[indiceAction].isDone = 1;
-				// 			break;
-				// 		}
-				// 		case 3:
-				// 		{
-				// 			//Vitesse Linéaire
-				// 			exit(0);
-				// 			robot->vitesseGaucheDefault = atoi ( listAction[ indiceAction ].params[ 1 ] );
-				// 			robot->vitesseDroiteDefault = atoi ( listAction[ indiceAction ].params[ 1 ] );
-				// 			listAction[indiceAction].isDone = 1;
-				// 			break;
-				// 		}
-				// 		case 4:
-				// 		{
-				// 			//Vitesse Angulaire
-				// 			robot->vitesseGaucheDefault = -1.* atoi ( listAction[ indiceAction ].params[ 1 ] );
-				// 			robot->vitesseDroiteDefault = atoi ( listAction[ indiceAction ].params[ 1 ] );
-				// 			listAction[indiceAction].isDone = 1;
-				// 			break;
-				// 		}
-				// 	}
-				// 	break;
-				// }
-				// case TYPE_COURBE:
-				// {
-				// 	break;
-				// }
-				// case TYPE_ATTENTE_BLOCAGE:
-				// {
-				// 	break;
-				// }
-				// case TYPE_DEPLACEMENT:
-				// {
-				// 	break;
-				// }
-				// case TYPE_FIN:
-				// {
-				// 	listAction[indiceAction].isDone = 1;
-				// 	break;
-				// }
-				// case TYPE_SET_VARIABLE:
-				// {
-				// 	jsonSet ( _management_json, 0, listAction[ indiceAction ].params[ 0 ], listAction[ indiceAction ].params[ 1 ], jT ( str ) );
-				// 	listAction[indiceAction].isDone = 1;
-				// 	break;
-				// }
-				// case TYPE_GET_VARIABLE:
-				// {
-				// 	jsonGet ( _management_json, 0, listAction[ indiceAction ].params[ 0 ], (void **)&listAction[ indiceAction ].params[ 2 ], NULL );
-				// 	if ( !strcmp ( listAction[ indiceAction ].params[ 1 ], listAction[ indiceAction ].params[ 2 ] ) )
-				// 	{
-				// 		listAction[indiceAction].isDone = 1;
-				// 	}
-				// 	break;
-				// }
-
-				case aT(get_var):
-				{
-					char * name = NULL;
-					type = jT(undefined);
-
-					if ( !jsonGet ( _action_current[ i ].params[ j ], 0, "key", (void**)&name, &type ) )
-					{ // no key for variable in params
-						logDebug ( "\n" );
-						return ( __LINE__ );
-					}
-
-					if ( type != jT(str) )
-					{ // the key is no a string
-						logDebug ( "\n" );
-						return ( __LINE__ );
-					}
-
-					void * value = NULL;
-
-					jsonGet ( _action_var, 0, name, &value, &type );
-					break;
-				}
-				case aT(set_var):
-				{
-					logDebug ( "\n" );
-
-					char * name = NULL;
-					type = jT(undefined);
-
-					// on recupère le nom
-					if ( !jsonGet ( _action_current[ i ].params[ j ], 0, "id", (void**)&name, &type ) )
-					{ // no key for variable in params
-						logDebug ( "\n" );
-						return ( __LINE__ );
-					}
-
-					if ( type != jT(str) )
-					{ // the key is no a string
-						logDebug ( "\n" );
-						return ( __LINE__ );
-					}
-					
-					// on recupère la cible
-					double * target = NULL;
-					double tmp = 0.0;
-					if ( !jsonGet ( _action_var, 0, name, (void**)&target, &type ) )
-					{ // the var $name doesn't existe
-						target = &tmp;
-					}
-					else if ( type != jT(double) )
-					{ // the var is not a number... not normal
-						logDebug ( "\n" );
-						return ( __LINE__ );
-					}
-
-					// le type d'action à faire
-					char * op = NULL;
-					if ( !jsonGet ( _action_current[ i ].params[ j ], 0, "condition", (void**)&op, &type ) )
-					{ // no key for variable in params
-						logDebug ( "\n" );
-						return ( __LINE__ );
-					}
-
-					if ( type != jT(str) )
-					{ // the key is no a string
-						logDebug ( "\n" );
-						return ( __LINE__ );
-					}
-
-					// l'operateur
-					char * t = NULL;
-					if ( !jsonGet ( _action_current[ i ].params[ j ], 0, "value", (void**)&t, &type ) )
-					{ // no key for variable in params
-						logDebug ( "\n" );
-						return ( __LINE__ );
-					}
-
-					if ( type != jT(str) )
-					{ // the key is no a string
-						logDebug ( "\n" );
-						return ( __LINE__ );
-					}
-					double value = atof ( t );
-					
-					// et puis on fini par faire le calcul
-					if ( !strcmp( op, "+" ) )
-					{
-						value += (*target);
-					}
-					else if ( !strcmp( op, "*" ) )
-					{
-						value *= (*target);
-					}
-					else if ( !strcmp( op, "/" ) &&
-						( (*target) != 0 ) )
-					{
-						value = (*target) / value;
-					}
-					else if ( !strcmp( op, "-" ) )
-					{
-						value = (*target) - value;
-					}
-
-					jsonSet ( _action_var, 0, name, (void*)&value, jT ( double ) );
-
-					break;
-				}
-				case aT(none):
-				case aT(last):
-				default:
-				{
-					// logDebug ( "\e[33m unknow action %s\e[0m\n", actionName );
-					break;
-				}
+				return ( err );
 			}
 		}
 	}
