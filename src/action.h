@@ -1,5 +1,5 @@
 #ifndef __ACTION_H__
-#define _8ACTION_H__
+#define __ACTION_H__
 
 #include <stdint.h>
 
@@ -12,6 +12,7 @@ enum {
 	ACTION_TYPE_get_var,
 	ACTION_TYPE_pause,
 	ACTION_TYPE_dyna,
+	ACTION_TYPE_get_dyna,
 	ACTION_TYPE_CAPTEUR,
 	ACTION_TYPE_MOTEUR,
 	ACTION_TYPE_AUTRE,
@@ -20,7 +21,6 @@ enum {
 	ACTION_TYPE_SEQUENCE,
 	ACTION_TYPE_ENTREE,
 	ACTION_TYPE_ATTENTE_SERVO,
-	ACTION_TYPE_ATTENTE_DYNA,
 	ACTION_TYPE_RETOUR_DEPLACEMENT,
 	ACTION_TYPE_RETOUR_ORIENTATION,
 	ACTION_TYPE_RETOUR_POSITION,
@@ -82,7 +82,7 @@ uint32_t actionManagerCurrentIndex ( void );
 int actionManagerCurrentNumber ( const uint32_t step );
 
 ////////////////////////////////////////////////////////////////////////////////
-/// \fn void actionManagerSetFd ( const int mcpFd, const int pcaFd, 
+/// \fn void actionManagerSetFd ( const int mcpFd, const int pcaFd,
 ///     const int dynaFd );
 /// \param [ in ] mcpFd
 /// \param [ in ] pcaFd
