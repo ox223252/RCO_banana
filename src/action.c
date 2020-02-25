@@ -7,6 +7,7 @@
 #include "utils.h"
 #include "action.h"
 #include "actionExtract.h"
+#include "utilActions/actionDyna.h"
 
 static json_el * _action_json = NULL;
 static uint32_t _action_jsonLength = 0;
@@ -34,10 +35,11 @@ static uint32_t _action_currentIndex = 0;
 static const char * _action_name[] = {
 	[aT(none)] = "none",
 	[aT(servo)] = "setServo",
-	[aT(dyna)] = "setDyna",
 	[aT(pause)] = "Pause",
 	[aT(get_var)] = "getVar",
 	[aT(set_var)] = "setVar",
+	[aT(set_dyna)] = "setDyna",
+	[aT(get_dyna)] = "getDyna",
 	[aT(last)] = NULL
 };
 
@@ -293,40 +295,105 @@ static int execOne ( const uint32_t step, const uint32_t action ) {
 		// 	listAction[indiceAction].isDone = 1;
 		// 	break;
 		// }
-		// case aT(dyna):
-		// { // done
-		// 	if ( _management_flagAction->noArm )
-		// 	{
-		// 		if ( _management_flagAction->armScan )
-		// 		{
-		// 			while ( _kbhit ( ) )
-		// 			{
-		// 				listAction[indiceAction].isDone = 1;
-		// 			}
-		// 		}
-		// 		else if ( _management_flagAction->armWait )
-		// 		{ 
-		// 		}
-		// 		else
-		// 		{ // arm done
-		// 			listAction[indiceAction].isDone = 1;
-		// 		}
-		// 	}
-		// 	else
-		// 	{
-		// 		if ( setVitesseDyna ( atoi ( listAction[ indiceAction ].params[ 0 ]), ( int )( 10.23*atoi ( listAction[ indiceAction ].params[ 2 ] ) ) ) )
-		// 		{
-		// 			logVerbose ( "Erreur set vitesse dyna \n" );
-		// 		}
-		// 		if ( setPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ]), ( int )( atoi ( listAction[ indiceAction ].params[ 1 ] ) ) ) )
-		// 		{
-		// 			logVerbose ( "Erreur set angle dyna \n" );
-		// 		}
-		// 		logDebug ("Dyna : id %s, angle %s, vitesse %s\n",listAction[ indiceAction ].params[ 0 ],listAction[ indiceAction ].params[ 1 ],listAction[ indiceAction ].params[ 2 ]);
-		// 		listAction[indiceAction].isDone = 1;
-		// 	}
-		// 	break;
-		// }
+		case aT(set_dyna):
+		{
+			return ( 0 );
+
+			uint32_t mID, mVitesse, mValue;
+
+			void * tmp = NULL;
+			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "id", (void**)&tmp, &type ) ||
+				type != jT( str ) )
+			{
+				logDebug ( "ERROR param \"id\" not found\n" );
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				break;
+			}
+			else
+			{
+				mID = atoi ( (char*)tmp );
+			}
+
+			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "Vitesse", (void**)&tmp, &type ) ||
+				type != jT( str ) )
+			{
+				logDebug ( "ERROR param \"Vitesse\" not found\n" );
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				break;
+			}
+			else
+			{
+				mVitesse = atoi ( (char*)tmp );
+			}
+
+			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "Value", (void**)&tmp, &type ) ||
+				type != jT( str ) )
+			{
+				logDebug ( "ERROR param \"Value\" not found\n" );
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				break;
+			}
+			else
+			{
+				mValue = atoi ( (char*)tmp );
+			}
+
+			if ( setVitesseDyna ( mID, ( int )( 10.23*mVitesse ) ) )
+			{
+				logVerbose ( "Erreur set vitesse dyna \n" );
+			}
+			if ( setPositionDyna ( mID, mValue ) )
+			{
+				logVerbose ( "Erreur set angle dyna \n" );
+			}
+			break;
+		}
+		case aT(get_dyna):
+		{
+			return ( 0 );
+
+			uint32_t mID, mTolerance, mValue;
+
+			void * tmp = NULL;
+			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "id", (void**)&tmp, &type ))
+			{
+				logDebug ( "ERROR param \"id\" not found\n" );
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				break;
+			}
+			else
+			{
+				mID = atoi ( (char*)tmp );
+			}
+
+			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "Tolerance", (void**)&tmp, &type ))
+			{
+				logDebug ( "ERROR param \"Tolerance\" not found\n" );
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				break;
+			}
+			else
+			{
+				mTolerance = atoi ( (char*)tmp );
+			}
+
+			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "Value", (void**)&tmp, &type ))
+			{
+				logDebug ( "ERROR param \"Value\" not found\n" );
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				break;
+			}
+			else
+			{
+				mValue = atoi ( (char*)tmp );
+			}
+
+			if ( abs ( getPositionDyna ( mID ) - mValue ) < mTolerance )
+			{
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+			}
+			break;
+		}
 		// case TYPE_CAPTEUR:
 		// {
 		// 	break;
@@ -426,15 +493,6 @@ static int execOne ( const uint32_t step, const uint32_t action ) {
 		// }
 		// case TYPE_ATTENTE_SERVO:
 		// {
-		// 	break;
-		// }
-		// case TYPE_ATTENTE_DYNA:
-		// { // done
-		// 	//id:param0 value:param1
-		// 	if ( abs ( getPositionDyna ( atoi ( listAction[ indiceAction ].params[ 0 ] ) ) - atoi ( listAction[ indiceAction ].params[ 1 ] ) ) < 5 )
-		// 	{
-		// 		listAction[indiceAction].isDone = 1;
-		// 	}
 		// 	break;
 		// }
 		case aT(pause):
@@ -932,6 +990,7 @@ void actionManagerSetFd ( const int mcpFd, const int pcaFd, const int dynaFd )
 	_action_mcpFd = mcpFd;
 	_action_pcaFd = pcaFd;
 	_action_dynaFd = dynaFd;
+	setPortNum(_action_dynaFd);
 }
 
 int actionManagerExec ( void )
