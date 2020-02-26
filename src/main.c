@@ -562,7 +562,6 @@ int main ( int argc, char * argv[] )
 			if ( step < 0 )
 			{
 				logDebug ( "\n" );
-				break;
 			}
 		}
 

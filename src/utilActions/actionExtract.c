@@ -2,7 +2,7 @@
 
 #include <errno.h>
 #include <stdio.h>
-#include "lib/log/log.h"
+#include "../lib/log/log.h"
 
 /// \retrun 0 : valid id found
 ///     -1 : no step remaining

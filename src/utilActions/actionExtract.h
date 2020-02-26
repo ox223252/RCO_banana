@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "lib/jsonParser/jsonParser.h"
+#include "../lib/jsonParser/jsonParser.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int getStepId ( const json_el * const data, uint32_t * const stepId );

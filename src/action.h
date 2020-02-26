@@ -6,14 +6,15 @@
 #define aT(type) ACTION_TYPE_##type
 
 enum {
-	ACTION_TYPE_none,
-	ACTION_TYPE_set_var,
-	ACTION_TYPE_servo,
-	ACTION_TYPE_get_var,
-	ACTION_TYPE_pause,
-	ACTION_TYPE_set_dyna,
-	ACTION_TYPE_get_dyna,
-	ACTION_TYPE_last
+	aT(none),
+	aT(set_var),
+	aT(servo),
+	aT(get_var),
+	aT(pause),
+	aT(set_dyna),
+	aT(get_dyna),
+	aT(timeout),
+	aT(last)
 };
 
 ////////////////////////////////////////////////////////////////////////////////
