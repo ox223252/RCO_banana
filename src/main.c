@@ -282,9 +282,6 @@ int main ( int argc, char * argv[] )
 	if ( flag.test )
 	{
 		logVerbose ( "### TEST ###\n" );
-		actionManagerInit ( jsonActionPath );
-		actionManagerPrint ( );
-		actionManagerDeInit ( );
 		return ( 0 );
 	}
 

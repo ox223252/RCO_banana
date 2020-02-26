@@ -261,6 +261,8 @@ static void delCurrent ( uint32_t step, uint32_t action )
 	}
 }
 
+// return the index of key in the _action_name array
+// if -1 key is not in array
 static int actionNameToId ( const char * __restrict__ const  key )
 {
 	uint32_t i = 0;
@@ -275,14 +277,47 @@ static int actionNameToId ( const char * __restrict__ const  key )
 	return ( -1 );
 }
 
+// get char* from _action_current array
+// return 0 if OK else error
+// if error set status to "done"
+static inline int getCharFromParams ( const uint32_t step, const uint32_t action, const char * __restrict__ const str, void ** const out )
+{
+	JSON_TYPE type;
+	if ( !jsonGet ( _action_current[ step ].params[ action ], 0, str, out, &type ) ||
+		type != jT( str ) )
+	{
+		logDebug ( "ERROR param \"%s\" not found %p %d\n", str, *out, type );
+		jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+		return ( __LINE__ );
+	}
+	return ( 0 );
+}
+
+// get char* from _action_json array
+// return 0 if OK else error
+// if error set status to "done"
+static inline int getCharFromMain ( const uint32_t step, const uint32_t action, const char * __restrict__ const str, void ** const out )
+{
+	JSON_TYPE type;
+	if ( !jsonGet ( _action_json,  _action_current[ step ].actionsId[ action ], str, out, &type ) ||
+		type != jT( str ) )
+	{
+		logDebug ( "ERROR param \"%s\" not found %p %d\n", str, *out, type );
+		jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+		return ( __LINE__ );
+	}
+	return ( 0 );
+}
+
+// make one action select by step index and action index
+// return 0 Ok else error
 static int execOne ( const uint32_t step, const uint32_t action )
 {
 	JSON_TYPE type;
 	char * actionName = NULL;
-	if ( !jsonGet ( _action_json, _action_current[ step ].actionsId[ action ], "nomAction", (void**)&actionName, &type ) )
+
+	if ( getCharFromMain ( step, action, "nomAction", (void**)&actionName ) )
 	{ // si une action n'a pas de nom alors on la finie quoi qu'il arrive, ça evitera des bloquages plus tard
-		logDebug ( "\n\n" );
-		jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
 		return ( 0 );
 	}
 
@@ -298,46 +333,31 @@ static int execOne ( const uint32_t step, const uint32_t action )
 		// }
 		case aT(set_dyna):
 		{
-			return ( 0 );
+			if ( _action_dynaFd <= 0 )
+			{ // arm disabled
+				return ( 0 );
+			}
 
 			uint32_t mID, mVitesse, mValue;
 
 			void * tmp = NULL;
-			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "id", (void**)&tmp, &type ) ||
-				type != jT( str ) )
+			if ( getCharFromParams ( step, action, "id", &tmp ) )
 			{
-				logDebug ( "ERROR param \"id\" not found\n" );
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-				break;
+				return ( __LINE__ );
 			}
-			else
-			{
-				mID = atoi ( (char*)tmp );
-			}
+			mID = atoi ( (char*)tmp );
 
-			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "Vitesse", (void**)&tmp, &type ) ||
-				type != jT( str ) )
+			if ( getCharFromParams ( step, action, "Vitesse", &tmp ) )
 			{
-				logDebug ( "ERROR param \"Vitesse\" not found\n" );
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-				break;
+				return ( __LINE__ );
 			}
-			else
-			{
-				mVitesse = atoi ( (char*)tmp );
-			}
+			mVitesse = atoi ( (char*)tmp );
 
-			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "Value", (void**)&tmp, &type ) ||
-				type != jT( str ) )
+			if ( getCharFromParams ( step, action, "Value", &tmp ) )
 			{
-				logDebug ( "ERROR param \"Value\" not found\n" );
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-				break;
+				return ( __LINE__ );
 			}
-			else
-			{
-				mValue = atoi ( (char*)tmp );
-			}
+			mValue = atoi ( (char*)tmp );
 
 			if ( setVitesseDyna ( mID, ( int )( 10.23*mVitesse ) ) )
 			{
@@ -351,45 +371,34 @@ static int execOne ( const uint32_t step, const uint32_t action )
 		}
 		case aT(get_dyna):
 		{
-			return ( 0 );
+			if ( _action_dynaFd <= 0 )
+			{ // arm disabled
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				return ( 0 );
+			}
 
 			uint32_t mID, mTolerance, mValue;
 
 			void * tmp = NULL;
-			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "id", (void**)&tmp, &type ))
+			if ( getCharFromParams ( step, action, "id", (void**)&actionName ) )
 			{
-				logDebug ( "ERROR param \"id\" not found\n" );
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-				break;
+				return ( __LINE__ );
 			}
-			else
-			{
-				mID = atoi ( (char*)tmp );
-			}
+			mID = atoi ( (char*)tmp );
 
-			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "Tolerance", (void**)&tmp, &type ))
+			if ( getCharFromParams ( step, action, "Tolerance", (void**)&actionName ) )
 			{
-				logDebug ( "ERROR param \"Tolerance\" not found\n" );
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-				break;
+				return ( __LINE__ );
 			}
-			else
-			{
-				mTolerance = atoi ( (char*)tmp );
-			}
+			mTolerance = atoi ( (char*)tmp );
 
-			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "Value", (void**)&tmp, &type ))
+			if ( getCharFromParams ( step, action, "Value", (void**)&actionName ) )
 			{
-				logDebug ( "ERROR param \"Value\" not found\n" );
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-				break;
+				return ( __LINE__ );
 			}
-			else
-			{
-				mValue = atoi ( (char*)tmp );
-			}
+			mValue = atoi ( (char*)tmp );
 
-			if ( abs ( getPositionDyna ( mID ) - mValue ) < mTolerance )
+			if ( (uint32_t)abs ( getPositionDyna ( mID ) - mValue ) < mTolerance )
 			{
 				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
 			}
@@ -498,20 +507,17 @@ static int execOne ( const uint32_t step, const uint32_t action )
 		// }
 		case aT(pause):
 		{ // done
-			char * t = NULL;
-			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "Temps", (void*)&t, &type ))
+			void * tmp = NULL;
+
+			if ( getCharFromParams ( step, action, "Temps", &tmp ) )
 			{
-				logDebug ( "ERROR param \"Temps\" not found\n" );
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-				break;
+				return ( __LINE__ );
 			}
-			else
-			{
-				uint32_t temps = atoi ( t );
-				if ( getDateMs ( ) - _action_current[ step ].start[ action ] > temps )
-				{ // le temps est passé
-					jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-				}
+
+			uint32_t temps = atoi ( (char*)tmp );
+			if ( getDateMs ( ) - _action_current[ step ].start[ action ] > temps )
+			{ // le temps est passé
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
 			}
 			break;
 		}
@@ -635,17 +641,22 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			char * name = NULL;
 			type = jT(undefined);
 
-			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "key", (void**)&name, &type ) )
-			{ // no key for variable in params
-				logDebug ( "\n" );
+			if ( getCharFromParams ( step, action, "key", (void**)&name ) )
+			{ // si une action n'a pas de nom alors on la finie quoi qu'il arrive, ça evitera des bloquages plus tard
 				return ( __LINE__ );
 			}
 
-			if ( type != jT(str) )
-			{ // the key is no a string
-				logDebug ( "\n" );
-				return ( __LINE__ );
-			}
+			// if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "key", (void**)&name, &type ) )
+			// { // no key for variable in params
+			// 	logDebug ( "\n" );
+			// 	return ( __LINE__ );
+			// }
+
+			// if ( type != jT(str) )
+			// { // the key is no a string
+			// 	logDebug ( "\n" );
+			// 	return ( __LINE__ );
+			// }
 
 			void * value = NULL;
 
@@ -659,22 +670,15 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			char * name = NULL;
 			type = jT(undefined);
 
-			// on recupère le nom
-			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "id", (void**)&name, &type ) )
+			if ( getCharFromParams ( step, action, "id", (void**)&name ) )
 			{ // no key for variable in params
-				logDebug ( "\n" );
 				return ( __LINE__ );
 			}
-
-			if ( type != jT(str) )
-			{ // the key is no a string
-				logDebug ( "\n" );
-				return ( __LINE__ );
-			}
-			
+		
 			// on recupère la cible
 			double * target = NULL;
 			double tmp = 0.0;
+
 			if ( !jsonGet ( _action_var, 0, name, (void**)&target, &type ) )
 			{ // the var $name doesn't existe
 				target = &tmp;
@@ -687,29 +691,15 @@ static int execOne ( const uint32_t step, const uint32_t action )
 
 			// le type d'action à faire
 			char * op = NULL;
-			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "condition", (void**)&op, &type ) )
-			{ // no key for variable in params
-				logDebug ( "\n" );
+			if ( getCharFromParams ( step, action, "condition", (void**)&op ) )
+			{
 				return ( __LINE__ );
 			}
 
-			if ( type != jT(str) )
-			{ // the key is no a string
-				logDebug ( "\n" );
-				return ( __LINE__ );
-			}
-
-			// l'operateur
+			// l'operande
 			char * t = NULL;
-			if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "value", (void**)&t, &type ) )
-			{ // no key for variable in params
-				logDebug ( "\n" );
-				return ( __LINE__ );
-			}
-
-			if ( type != jT(str) )
-			{ // the key is no a string
-				logDebug ( "\n" );
+			if ( getCharFromParams ( step, action, "value", (void**)&t ) )
+			{
 				return ( __LINE__ );
 			}
 			double value = atof ( t );
