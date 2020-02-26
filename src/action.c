@@ -275,7 +275,8 @@ static int actionNameToId ( const char * __restrict__ const  key )
 	return ( -1 );
 }
 
-static int execOne ( const uint32_t step, const uint32_t action ) {
+static int execOne ( const uint32_t step, const uint32_t action )
+{
 	JSON_TYPE type;
 	char * actionName = NULL;
 	if ( !jsonGet ( _action_json, _action_current[ step ].actionsId[ action ], "nomAction", (void**)&actionName, &type ) )

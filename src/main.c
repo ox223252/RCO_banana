@@ -70,8 +70,6 @@ int main ( int argc, char * argv[] )
 	int err = 0;                       // var used to stor error of init function
 	void * tmp = NULL;                 // tmp pointer used for initialisation only
 
-	// struct timeval start;              // used to determination of action beginning and timeout
-
 	char dynamixelsPath[ 128 ] = { 0 }; // dynamixel acces point /dev/dyna
 	uint32_t dynamixelUartSpeed = 1000000; // dynamixel uart speed
 	long int dynaPortNum = 0;          // dynamixel file descriptor
@@ -130,7 +128,7 @@ int main ( int argc, char * argv[] )
 		uint8_t logFile:1,  // &flag + 1 : 0x01
 			verbose:1,      //             0x02
 			test:1;         //             0x04
-		}
+	}
 	flag = { 0 };                      // some flags used to set verbosity
 
 	ActionFlag flagAction = { 0 };
@@ -293,26 +291,26 @@ int main ( int argc, char * argv[] )
 
 	if ( !flagAction.noDrive )
 	{ // if engine wasn't disabled
-robot1.blocageVoulu = false;
-initDetectionBlocage();
+		robot1.blocageVoulu = false;
+		initDetectionBlocage();
 
 		// init motor
-if ( initEngine ( motorBoadPath, motorBoardUartSpeed, Vmax, Vmin, readDelay, &motorBoard ) )
-{
-	logVerbose ( "can't open robo claw bus at %s\n", motorBoadPath );
-	logVerbose ( "%s\n", strerror ( errno ) );
-	return ( __LINE__ );
-}
+		if ( initEngine ( motorBoadPath, motorBoardUartSpeed, Vmax, Vmin, readDelay, &motorBoard ) )
+		{
+			logVerbose ( "can't open robo claw bus at %s\n", motorBoadPath );
+			logVerbose ( "%s\n", strerror ( errno ) );
+			return ( __LINE__ );
+		}
 
-initBoost ( Vboost, tBoost );
+		initBoost ( Vboost, tBoost );
 
-initOdometrie ( motorBoard, &robot1 );
+		initOdometrie ( motorBoard, &robot1 );
 
-initAsservissementVitesse ( speedAsservPG, speedAsservIG, speedAsservDG, maxSpeed, speedAsservPD, speedAsservID, speedAsservDD );
-}
+		initAsservissementVitesse ( speedAsservPG, speedAsservIG, speedAsservDG, maxSpeed, speedAsservPD, speedAsservID, speedAsservDD );
+	}
 
 
-while ( true )
+	while ( true )
 	{ // test du/des /fichiers de jeux
 		while ( !( flag.green ^ flag.red ) )
 		{ // if no color or both colors set
@@ -411,73 +409,73 @@ while ( true )
 		packetHandler ( );
 		if ( !openPort ( dynaPortNum ) )
 		{ // can't open port
-	flagAction.noArm = 0;
-	logVerbose ( " - dyna : \e[31m%s\e[0m (open failure)\n", dynamixelsPath );
-}
-else
-{
-	logVerbose ( " - dyna : %s\n", dynamixelsPath );
-	logVerbose ( "   - Device Name : %s\n", dynamixelsPath );
+			flagAction.noArm = 0;
+			logVerbose ( " - dyna : \e[31m%s\e[0m (open failure)\n", dynamixelsPath );
+		}
+		else
+		{
+			logVerbose ( " - dyna : %s\n", dynamixelsPath );
+			logVerbose ( "   - Device Name : %s\n", dynamixelsPath );
 
-	logVerbose ( "   - Baudrate : %d \n", dynamixelUartSpeed );
-	if ( !setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
-	{
-		logVerbose ( "   - Baudratesetting failed, stay with last value\n" );
-	}
-	else
-	{
-		logVerbose ( "   - Baudrate	: %d\n", getBaudRate ( dynaPortNum ) );
-	}
+			logVerbose ( "   - Baudrate : %d \n", dynamixelUartSpeed );
+			if ( !setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
+			{
+				logVerbose ( "   - Baudratesetting failed, stay with last value\n" );
+			}
+			else
+			{
+				logVerbose ( "   - Baudrate	: %d\n", getBaudRate ( dynaPortNum ) );
+			}
 
-	setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
-}
+			setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
+		}
 
 		// init gpio expander
-if ( mcp23017Addr )
-{
-	logVerbose ( "   - mcp23017 : %d\n", mcp23017Addr );
-	if ( err = openMCP23017 ( i2cPortName, mcp23017Addr, &mcp23017Fd ), err )
-	{
-		logVerbose ( "      - error : %d\n", err );
-		logVerbose ( "         %s\n", strerror ( errno ) );
-		return ( __LINE__ );
-	}
+		if ( mcp23017Addr )
+		{
+			logVerbose ( "   - mcp23017 : %d\n", mcp23017Addr );
+			if ( err = openMCP23017 ( i2cPortName, mcp23017Addr, &mcp23017Fd ), err )
+			{
+				logVerbose ( "      - error : %d\n", err );
+				logVerbose ( "         %s\n", strerror ( errno ) );
+				return ( __LINE__ );
+			}
 
-	if ( err = setCloseOnExit ( mcp23017Fd ), err )
-	{
-		logVerbose ( "       - error : %d\n", err );
-		logVerbose ( "         %s\n", strerror ( errno ) );
-		close ( mcp23017Fd );
-		return ( __LINE__ );
-	}
+			if ( err = setCloseOnExit ( mcp23017Fd ), err )
+			{
+				logVerbose ( "       - error : %d\n", err );
+				logVerbose ( "         %s\n", strerror ( errno ) );
+				close ( mcp23017Fd );
+				return ( __LINE__ );
+			}
 
-	gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_OUTPUT );
-	gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_OUTPUT );
-	gpioSet ( mcp23017Fd, 'A', 0, 1 );
-	gpioSet ( mcp23017Fd, 'A', 1, 1 );
-}
+			gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_OUTPUT );
+			gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_OUTPUT );
+			gpioSet ( mcp23017Fd, 'A', 0, 1 );
+			gpioSet ( mcp23017Fd, 'A', 1, 1 );
+		}
 
 		// init pwm epander
-if ( pca9685Addr )
-{
-	logVerbose ( "   - pca9685 : %d\n", pca9685Addr );
-	if ( err = openPCA9685 ( i2cPortName, pca9685Addr, &pca9685Fd ), err )
-	{
-		logVerbose ( "   - error : %d\n", err );
-		logVerbose ( "     %s\n", strerror ( errno ) );
-		return ( __LINE__ );
-	}
+		if ( pca9685Addr )
+		{
+			logVerbose ( "   - pca9685 : %d\n", pca9685Addr );
+			if ( err = openPCA9685 ( i2cPortName, pca9685Addr, &pca9685Fd ), err )
+			{
+				logVerbose ( "   - error : %d\n", err );
+				logVerbose ( "     %s\n", strerror ( errno ) );
+				return ( __LINE__ );
+			}
 
-	if ( err = setCloseOnExit ( pca9685Fd ), err )
-	{
-		logVerbose ( "   - error : %d\n", err );
-		logVerbose ( "     %s\n", strerror ( errno ) );
-		close ( pca9685Fd );
-		return ( __LINE__ );
+			if ( err = setCloseOnExit ( pca9685Fd ), err )
+			{
+				logVerbose ( "   - error : %d\n", err );
+				logVerbose ( "     %s\n", strerror ( errno ) );
+				close ( pca9685Fd );
+				return ( __LINE__ );
+			}
+		}
 	}
-}
-}
-else
+	else
 	{ // arm disabled
 		logVerbose ( " - dyna : \e[31m%s\e[0m\n", dynamixelsPath );
 		logVerbose ( " - mcp23017 : \e[31m%d\e[0m (GPIO)\n", mcp23017Addr );
