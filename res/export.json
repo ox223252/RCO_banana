@@ -60,13 +60,13 @@
                     ],
                     "arrayParam": [
                         {
-                            "defaultValue": "10000",
+                            "defaultValue": "1000",
                             "nomParam": "Temps"
                         }
                     ],
                     "arrayTimeout": [
                     ],
-                    "blocante": true,
+                    "blocante": false,
                     "indice": 2,
                     "nomAction": "Pause",
                     "xBloc": 702,
@@ -82,13 +82,13 @@
                     ],
                     "arrayParam": [
                         {
-                            "defaultValue": "10000",
+                            "defaultValue": "500",
                             "nomParam": "Temps"
                         }
                     ],
                     "arrayTimeout": [
                     ],
-                    "blocante": true,
+                    "blocante": false,
                     "indice": 3,
                     "nomAction": "Pause",
                     "xBloc": 1046,
@@ -275,15 +275,23 @@
                     ],
                     "arrayParam": [
                         {
-                            "defaultValue": "5000",
-                            "nomParam": "Temps"
+                            "defaultValue": "01",
+                            "nomParam": "id"
+                        },
+                        {
+                            "defaultValue": "02",
+                            "nomParam": "Value"
+                        },
+                        {
+                            "defaultValue": "03",
+                            "nomParam": "Vitesse"
                         }
                     ],
                     "arrayTimeout": [
                     ],
-                    "blocante": true,
+                    "blocante": false,
                     "indice": 10,
-                    "nomAction": "Pause",
+                    "nomAction": "setDyna",
                     "xBloc": 611,
                     "yBloc": 324
                 },

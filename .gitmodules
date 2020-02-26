@@ -31,3 +31,6 @@
 [submodule "src/lib/sharedMem"]
 	path = src/lib/sharedMem
 	url = https://github.com/ox223252/sharedMem.git
+[submodule "src/lib/timer"]
+	path = src/lib/timer
+	url = https://github.com/ox223252/timer.git
