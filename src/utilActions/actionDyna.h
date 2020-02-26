@@ -18,4 +18,4 @@ int setVitesseDyna(int id, int vitesse);
 int setPositionDyna(int id, int position);
 int getPositionDyna(int id);
 
-#endin __ACTION_DYNA_H__
+#endif

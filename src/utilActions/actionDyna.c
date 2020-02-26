@@ -2,6 +2,8 @@
 
 static int port_Num;
 
+static bool _actionDyna_armDesabled = false;
+
 void setPortNum ( int portNum )
 {
 	port_Num = portNum;
@@ -13,7 +15,7 @@ int setVitesseDyna ( int id, int vitesse )
 	uint8_t dxl_error = 0;
 	int dxl_comm_result = COMM_TX_FAIL;						 // Communication result
 
-	if ( _action_armDesabled )
+	if ( _actionDyna_armDesabled )
 	{
 		return ( 0 );
 	}
@@ -37,7 +39,7 @@ int setPositionDyna ( int id, int position )
 	uint8_t dxl_error = 0;
 	int dxl_comm_result = COMM_TX_FAIL;						 // Communication result
 
-	if ( _action_armDesabled )
+	if ( _actionDyna_armDesabled )
 	{
 		return ( 0 );
 	}
@@ -62,7 +64,7 @@ int getPositionDyna ( int id )
 	uint8_t dxl_error = 0;
 	int dxl_comm_result = COMM_TX_FAIL;						 // Communication result
 
-	if ( _action_armDesabled )
+	if ( _actionDyna_armDesabled )
 	{
 		return ( 0 );
 	}
