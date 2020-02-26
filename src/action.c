@@ -8,6 +8,7 @@
 #include "action.h"
 #include "utilActions/actionExtract.h"
 #include "utilActions/actionDyna.h"
+#include "lib/freeOnExit/freeOnExit.h"
 
 #include "lib/timer/timer.h"
 
@@ -69,7 +70,7 @@ static int newCurrent ( uint32_t step, uint32_t action )
 	if ( i == _action_currentLength )
 	{
 		tmp = realloc ( _action_current, sizeof ( currentWork ) * ( _action_currentLength + 1 ) );
-		
+
 		if ( !tmp )
 		{
 			logDebug ( "\n" );
@@ -201,20 +202,21 @@ static void delCurrent ( uint32_t step, uint32_t action )
 			if ( _action_current[ i ].actionsId[ j ] == action )
 			{
 				exchange = 1;
+
+				if ( _action_current[ i ].params[ j ] )
+				{
+					jsonFree ( &_action_current[ i ].params[ j ], 1 );
+					_action_current[ i ].params[ j ] = NULL;
+				}
 			}
 
-			if ( _action_current[ i ].params[ j ] == action )
-			{
-				jsonFree ( &_action_current[ i ].params[ j ], 1 );
-				_action_current[ i ].params[ j ] = NULL;
-			}
 
 			if ( !exchange ||
 				j >= ( _action_current[ i ].length - exchange ) )
 			{
 				continue;
 			}
-			
+
 			_action_current[ i ].actionsId[ j ] = _action_current[ i ].actionsId[ j + 1 ];
 			_action_current[ i ].actionsId[ j + 1 ] = 0;
 
@@ -360,8 +362,11 @@ static void * actionCleanAndSet ( void * arg )
 		_action_currentIndex++;
 	}
 
+	unsetFreeOnExit ( a->nexts );
 	free ( a->nexts );
 	a->nexts = NULL;
+
+	unsetFreeOnExit ( a );
 	free ( a );
 	a = NULL;
 	return ( NULL );
@@ -608,7 +613,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 
 			// 		listAction[indiceAction].isDone = 1;
 			// 	}
-					
+
 			// 	break;
 			// }
 			// case TYPE_AND:
@@ -730,7 +735,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			{ // no key for variable in params
 				return ( __LINE__ );
 			}
-		
+
 			// on recupère la cible
 			double * target = NULL;
 			double tmp = 0.0;
@@ -759,7 +764,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 				return ( __LINE__ );
 			}
 			double value = atof ( t );
-			
+
 			// et puis on fini par faire le calcul
 			if ( !strcmp( op, "+" ) )
 			{
@@ -798,7 +803,8 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			}
 
 			arg->stepId = _action_current[ step ].stepId;
-			
+			setFreeOnExit ( arg );
+
 			switch( getNextActions ( _action_json, _action_current[ step ].actionsId[ action ], &(arg->nexts), &(arg->length), true ) )
 			{
 				case -1:
@@ -808,6 +814,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 				}
 				case 0:
 				{ // next step
+					setFreeOnExit ( arg->nexts );
 					if ( !startTimer( delay, actionCleanAndSet, (void *)arg) )
 					{
 						free ( arg );
@@ -874,7 +881,7 @@ int actionManagerDeInit ( void )
 	}
 
 	cleanCurrent ( );
-	
+
 	return ( 0 );
 }
 
@@ -917,7 +924,7 @@ int actionStartStep ( void )
 		actionIndex++;
 	}
 	while ( true );
-	
+
 	// pas d'etatpe nomé Début trouve dans la sequence
 	logDebug ( "\n" );
 	return ( -__LINE__ );
@@ -933,7 +940,7 @@ int actionManagerUpdate ( void )
 		/// eviter de rajouter une action et la retraiter aussitot ce qui nous empecherait d'executer l'action par la suite
 		uint32_t length = _action_current[ i ].length;
 		#endif
-		
+
 		// pour toutes les actions enregistrées dans le tableau
 		#ifdef ONE_LEVEL_BY_LOOP
 		for ( uint32_t j = 0; j < length; j++ )
@@ -992,7 +999,7 @@ int actionManagerUpdate ( void )
 				execOne ( i, j );
 				#endif
 			}
-			
+
 			uint32_t * next = NULL;
 			uint32_t l = 0;
 
@@ -1020,7 +1027,7 @@ int actionManagerUpdate ( void )
 			}
 
 			free ( next );
-			
+
 			// on supprime l'action courrante
 			delCurrent ( _action_current[ i ].stepId, _action_current[ i ].actionsId[ j ] );
 			_action_currentIndex++;
@@ -1091,7 +1098,7 @@ void actionManagerPrint ( void )
 			logDebug ( "\n" );
 			break;
 		}
-		
+
 		printf ( "etape %d\n", stepId );
 
 		uint32_t actionIndex = 0;

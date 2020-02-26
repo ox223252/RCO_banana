@@ -46,7 +46,7 @@ const uint8_t speedStep = 10;
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void actionClose ( void * arg )
 {
-	logSetVerbose ( "clean\n" );
+	logVerbose ( "clean\n" );
 	actionManagerDeInit ( );
 }
 #pragma GCC diagnostic pop
