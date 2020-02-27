@@ -7,13 +7,25 @@
 
 enum {
 	aT(none),
-	aT(set_var),
 	aT(servo),
-	aT(get_var),
 	aT(pause),
+	aT(get_var),
+	aT(set_var),
 	aT(set_dyna),
 	aT(get_dyna),
 	aT(timeout),
+	aT(start),
+	aT(sequence),
+	aT(position),
+	aT(stopMove),
+	aT(blocked),
+	aT(pick),
+	aT(place),
+	aT(move),
+	aT(getGpio),
+	aT(setGpio),
+	aT(setPasAPas),
+	aT(end),
 	aT(last)
 };
 

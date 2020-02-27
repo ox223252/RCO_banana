@@ -11,6 +11,10 @@
 #include "lib/freeOnExit/freeOnExit.h"
 
 #include "lib/timer/timer.h"
+#include "lib/termRequest/request.h"
+#include "lib/pca9685/pca9685.h"
+
+#include "struct/structRobot.h"
 
 static json_el * _action_json = NULL;
 static uint32_t _action_jsonLength = 0;
@@ -44,8 +48,22 @@ static const char * _action_name[] = {
 	[aT(set_dyna)] = "setDyna",
 	[aT(get_dyna)] = "getDyna",
 	[aT(timeout)] = "PermAction",
+	[aT(start)] = "Départ",
+	[aT(sequence)] = "Sequence",
+	[aT(position)] = "Position",
+	[aT(stopMove)] = "arretMoteur",
+	[aT(blocked)] = "attenteBlocage",
+	[aT(pick)] = "PriseVerreExterieur",
+	[aT(place)] = "DeposeVerrePort",
+	[aT(move)] = "Déplacement",
+	[aT(getGpio)] = "getGpio",
+	[aT(setGpio)] = "setGpio",
+	[aT(setPasAPas)] = "setPasAPas",
+	[aT(end)] = "Fin",
 	[aT(last)] = NULL
 };
+
+static ActionFlag *_action_flags = NULL;
 
 int _action_mcpFd = -1;
 int _action_pcaFd = -1;
@@ -283,6 +301,7 @@ static int actionNameToId ( const char * __restrict__ const  key )
 	return ( -1 );
 }
 
+// clean all current actions
 static void cleanCurrent ( void )
 {
 	for ( uint32_t i = 0; i < _action_currentLength; i++ )
@@ -314,7 +333,7 @@ static void cleanCurrent ( void )
 // if error set status to "done"
 static inline int getCharFromParams ( const uint32_t step, const uint32_t action, const char * __restrict__ const str, void ** const out )
 {
-	JSON_TYPE type;
+	JSON_TYPE type = jT ( undefined );
 	if ( !jsonGet ( _action_current[ step ].params[ action ], 0, str, out, &type ) ||
 		type != jT( str ) )
 	{
@@ -331,12 +350,70 @@ static inline int getCharFromParams ( const uint32_t step, const uint32_t action
 // if error set status to "done"
 static inline int getCharFromMain ( const uint32_t step, const uint32_t action, const char * __restrict__ const str, void ** const out )
 {
-	JSON_TYPE type;
+	JSON_TYPE type = jT ( undefined );
 	if ( !jsonGet ( _action_json,  _action_current[ step ].actionsId[ action ], str, out, &type ) ||
 		type != jT( str ) )
 	{
 		logDebug ( "ERROR param \"%s\" not found %p %d\n", str, *out, type );
 		jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+		return ( __LINE__ );
+	}
+	return ( 0 );
+}
+
+// manage case when action flag for arms are set
+// retrun 0 if no flag set else no action need to be done
+static inline int testFlagsArms ( const uint32_t step, const uint32_t action, const bool bloquante )
+{
+	if ( _action_flags &&
+		_action_flags->noArm )
+	{
+		if ( bloquante )
+		{
+			if ( _action_flags->armWait )
+			{ // wait imeout (default)
+			}
+			else if ( _action_flags->armScan &&
+				_kbhit ( ) &&
+				_getch ( ) )
+			{ // if wait key hit
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+			}
+			else if ( _action_flags->armDone &&
+				bloquante )
+			{
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+			}
+		}
+		return ( __LINE__ );
+	}
+	return ( 0 );
+}
+
+// manage case when action flag for drivers are set
+// retrun 0 if no flag set else no action need to be done
+static inline int testFlagsDrivers ( const uint32_t step, const uint32_t action, const bool bloquante )
+{
+	if ( _action_flags &&
+		_action_flags->noDrive )
+	{
+		if ( bloquante )
+		{
+			if ( _action_flags->driveWait )
+			{ // wait imeout (default)
+			}
+			else if ( _action_flags->driveScan &&
+				_kbhit ( ) &&
+				_getch ( ) )
+			{ // if wait key hit
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+			}
+			else if ( _action_flags->driveDone &&
+				bloquante )
+			{
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+			}
+		}
 		return ( __LINE__ );
 	}
 	return ( 0 );
@@ -348,7 +425,8 @@ typedef struct {
 	uint32_t * nexts;
 }actionCleanAndSet_t;
 
-static void * actionCleanAndSet ( void * arg )
+// step used by external timeout to stop everything and set new actions
+static void actionCleanAndSet ( void * arg )
 {
 	printf ( "action timeout\n" );
 	actionCleanAndSet_t * a = arg;
@@ -369,7 +447,6 @@ static void * actionCleanAndSet ( void * arg )
 	unsetFreeOnExit ( a );
 	free ( a );
 	a = NULL;
-	return ( NULL );
 }
 
 // make one action select by step index and action index
@@ -389,16 +466,11 @@ static int execOne ( const uint32_t step, const uint32_t action )
 
 	switch ( actionNameToId ( actionName ) )
 	{
-		// case aT(servo):
-			// { // done
-			// 	//setPCA9685PWM ( atoi ( listAction[ indiceAction ].params[ 0 ] ), 0, 210 + atoi ( listAction[ indiceAction ].params[ 1 ] ) % 360, *_management_pca9685 );
-			// 	listAction[indiceAction].isDone = 1;
-			// 	break;
-			// }
 		case aT(set_dyna):
-		{
-			if ( _action_dynaFd <= 0 )
-			{ // arm disabled
+		{ // done
+			if ( testFlagsArms ( step, action, false  ) ||
+				( _action_dynaFd <= 0 ) )
+			{ // fd unvalid of arm disabled
 				return ( 0 );
 			}
 
@@ -434,10 +506,10 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			break;
 		}
 		case aT(get_dyna):
-		{
-			if ( _action_dynaFd <= 0 )
+		{ // done
+			if ( testFlagsArms ( step, action, true  ) ||
+				( _action_dynaFd <= 0 ) )
 			{ // arm disabled
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
 				return ( 0 );
 			}
 
@@ -468,107 +540,6 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			}
 			break;
 		}
-		// case TYPE_CAPTEUR:
-			// {
-			// 	break;
-			// }
-			// case TYPE_MOTEUR:
-			// { // done 
-			// 	if ( _management_flagAction->noDrive )
-			// 	{
-			// 		if ( _management_flagAction->driveScan )
-			// 		{
-			// 			while ( _kbhit ( ) )
-			// 			{
-			// 				listAction[indiceAction].isDone = 1;
-			// 			}
-			// 		}
-			// 		else if ( _management_flagAction->driveWait )
-			// 		{
-			// 		}
-			// 		else
-			// 		{ // drive done
-			// 			listAction[indiceAction].isDone = 1;
-			// 		}
-			// 	}
-			// 	else
-			// 	{
-
-			// 	}
-			// 	break;
-			// }
-			// case TYPE_AUTRE:
-			// {
-			// 	break;
-			// }
-			// case TYPE_POSITION:
-			// { // done
-			// 	if ( _management_newDeplacement == 1 )
-			// 	{
-			// 		_management_newDeplacement = 0;
-			// 		robot->vitesseGaucheDefault = 0.;
-			// 		robot->vitesseDroiteDefault = 0.;
-			// 		resetBlocage();
-
-			// 		robot->cible.xCible = atoi ( listAction[ indiceAction ].params[ 0 ] );
-			// 		robot->cible.yCible = atoi ( listAction[ indiceAction ].params[ 1 ] );
-			// 		robot->cible.vitesseMax = atoi ( listAction[ indiceAction ].params[ 2 ] );
-			// 		robot->cible.acc = atoi ( listAction[ indiceAction ].params[ 3 ] );
-			// 		robot->cible.dec = atoi ( listAction[ indiceAction ].params[ 4 ] );
-			// 		robot->cible.sens = atoi ( listAction[ indiceAction ].params[ 5 ] );
-			// 		robot->cible.precision = atoi ( listAction[ indiceAction ].params[ 6 ] );
-			// 		robot->cible.distanceFreinage = atoi ( listAction[ indiceAction ].params[ 7 ] );
-			// 		robot->setDetection = atoi ( listAction[ indiceAction ].params[ 8 ] );
-			// 		premierAppel ( robot );
-			// 	}
-			// 	else if ( calculDeplacement ( robot )==1 )
-			// 	{
-			// 		_management_newDeplacement = 1;
-			// 		listAction[indiceAction].isDone = 1;
-			// 		robot->vitesseGaucheDefault = 0.;
-			// 		robot->vitesseDroiteDefault = 0.;
-			// 	}
-
-			// 	break;
-			// }
-			// case TYPE_ORIENTATION:
-			// { // done
-			// 	if ( _management_newDeplacement == 1 )
-			// 	{
-			// 		_management_newDeplacement = 0;
-			// 		robot->vitesseGaucheDefault = 0.;
-			// 		robot->vitesseDroiteDefault = 0.;
-			// 		resetBlocage();
-			// 		robot->orientationVisee = atoi ( listAction[ indiceAction ].params[ 0 ] );
-			// 		robot->cible.vitesseMax = atoi ( listAction[ indiceAction ].params[ 1 ] );
-			// 		robot->cible.precision = atoi ( listAction[ indiceAction ].params[ 2 ] );
-			// 		premierAppelTenirAngle ( robot );
-			// 	}
-			// 	else
-			// 	{
-			// 		if ( tenirAngle ( robot )==1 )
-			// 		{
-			// 			_management_newDeplacement = 1;
-			// 			listAction[indiceAction].isDone = 1;
-			// 			robot->vitesseGaucheDefault = 0.;
-			// 			robot->vitesseDroiteDefault = 0.;
-			// 		}
-			// 	}
-			// 	break;
-			// }
-			// case TYPE_SEQUENCE:
-			// {
-			// 	break;
-			// }
-			// case TYPE_ENTREE:
-			// { // done
-			// 	listAction[indiceAction].isDone = 1;
-			// 	break;
-			// }
-			// case TYPE_ATTENTE_SERVO:
-			// {
-			// 	break;
-			// }
 		case aT(pause):
 		{ // done
 			void * tmp = NULL;
@@ -585,149 +556,8 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			}
 			break;
 		}
-		// case TYPE_RETOUR_DEPLACEMENT:
-			// {
-
-			// 	break;
-			// }
-			// case TYPE_RETOUR_ORIENTATION:
-			// {
-			// 	break;
-			// }
-			// case TYPE_RETOUR_POSITION:
-			// {
-			// 	break;
-			// }
-			// case TYPE_GPIO:
-			// {
-			// 	//printf("GPIO : %s %s %d\n",listAction[ indiceAction ].params[ 0 ],listAction[ indiceAction ].params[ 1 ],*(_management_mcp23017));
-			// 	gpioSet ( _management_mcp23017, 'A', atoi ( listAction[ indiceAction ].params[ 0 ] ), atoi ( listAction[ indiceAction ].params[ 1 ] ) != 1 );
-
-			// 	listAction[indiceAction].isDone = 1;
-			// 	break;
-			// }
-			// case TYPE_RETOUR_GPIO:
-			// {
-			// 	if(GPIORead(atoi ( listAction[ indiceAction ].params[ 0 ] )) == atoi ( listAction[ indiceAction ].params[ 1 ] ))
-			// 	{
-
-			// 		listAction[indiceAction].isDone = 1;
-			// 	}
-
-			// 	break;
-			// }
-			// case TYPE_AND:
-			// {
-			// 	break;
-			// }
-			// case TYPE_SET_VALEUR: //fonction
-			// { // done
-			// 	switch ( atoi ( listAction[ indiceAction ].params[ 0 ] ) )
-			// 	{
-			// 		case 0:
-			// 		{
-			// 			//xRobot
-			// 			robot->xRobot = atoi ( listAction[ indiceAction ].params[ 1 ] );
-			// 			listAction[indiceAction].isDone = 1;
-			// 			break;
-			// 		}
-			// 		case 1:
-			// 		{
-			// 			//yRobot
-			// 			robot->yRobot = atoi ( listAction[ indiceAction ].params[ 1 ] );
-			// 			listAction[indiceAction].isDone = 1;
-			// 			break;
-			// 		}
-			// 		case 2:
-			// 		{
-			// 			//Orientation Robot
-			// 			robot->orientationRobot = atoi ( listAction[ indiceAction ].params[ 1 ] );
-			// 			robot->orientationVisee = atoi ( listAction[ indiceAction ].params[ 1 ] );
-
-			// 			listAction[indiceAction].isDone = 1;
-			// 			break;
-			// 		}
-			// 		case 3:
-			// 		{
-			// 			//Vitesse Linéaire
-			// 			exit(0);
-			// 			robot->vitesseGaucheDefault = atoi ( listAction[ indiceAction ].params[ 1 ] );
-			// 			robot->vitesseDroiteDefault = atoi ( listAction[ indiceAction ].params[ 1 ] );
-			// 			listAction[indiceAction].isDone = 1;
-			// 			break;
-			// 		}
-			// 		case 4:
-			// 		{
-			// 			//Vitesse Angulaire
-			// 			robot->vitesseGaucheDefault = -1.* atoi ( listAction[ indiceAction ].params[ 1 ] );
-			// 			robot->vitesseDroiteDefault = atoi ( listAction[ indiceAction ].params[ 1 ] );
-			// 			listAction[indiceAction].isDone = 1;
-			// 			break;
-			// 		}
-			// 	}
-			// 	break;
-			// }
-			// case TYPE_COURBE:
-			// {
-			// 	break;
-			// }
-			// case TYPE_ATTENTE_BLOCAGE:
-			// {
-			// 	break;
-			// }
-			// case TYPE_DEPLACEMENT:
-			// {
-			// 	break;
-			// }
-			// case TYPE_FIN:
-			// {
-			// 	listAction[indiceAction].isDone = 1;
-			// 	break;
-			// }
-			// case TYPE_SET_VARIABLE:
-			// {
-			// 	jsonSet ( _management_json, 0, listAction[ indiceAction ].params[ 0 ], listAction[ indiceAction ].params[ 1 ], jT ( str ) );
-			// 	listAction[indiceAction].isDone = 1;
-			// 	break;
-			// }
-			// case TYPE_GET_VARIABLE:
-			// {
-			// 	jsonGet ( _management_json, 0, listAction[ indiceAction ].params[ 0 ], (void **)&listAction[ indiceAction ].params[ 2 ], NULL );
-			// 	if ( !strcmp ( listAction[ indiceAction ].params[ 1 ], listAction[ indiceAction ].params[ 2 ] ) )
-			// 	{
-			// 		listAction[indiceAction].isDone = 1;
-			// 	}
-			// 	break;
-			// }
-		case aT(get_var):
-		{
-			char * name = NULL;
-			type = jT(undefined);
-
-			if ( getCharFromParams ( step, action, "key", (void**)&name ) )
-			{ // si une action n'a pas de nom alors on la finie quoi qu'il arrive, ça evitera des bloquages plus tard
-				return ( __LINE__ );
-			}
-
-			// if ( !jsonGet ( _action_current[ step ].params[ action ], 0, "key", (void**)&name, &type ) )
-			// { // no key for variable in params
-			// 	logDebug ( "\n" );
-			// 	return ( __LINE__ );
-			// }
-
-			// if ( type != jT(str) )
-			// { // the key is no a string
-			// 	logDebug ( "\n" );
-			// 	return ( __LINE__ );
-			// }
-
-			void * value = NULL;
-
-			jsonGet ( _action_var, 0, name, &value, &type );
-			break;
-		}
 		case aT(set_var):
-		{
+		{ // done
 			char * name = NULL;
 			type = jT(undefined);
 
@@ -789,7 +619,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			break;
 		}
 		case aT(timeout):
-		{
+		{ // done
 			jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
 
 			uint32_t delay = _action_current[ step ].timeout[ action ];
@@ -831,7 +661,324 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			}
 			break;
 		}
+		case aT(servo):
+		{ // to be tested
+			if ( testFlagsArms ( step, action, false  ) ||
+				( _action_pcaFd <= 0 ) )
+			{ // fd unvalid of arm disabled
+				return ( 0 );
+			}
+			uint32_t id, angle;
+
+			void * tmp = NULL;
+			if ( getCharFromParams ( step, action, "id", &tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			id = atoi ( (char*)tmp );
+
+			if ( getCharFromParams ( step, action, "Value", &tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			angle = atoi ( (char*)tmp );
+
+			setPCA9685PWM ( id, 0, 210 + angle % 360, _action_pcaFd );
+			break;
+		}
+		// case TYPE_CAPTEUR:
+			// {
+			// 	break;
+			// }
+			// case TYPE_MOTEUR:
+			// { // done 
+			// 	if ( _management_flagAction->noDrive )
+			// 	{
+			// 		if ( _management_flagAction->driveScan )
+			// 		{
+			// 			while ( _kbhit ( ) )
+			// 			{
+			// 				listAction[indiceAction].isDone = 1;
+			// 			}
+			// 		}
+			// 		else if ( _management_flagAction->driveWait )
+			// 		{
+			// 		}
+			// 		else
+			// 		{ // drive done
+			// 			listAction[indiceAction].isDone = 1;
+			// 		}
+			// 	}
+			// 	else
+			// 	{
+
+			// 	}
+			// 	break;
+			// }
+		// case TYPE_AUTRE:
+			// {
+			// 	break;
+			// }
+			// case TYPE_POSITION:
+			// { // done
+			// 	if ( _management_newDeplacement == 1 )
+			// 	{
+			// 		_management_newDeplacement = 0;
+			// 		robot->vitesseGaucheDefault = 0.;
+			// 		robot->vitesseDroiteDefault = 0.;
+			// 		resetBlocage();
+
+			// 		robot->cible.xCible = atoi ( listAction[ indiceAction ].params[ 0 ] );
+			// 		robot->cible.yCible = atoi ( listAction[ indiceAction ].params[ 1 ] );
+			// 		robot->cible.vitesseMax = atoi ( listAction[ indiceAction ].params[ 2 ] );
+			// 		robot->cible.acc = atoi ( listAction[ indiceAction ].params[ 3 ] );
+			// 		robot->cible.dec = atoi ( listAction[ indiceAction ].params[ 4 ] );
+			// 		robot->cible.sens = atoi ( listAction[ indiceAction ].params[ 5 ] );
+			// 		robot->cible.precision = atoi ( listAction[ indiceAction ].params[ 6 ] );
+			// 		robot->cible.distanceFreinage = atoi ( listAction[ indiceAction ].params[ 7 ] );
+			// 		robot->setDetection = atoi ( listAction[ indiceAction ].params[ 8 ] );
+			// 		premierAppel ( robot );
+			// 	}
+			// 	else if ( calculDeplacement ( robot )==1 )
+			// 	{
+			// 		_management_newDeplacement = 1;
+			// 		listAction[indiceAction].isDone = 1;
+			// 		robot->vitesseGaucheDefault = 0.;
+			// 		robot->vitesseDroiteDefault = 0.;
+			// 	}
+
+			// 	break;
+			// }
+		// case TYPE_ORIENTATION:
+			// { // done
+			// 	if ( _management_newDeplacement == 1 )
+			// 	{
+			// 		_management_newDeplacement = 0;
+			// 		robot->vitesseGaucheDefault = 0.;
+			// 		robot->vitesseDroiteDefault = 0.;
+			// 		resetBlocage();
+			// 		robot->orientationVisee = atoi ( listAction[ indiceAction ].params[ 0 ] );
+			// 		robot->cible.vitesseMax = atoi ( listAction[ indiceAction ].params[ 1 ] );
+			// 		robot->cible.precision = atoi ( listAction[ indiceAction ].params[ 2 ] );
+			// 		premierAppelTenirAngle ( robot );
+			// 	}
+			// 	else
+			// 	{
+			// 		if ( tenirAngle ( robot )==1 )
+			// 		{
+			// 			_management_newDeplacement = 1;
+			// 			listAction[indiceAction].isDone = 1;
+			// 			robot->vitesseGaucheDefault = 0.;
+			// 			robot->vitesseDroiteDefault = 0.;
+			// 		}
+			// 	}
+			// 	break;
+			// }
+		// case TYPE_SEQUENCE:
+			// {
+			// 	break;
+			// }
+		// case TYPE_ENTREE:
+			// { // done
+			// 	listAction[indiceAction].isDone = 1;
+			// 	break;
+			// }
+		// case TYPE_ATTENTE_SERVO:
+			// {
+			// 	break;
+			// }
+		// case TYPE_RETOUR_DEPLACEMENT:
+			// {
+
+			// 	break;
+			// }
+		// case TYPE_RETOUR_ORIENTATION:
+			// {
+			// 	break;
+			// }
+		// case TYPE_RETOUR_POSITION:
+			// {
+			// 	break;
+			// }
+		// case TYPE_GPIO:
+			// {
+			// 	//printf("GPIO : %s %s %d\n",listAction[ indiceAction ].params[ 0 ],listAction[ indiceAction ].params[ 1 ],*(_management_mcp23017));
+			// 	gpioSet ( _management_mcp23017, 'A', atoi ( listAction[ indiceAction ].params[ 0 ] ), atoi ( listAction[ indiceAction ].params[ 1 ] ) != 1 );
+
+			// 	listAction[indiceAction].isDone = 1;
+			// 	break;
+			// }
+			// case TYPE_RETOUR_GPIO:
+			// {
+			// 	if(GPIORead(atoi ( listAction[ indiceAction ].params[ 0 ] )) == atoi ( listAction[ indiceAction ].params[ 1 ] ))
+			// 	{
+
+			// 		listAction[indiceAction].isDone = 1;
+			// 	}
+
+			// 	break;
+			// }
+		// case TYPE_AND:
+			// {
+			// 	break;
+			// }
+		// case TYPE_COURBE:
+			// {
+			// 	break;
+			// }
+			// case TYPE_ATTENTE_BLOCAGE:
+			// {
+			// 	break;
+			// }
+		// case TYPE_DEPLACEMENT:
+			// {
+			// 	break;
+			// }
+		// case TYPE_FIN:
+			// {
+			// 	listAction[indiceAction].isDone = 1;
+			// 	break;
+			// }
+		// case TYPE_SET_VARIABLE:
+			// {
+			// 	jsonSet ( _management_json, 0, listAction[ indiceAction ].params[ 0 ], listAction[ indiceAction ].params[ 1 ], jT ( str ) );
+			// 	listAction[indiceAction].isDone = 1;
+			// 	break;
+			// }
+		case aT(get_var):
+		{
+			char * name = NULL;
+			type = jT(undefined);
+
+			if ( getCharFromParams ( step, action, "id", (void**)&name ) )
+			{
+				return ( __LINE__ );
+			}
+
+			void * tmp = NULL;
+			if ( getCharFromParams ( step, action, "value", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			double value = atof ( ( char*)tmp );
+
+			// le type d'action à faire
+			char * op = NULL;
+			if ( getCharFromParams ( step, action, "condition", (void**)&op ) )
+			{
+				return ( __LINE__ );
+			}
+
+						// on recupère la cible
+			double * target = NULL;
+			if ( !jsonGet ( _action_var, 0, name, (void**)&target, &type ) )
+			{ // the var doesn't existe
+				return ( 0 );
+			}
+			else if ( type != jT(double) )
+			{ // the var is not a number... not normal
+				logDebug ( "\n" );
+				return ( __LINE__ );
+			}
+
+			// et puis on fini par faire le calcul
+			if ( !strcmp( op, "!=" ) &&
+				( *target != value ) )
+			{
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+			}
+			else if ( !strcmp( op, "==" ) &&
+				( *target == value ) )
+			{
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+			}
+			else if ( !strcmp( op, "<" ) &&
+				( value < *target ) )
+			{
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+			}
+			else if ( !strcmp( op, ">" ) &&
+				( value > *target  ) )
+			{
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+			}
+			break;
+		}
+		case aT(position):
+		{
+			if ( testFlagsArms ( step, action, true  ) ||
+				( _action_dynaFd <= 0 ) )
+			{ // arm disabled
+				return ( 0 );
+			}
+
+			void * tmp = NULL;
+			if ( getCharFromParams ( step, action, "Sens", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t sens = atoi ( ( char * )tmp );
+
+			if ( getCharFromParams ( step, action, "Tolérance", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t tolerance = atoi ( ( char * )tmp );
+
+			if ( getCharFromParams ( step, action, "Accélération", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t acceleration = atoi ( ( char * )tmp );
+
+			if ( getCharFromParams ( step, action, "Vitesse", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t vitesse = atoi ( ( char * )tmp );
+
+			if ( getCharFromParams ( step, action, "x", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t x = atoi ( ( char * )tmp );
+
+			if ( getCharFromParams ( step, action, "y", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t y = atoi ( ( char * )tmp );
+
+			// x, y, vitesse, acceleration, tolerance, sens
+			// TODO
+			break;
+		}
+		case aT(stopMove):
+		{
+			break;
+		}
+		case aT(pick):
+		{
+			void * tmp = NULL;
+			if ( getCharFromParams ( step, action, "id", &tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			break;
+		}
+		case aT(blocked):
+		case aT(place):
+		case aT(move):
+		case aT(getGpio):
+		case aT(setGpio):
+		case aT(setPasAPas):
+		case aT(start):
+		case aT(sequence):
+		case aT(end):
 		case aT(none):
+		{
+			break;
+		}
 		case aT(last):
 		default:
 		{
@@ -1064,6 +1211,11 @@ void actionManagerSetFd ( const int mcpFd, const int pcaFd, const int dynaFd )
 	_action_pcaFd = pcaFd;
 	_action_dynaFd = dynaFd;
 	setPortNum(_action_dynaFd);
+}
+
+void actionManagerSetFlags ( ActionFlag * __restrict__ const f )
+{
+	_action_flags = f;
 }
 
 int actionManagerExec ( void )

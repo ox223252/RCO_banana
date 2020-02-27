@@ -1,0 +1,630 @@
+{
+    "Strategie": [
+        {
+            "TauxArray": [
+            ],
+            "arraySequence": [
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 19
+                        }
+                    ],
+                    "arrayParam": [
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 0,
+                    "nomAction": "Départ",
+                    "xBloc": 81,
+                    "yBloc": 299
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 2
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "Test.json",
+                            "nomParam": "Nom"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 1,
+                    "nomAction": "Sequence",
+                    "xBloc": 266,
+                    "yBloc": 301
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 3
+                        }
+                    ],
+                    "arrayParam": [
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 2,
+                    "nomAction": "arretMoteur",
+                    "xBloc": 647,
+                    "yBloc": 312
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 4
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "5000",
+                            "nomParam": "Timeout"
+                        },
+                        {
+                            "defaultValue": "100",
+                            "nomParam": "seuil"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": true,
+                    "indice": 3,
+                    "nomAction": "attenteBlocage",
+                    "xBloc": 627,
+                    "yBloc": 403
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 5
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "5000",
+                            "nomParam": "Timeout"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "id"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": true,
+                    "indice": 4,
+                    "nomAction": "DeposeVerrePort",
+                    "xBloc": 983,
+                    "yBloc": 412
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 6
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "5000",
+                            "nomParam": "Timeout"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "Type"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "Value"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": true,
+                    "indice": 5,
+                    "nomAction": "Déplacement",
+                    "xBloc": 1352,
+                    "yBloc": 411
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 7
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "5000",
+                            "nomParam": "Timeout"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "id"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "Value"
+                        },
+                        {
+                            "defaultValue": "5",
+                            "nomParam": "Tolerance"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": true,
+                    "indice": 6,
+                    "nomAction": "getDyna",
+                    "xBloc": 1710,
+                    "yBloc": 407
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 8
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "id"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "value"
+                        },
+                        {
+                            "defaultValue": "5000",
+                            "nomParam": "Timeout"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": true,
+                    "indice": 7,
+                    "nomAction": "getGpio",
+                    "xBloc": 2047,
+                    "yBloc": 413
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 9
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "5000",
+                            "nomParam": "Timeout"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "id"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "Value"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": true,
+                    "indice": 8,
+                    "nomAction": "getPasAPas",
+                    "xBloc": 2407,
+                    "yBloc": 417
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 10
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "5000",
+                            "nomParam": "Timeout"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "id"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "condition"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "value"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": true,
+                    "indice": 9,
+                    "nomAction": "getVar",
+                    "xBloc": 2428,
+                    "yBloc": 589
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 12
+                        },
+                        {
+                            "indiceFille": 11
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "1000",
+                            "nomParam": "Temps"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 10,
+                    "nomAction": "Pause",
+                    "xBloc": 2753,
+                    "yBloc": 428
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "5000",
+                            "nomParam": "Timeout"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": true,
+                    "indice": 11,
+                    "nomAction": "PermAction",
+                    "xBloc": 3120,
+                    "yBloc": 267
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 13
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "5000",
+                            "nomParam": "Timeout"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "x"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "y"
+                        },
+                        {
+                            "defaultValue": "500",
+                            "nomParam": "Vitesse"
+                        },
+                        {
+                            "defaultValue": "500",
+                            "nomParam": "Accélération"
+                        },
+                        {
+                            "defaultValue": "25",
+                            "nomParam": "Tolérance"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "Sens"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": true,
+                    "indice": 12,
+                    "nomAction": "Position",
+                    "xBloc": 3183,
+                    "yBloc": 416
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 14
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "5000",
+                            "nomParam": "Timeout"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "id"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": true,
+                    "indice": 13,
+                    "nomAction": "PriseVerreExterieur",
+                    "xBloc": 3499,
+                    "yBloc": 387
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 15
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "id"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "Value"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "Vitesse"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 14,
+                    "nomAction": "setDyna",
+                    "xBloc": 3839,
+                    "yBloc": 382
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 16
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "id"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "value"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 15,
+                    "nomAction": "setGpio",
+                    "xBloc": 4191,
+                    "yBloc": 384
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 17
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "id"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "nbPas"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 16,
+                    "nomAction": "setPasAPas",
+                    "xBloc": 3605,
+                    "yBloc": 595
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 18
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "id"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "Value"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 17,
+                    "nomAction": "setServo",
+                    "xBloc": 3938,
+                    "yBloc": 598
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "id"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "condition"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "value"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 18,
+                    "nomAction": "setVar",
+                    "xBloc": 4277,
+                    "yBloc": 592
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 20
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "Init.json",
+                            "nomParam": "Nom"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 19,
+                    "nomAction": "Sequence",
+                    "xBloc": 229,
+                    "yBloc": 309
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 21
+                        }
+                    ],
+                    "arrayParam": [
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 20,
+                    "nomAction": "Départ",
+                    "xBloc": 153,
+                    "yBloc": 140
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 22
+                        }
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "5000",
+                            "nomParam": "Timeout"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "id"
+                        },
+                        {
+                            "defaultValue": "0",
+                            "nomParam": "Value"
+                        },
+                        {
+                            "defaultValue": "5",
+                            "nomParam": "Tolerance"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": true,
+                    "indice": 21,
+                    "nomAction": "getDyna",
+                    "xBloc": 268,
+                    "yBloc": 145
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 2
+                        }
+                    ],
+                    "arrayParam": [
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 22,
+                    "nomAction": "Fin",
+                    "xBloc": 640,
+                    "yBloc": 157
+                }
+            ],
+            "color": "#aa007f",
+            "dateMax": 222,
+            "deadline": 111,
+            "nbPoints": 666,
+            "nomEtape": "verreViolet",
+            "tempsMax": 333,
+            "tempsMoyen": 444,
+            "xEtape": 133,
+            "yEtape": 216
+        }
+    ]
+}
