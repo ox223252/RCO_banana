@@ -22,6 +22,10 @@ static uint32_t _action_jsonLength = 0;
 static json_el * _action_var = NULL;
 static uint32_t _action_varLength = 0;
 
+static bool isPremierAppel = true;
+static int32_t posGauche = 0;
+static int32_t posDroite = 0;
+
 typedef struct
 {
 	uint32_t stepId;
@@ -38,6 +42,7 @@ static currentWork * _action_current = NULL;
 static uint32_t _action_currentLength = 0;
 
 static uint32_t _action_currentIndex = 0;
+static Robot * mRobot = NULL;
 
 static const char * _action_name[] = {
 	[aT(none)] = "none",
@@ -51,6 +56,7 @@ static const char * _action_name[] = {
 	[aT(start)] = "Départ",
 	[aT(sequence)] = "Sequence",
 	[aT(position)] = "Position",
+	[aT(orientation)] = "tenirAngle",
 	[aT(stopMove)] = "arretMoteur",
 	[aT(blocked)] = "attenteBlocage",
 	[aT(pick)] = "PriseVerreExterieur",
@@ -904,6 +910,54 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			}
 			break;
 		}
+
+		case aT(move):
+		{
+			void * tmp = NULL;
+			if ( getCharFromParams ( step, action, "Type", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t type = atoi ( ( char * )tmp );
+			if ( getCharFromParams ( step, action, "Value", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t value = atoi ( ( char * )tmp );
+			if ( getCharFromParams ( step, action, "Vitesse", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t vitesse = atoi ( ( char * )tmp );
+			if ( getCharFromParams ( step, action, "Accel", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t accel = atoi ( ( char * )tmp );
+			if ( getCharFromParams ( step, action, "Decel", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t decel = atoi ( ( char * )tmp );
+			if ( getCharFromParams ( step, action, "Tolerance", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t tolerance = atoi ( ( char * )tmp );
+
+			if(isPremierAppel)
+			{
+				isPremierAppel = false;
+				premierAppelSetMouvement(mRobot, type, value, vitesse, accel, decel, &posGauche, &posDroite);
+			}
+
+			if(setMouvement(mRobot, posGauche, posDroite, tolerance))
+			{
+				isPremierAppel = true;
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+			}
+
+		}
 		case aT(position):
 		{
 			if ( testFlagsArms ( step, action, true  ) ||
@@ -918,39 +972,80 @@ static int execOne ( const uint32_t step, const uint32_t action )
 				return ( __LINE__ );
 			}
 			uint32_t sens = atoi ( ( char * )tmp );
-
+			mRobot->cible.sens = sens;
 			if ( getCharFromParams ( step, action, "Tolérance", (void**)&tmp ) )
 			{
 				return ( __LINE__ );
 			}
 			uint32_t tolerance = atoi ( ( char * )tmp );
-
+			mRobot->cible.precision = tolerance;
 			if ( getCharFromParams ( step, action, "Accélération", (void**)&tmp ) )
 			{
 				return ( __LINE__ );
 			}
 			uint32_t acceleration = atoi ( ( char * )tmp );
-
+			mRobot->cible.acc = acceleration;
+			if ( getCharFromParams ( step, action, "Décélération", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t deceleration = atoi ( ( char * )tmp );
+			mRobot->cible.dec = deceleration;
 			if ( getCharFromParams ( step, action, "Vitesse", (void**)&tmp ) )
 			{
 				return ( __LINE__ );
 			}
 			uint32_t vitesse = atoi ( ( char * )tmp );
-
+			mRobot->cible.vitesseMax = vitesse;
 			if ( getCharFromParams ( step, action, "x", (void**)&tmp ) )
 			{
 				return ( __LINE__ );
 			}
 			uint32_t x = atoi ( ( char * )tmp );
-
+			mRobot->cible.xCible = x;
 			if ( getCharFromParams ( step, action, "y", (void**)&tmp ) )
 			{
 				return ( __LINE__ );
 			}
 			uint32_t y = atoi ( ( char * )tmp );
+			mRobot->cible.yCible = y;
 
-			// x, y, vitesse, acceleration, tolerance, sens
-			// TODO
+
+			if(calculDeplacement(mRobot))
+			{
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+			}
+			break;
+		}
+		case at(orientation)
+		{
+			void * tmp = NULL;
+			if ( getCharFromParams ( step, action, "Orientation", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t type = atoi ( ( char * )tmp );		
+			if ( getCharFromParams ( step, action, "Vitesse", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t vitesse = atoi ( ( char * )tmp );
+			if ( getCharFromParams ( step, action, "Acc", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t accel = atoi ( ( char * )tmp );
+			if ( getCharFromParams ( step, action, "Dec", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t decel = atoi ( ( char * )tmp );
+			if ( getCharFromParams ( step, action, "Tolerance", (void**)&tmp ) )
+			{
+				return ( __LINE__ );
+			}
+			uint32_t tolerance = atoi ( ( char * )tmp );
+
 			break;
 		}
 		case aT(stopMove):
@@ -967,8 +1062,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			break;
 		}
 		case aT(blocked):
-		case aT(place):
-		case aT(move):
+		case aT(place):	
 		case aT(getGpio):
 		case aT(setGpio):
 		case aT(setPasAPas):
@@ -992,9 +1086,11 @@ static int execOne ( const uint32_t step, const uint32_t action )
 
 ////////////////////////////////////////////////////////////////////////////////
 /// init part
-int actionManagerInit ( const char * __restrict__ const file )
+int actionManagerInit ( const char * __restrict__ const file , Robot* robot)
 {
 	actionManagerDeInit ( );
+
+	mRobot = robot;
 
 	if ( jsonParseFile ( file, &_action_json, &_action_jsonLength ) )
 	{
@@ -1026,6 +1122,8 @@ int actionManagerDeInit ( void )
 		_action_var = NULL;
 		_action_jsonLength = 0;
 	}
+
+	mRobot = NULL;
 
 	cleanCurrent ( );
 

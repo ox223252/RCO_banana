@@ -17,6 +17,7 @@ enum {
 	aT(start),
 	aT(sequence),
 	aT(position),
+	aT(orientation),
 	aT(stopMove),
 	aT(blocked),
 	aT(pick),

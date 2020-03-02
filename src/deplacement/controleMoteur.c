@@ -195,3 +195,13 @@ int envoiOrdreMoteur ( int16_t left, int16_t right, int16_t limitSpeed )
 
 	return(  0 );
 }
+
+int envoiOrdrePositionMoteurs(int accel_m1, int speed_m1, int decel_m1, int position_m1, int accel_m2, int speed_m2, int decel_m2, int position_m2)
+{
+	if ( roboclaw_position_m1_m2 ( _controlMoteur_motorBoard, 0x80, accel_m1, speed_m1, decel_m1, position_m1, accel_m2, speed_m2, decel_m2, position_m2 ) != ROBOCLAW_OK )
+	{
+		return ( __LINE__ );
+	}
+
+	return(  0 );
+}

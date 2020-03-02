@@ -26,7 +26,6 @@
 
 #include "deplacement/odometrie.h"
 #include "deplacement/controleMoteur.h"
-#include "deplacement/asservissementVitesse.h"
 #include "deplacement/detectionBlocage.h"
 
 #include "utils.h"

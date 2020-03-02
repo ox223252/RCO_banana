@@ -12,7 +12,6 @@ typedef struct
 	float dec;
 	float sens;
 	float precision;
-	float distanceFreinage;
 }
 Point;
 
