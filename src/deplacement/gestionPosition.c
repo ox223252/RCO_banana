@@ -1,49 +1,24 @@
 #include "gestionPosition.h"
 #include "controleMoteur.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 #define dX ( robot->cible.xCible - robot->xRobot )
 #define dY ( robot->cible.yCible - robot->yRobot )
 
 static float minimumErreur2Angles ( float angle1, float angle2 );
 
-static float _gestionPosition_erreurAnglePre = 0.;
-static float _gestionPosition_distanceCiblePre = 0.;
-static float _gestionPosition_tempsEcoule;
-static float _gestionPosition_pourcentageVitesse;
-static struct timeval _gestionPosition_now;
-static struct timeval _gestionPosition_pre;
-
 /// \brief return the length.
 double pytagor ( double x, double y );
 #define pytagor(x,y) ( sqrt ( ( x ) * ( x ) + ( y ) * ( y ) ) )
 
-void premierAppel ( Robot* robot )
-{
-	resetBlocage();
-	_gestionPosition_distanceCiblePre = pytagor ( dX, dY );
-	robot->orientationVisee = acos ( ( robot->cible.xCible - robot->xRobot ) / _gestionPosition_distanceCiblePre ) * 360. / ( 2. * M_PI );
-	printf("Clef : %d \n",robot->memKey);
-	if(robot->cible.sens == 0)
-	{
-		robot->detection->dir = DIR_FORWARD;
-	}else
-	{
-		robot->detection->dir = DIR_BACKWARD;
-	}
-	
-	if ( robot->cible.yCible < robot->yRobot )
-	{
-		robot->orientationVisee = -1. * robot->orientationVisee;
-	}
-}
-
 void premierAppelTenirAngle ( Robot* robot , int32_t orientation, int32_t vitesse, int32_t acc, int32_t decel, int32_t * posGauche, int32_t * posDroite)
 {
-	erreurAngle = minimumErreur2Angles ( robot->orientationRobot, orientation );
-	erreurAngle /= 2;
-	posGauche = robot->codeurGauche - ( erreurAngle / robot->coeffAngleG)
-	posDroite = robot->codeurDroit + ( erreurAngle / robot->coeffAngleD)
-	envoiOrdrePositionMoteurs(acc, vitesse, decel, posGauche, acc, speed, decel, posDroite);
+	float erreurAngle = minimumErreur2Angles ( robot->orientationRobot, orientation );
+	erreurAngle /= 2.;
+	*posGauche = robot->codeurGauche - ( erreurAngle / robot->coeffAngleG);
+	*posDroite = robot->codeurDroit + ( erreurAngle / robot->coeffAngleD);
+	envoiOrdrePositionMoteurs(acc, vitesse, decel, *posGauche, acc, vitesse, decel, *posDroite);
 }
 
 int calculDeplacement(Robot* robot)
@@ -56,7 +31,6 @@ int calculDeplacement(Robot* robot)
 
 	if ( distanceCible <= robot->cible.precision )
 	{
-		razAsserv();
 		return 1;
 	}
 	robot->orientationVisee = acos ( ( robot->cible.xCible - robot->xRobot ) / distanceCible ) * 360. / ( 2. * M_PI );
@@ -123,8 +97,8 @@ int calculDeplacement(Robot* robot)
 		}
 		
 
-		envoiOrdrePositionMoteurs(robot->cible.acc, robot->vitesseGaucheToSend, robot->cible.decel, robot->codeurGauche + ( distanceCible / robot->coeffLongG), 
-			robot->cible.acc, robot->vitesseDroiteToSend, robot->cible.decel, robot->codeurDroit + ( distanceCible / robot->coeffLongD));
+		envoiOrdrePositionMoteurs(robot->cible.acc, robot->vitesseGaucheToSend, robot->cible.dec, robot->codeurGauche + ( distanceCible / robot->coeffLongG), 
+			robot->cible.acc, robot->vitesseDroiteToSend, robot->cible.dec, robot->codeurDroit + ( distanceCible / robot->coeffLongD));
 	}	
 
 	return 0;
@@ -204,30 +178,30 @@ void premierAppelMouvement(Robot* robot, int type, int value, int32_t vitesse, i
 {
 	switch (type)
 	{
-		case _AVANCE_DE:
+		case _AVANCER_DE:
 		{
-			posGauche = robot->codeurGauche + ( value / robot->coeffLongG)
-			posDroite = robot->codeurDroit + ( value / robot->coeffLongD)
+			*posGauche = robot->codeurGauche + ( value / robot->coeffLongG);
+			*posDroite = robot->codeurDroit + ( value / robot->coeffLongD);
 			break;
 		}
 		case _TOURNER_DE:
 		{
 			value /= 2;
-			posGauche = robot->codeurGauche - ( value / robot->coeffAngleG)
-			posDroite = robot->codeurDroit + ( value / robot->coeffAngleD)
+			*posGauche = robot->codeurGauche - ( value / robot->coeffAngleG);
+			*posDroite = robot->codeurDroit + ( value / robot->coeffAngleD);
 			break;
 		}
 		default: 
 		break;
 	}
-	envoiOrdrePositionMoteurs(acc, vitesse, decel, posGauche, acc, vitesse, decel, posDroite);
+	envoiOrdrePositionMoteurs(acc, vitesse, decel, *posGauche, acc, vitesse, decel, *posDroite);
 }
 
-int setMouvement(Robot* robot, int32_t posGauche, int32_t posDroite, int32_t tolerance)
+int setMouvement(Robot* robot, int type, int32_t posGauche, int32_t posDroite, int32_t tolerance)
 {
 switch (type)
 	{
-		case _AVANCE_DE:
+		case _AVANCER_DE:
 		{
 			if( abs(robot->codeurGauche - posGauche) < tolerance / robot->coeffLongG && abs(robot->codeurDroit - posDroite) < tolerance / robot->coeffLongD)
 			{

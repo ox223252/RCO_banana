@@ -302,7 +302,6 @@ int main ( int argc, char * argv[] )
 
 		initOdometrie ( motorBoard, &robot1 );
 
-		initAsservissementVitesse ( speedAsservPG, speedAsservIG, speedAsservDG, maxSpeed, speedAsservPD, speedAsservID, speedAsservDD );
 	}
 
 
@@ -526,7 +525,7 @@ int main ( int argc, char * argv[] )
 		// 	// nothing to be done yet
 		// }
 
-	if ( actionManagerInit ( jsonActionPath ) )
+	if ( actionManagerInit ( jsonActionPath, &robot1) )
 	{
 		logDebug ( "\n" );
 		return ( __LINE__ );

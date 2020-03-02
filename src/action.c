@@ -9,12 +9,12 @@
 #include "utilActions/actionExtract.h"
 #include "utilActions/actionDyna.h"
 #include "lib/freeOnExit/freeOnExit.h"
+#include "deplacement/gestionPosition.h"
 
 #include "lib/timer/timer.h"
 #include "lib/termRequest/request.h"
 #include "lib/pca9685/pca9685.h"
 
-#include "struct/structRobot.h"
 
 static json_el * _action_json = NULL;
 static uint32_t _action_jsonLength = 0;
@@ -918,7 +918,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			{
 				return ( __LINE__ );
 			}
-			uint32_t type = atoi ( ( char * )tmp );
+			uint32_t _type = atoi ( ( char * )tmp );
 			if ( getCharFromParams ( step, action, "Value", (void**)&tmp ) )
 			{
 				return ( __LINE__ );
@@ -948,14 +948,15 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			if(isPremierAppel)
 			{
 				isPremierAppel = false;
-				premierAppelSetMouvement(mRobot, type, value, vitesse, accel, decel, &posGauche, &posDroite);
+				premierAppelMouvement(mRobot, _type, value, vitesse, accel, decel, &posGauche, &posDroite);
 			}
 
-			if(setMouvement(mRobot, posGauche, posDroite, tolerance))
+			if(setMouvement(mRobot, _type, posGauche, posDroite, tolerance))
 			{
 				isPremierAppel = true;
 				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
 			}
+			break;
 
 		}
 		case aT(position):
@@ -1017,14 +1018,14 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			}
 			break;
 		}
-		case at(orientation)
+		case aT(orientation):
 		{
 			void * tmp = NULL;
 			if ( getCharFromParams ( step, action, "Orientation", (void**)&tmp ) )
 			{
 				return ( __LINE__ );
 			}
-			uint32_t type = atoi ( ( char * )tmp );		
+			uint32_t orientation = atoi ( ( char * )tmp );		
 			if ( getCharFromParams ( step, action, "Vitesse", (void**)&tmp ) )
 			{
 				return ( __LINE__ );
@@ -1045,6 +1046,18 @@ static int execOne ( const uint32_t step, const uint32_t action )
 				return ( __LINE__ );
 			}
 			uint32_t tolerance = atoi ( ( char * )tmp );
+
+			if(isPremierAppel)
+			{
+				isPremierAppel = false;
+				premierAppelTenirAngle(mRobot, orientation, vitesse, accel, decel, &posGauche, &posDroite);
+			}
+
+			if(tenirAngle(mRobot, posGauche, posDroite, tolerance))
+			{
+				isPremierAppel = true;
+				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+			}
 
 			break;
 		}
