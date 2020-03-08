@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../lib/log/log.h"
+
 #define dX ( robot->cible.xCible - robot->xRobot )
 #define dY ( robot->cible.yCible - robot->yRobot )
 
@@ -22,13 +24,11 @@ void premierAppelTenirAngle ( Robot* robot , int32_t orientation, int32_t vitess
 }
 
 int calculDeplacement(Robot* robot)
-{	
-
+{
 	float distanceCible;
 	float erreurAngle;
 
 	distanceCible = pytagor ( dX, dY );
-
 	if ( distanceCible <= robot->cible.precision )
 	{
 		return 1;
@@ -53,7 +53,6 @@ int calculDeplacement(Robot* robot)
 	erreurAngle = minimumErreur2Angles ( robot->orientationRobot,robot->orientationVisee );
 
 	
-	
 	if(robot->setDetection == 1)
 	{
 		if(robot->detection->distance <= 350 && robot->detection->distance >= 180)
@@ -74,31 +73,52 @@ int calculDeplacement(Robot* robot)
 		}
 	}else
 	{
-		if(erreurAngle > 100)erreurAngle = 100;
-		else if(erreurAngle < -100)erreurAngle = -100;
-
-		//posGauche = robot->codeurGauche - ( erreurAngle / robot->coeffAngleG)
-		//posDroite = robot->codeurDroit + ( erreurAngle / robot->coeffAngleD)
-		if(erreurAngle > 0 )
+		printf("%f %f %f %f\n", robot->xRobot, robot->yRobot, robot->orientationRobot, erreurAngle);
+		if(abs(erreurAngle) < 5)
 		{
-			robot->vitesseGaucheToSend = robot->cible.vitesseMax - ( robot->cible.vitesseMax / erreurAngle );
-			robot->vitesseDroiteToSend = robot->cible.vitesseMax;
+			//posGauche = 
+			//posDroite = 
+			if(erreurAngle < 0 )
+			{
+				robot->vitesseGaucheToSend = (1. + (erreurAngle / 100. )) * robot->cible.vitesseMax ;
+				robot->vitesseDroiteToSend = robot->cible.vitesseMax;
+			}else
+			{
+				robot->vitesseGaucheToSend = robot->cible.vitesseMax;
+				robot->vitesseDroiteToSend = (1. - (erreurAngle / 100. )) * robot->cible.vitesseMax ;
+			}
+
+			if ( robot->cible.sens == 1 )
+			{
+				//marche arriere
+				robot->vitesseGaucheToSend *= -1.;
+				robot->vitesseDroiteToSend *= -1.;
+			}
+
+			envoiOrdrePositionMoteurs(robot->cible.acc / robot->coeffLongG, 
+			robot->vitesseGaucheToSend / robot->coeffLongG, 
+			robot->cible.dec / robot->coeffLongG, 
+			robot->codeurGauche + ( distanceCible / robot->coeffLongG),
+
+			robot->cible.acc / robot->coeffLongD, 
+			robot->vitesseDroiteToSend / robot->coeffLongD, 
+			robot->cible.dec / robot->coeffLongD, 
+			robot->codeurDroit + ( distanceCible / robot->coeffLongD));
 		}else
 		{
-			robot->vitesseGaucheToSend = robot->cible.vitesseMax;
-			robot->vitesseDroiteToSend = robot->cible.vitesseMax - ( robot->cible.vitesseMax / erreurAngle );
-		}
+			robot->vitesseDroiteToSend = robot->cible.vitesseMax;
 
-		if ( robot->cible.sens == 1 )
-		{
-			//marche arriere
-			robot->vitesseGaucheToSend *= -1.;
-			robot->vitesseDroiteToSend *= -1.;
-		}
+			envoiOrdrePositionMoteurs(robot->cible.acc / robot->coeffLongG, 
+			robot->vitesseGaucheToSend / robot->coeffLongG, 
+			robot->cible.dec / robot->coeffLongG, 
+			robot->codeurGauche + ( erreurAngle / 2. / robot->coeffAngleG),
+
+			robot->cible.acc / robot->coeffLongD, 
+			robot->vitesseDroiteToSend / robot->coeffLongD, 
+			robot->cible.dec / robot->coeffLongD, 
+			robot->codeurDroit - ( erreurAngle / 2. / robot->coeffAngleD));
+		}		
 		
-
-		envoiOrdrePositionMoteurs(robot->cible.acc, robot->vitesseGaucheToSend, robot->cible.dec, robot->codeurGauche + ( distanceCible / robot->coeffLongG), 
-			robot->cible.acc, robot->vitesseDroiteToSend, robot->cible.dec, robot->codeurDroit + ( distanceCible / robot->coeffLongD));
 	}	
 
 	return 0;
@@ -181,7 +201,7 @@ void premierAppelMouvement(Robot* robot, int type, int value, int32_t vitesse, i
 		case _AVANCER_DE:
 		{
 			*posGauche = robot->codeurGauche + ( value / robot->coeffLongG);
-			*posDroite = robot->codeurDroit + ( value / robot->coeffLongD);
+			*posDroite = robot->codeurDroit + ( value / (robot->coeffLongD));
 			break;
 		}
 		case _TOURNER_DE:
@@ -194,16 +214,25 @@ void premierAppelMouvement(Robot* robot, int type, int value, int32_t vitesse, i
 		default: 
 		break;
 	}
-	envoiOrdrePositionMoteurs(acc, vitesse, decel, *posGauche, acc, vitesse, decel, *posDroite);
+
+	envoiOrdrePositionMoteurs(
+		acc / robot->coeffLongG, 
+		vitesse / robot->coeffLongG, 
+		decel / robot->coeffLongG, 
+		*posGauche, 
+		acc /( robot->coeffLongD), 
+		vitesse / (robot->coeffLongD), 
+		decel / (robot->coeffLongD), 
+		*posDroite);
 }
 
 int setMouvement(Robot* robot, int type, int32_t posGauche, int32_t posDroite, int32_t tolerance)
 {
-switch (type)
+	switch (type)
 	{
 		case _AVANCER_DE:
-		{
-			if( abs(robot->codeurGauche - posGauche) < tolerance / robot->coeffLongG && abs(robot->codeurDroit - posDroite) < tolerance / robot->coeffLongD)
+		{			
+			if( abs(robot->codeurGauche - posGauche) < tolerance / robot->coeffLongG && abs(robot->codeurDroit - posDroite) < tolerance /( robot->coeffLongD))
 			{
 				return 1;
 			}

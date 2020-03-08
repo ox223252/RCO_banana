@@ -540,15 +540,15 @@ int main ( int argc, char * argv[] )
 	do 
 	{
 		logDebug ( "\n" ); 
-		printf ( "\e[A\e[KLOOP : %6d\n", getDateMs ( ) - start );
+		//printf ( "\e[A\e[KLOOP : %6d\n", getDateMs ( ) - start );
 
 		static uint32_t nb = 0;
 		if ( nb != actionManagerCurrentIndex ( ) )
 		{
 			nb = actionManagerCurrentIndex ( );
-			actionManagerPrintCurrent ( );
-			actionManagerPrintEnv ( );
-			printf("\n");
+			//actionManagerPrintCurrent ( );
+			//actionManagerPrintEnv ( );
+			//printf("\n");
 		}
 
 		// if no action remainig for this step, search next available step
@@ -569,9 +569,9 @@ int main ( int argc, char * argv[] )
 		}
 
 		calculPosition( motorBoard, &robot1);
-		logVerbose ( "\e[2K\rVGauche : %.3f VDroite : %.3f\n\e[A",
+		/*logVerbose ( "\e[2K\rVGauche : %.3f VDroite : %.3f\n\e[A",
 			robot1.vitesseGauche,
-			robot1.vitesseDroite );
+			robot1.vitesseDroite );*/
 		
 		// Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
 		// Comme ça, si on a pas d'actions influant sur les moteurs, on arrête la bête.

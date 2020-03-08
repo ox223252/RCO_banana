@@ -93,6 +93,11 @@ int initEngine ( const char * restrict const path,
 		return ( __LINE__ );
 	}
 
+	set_pid_constants_m1( _controlMoteur_motorBoard, 0x80, 99999, 1, 0, 40000);
+	set_pid_constants_m2( _controlMoteur_motorBoard, 0x80, 99999, 1, 0, 40000);
+	set_position_constants_m1( _controlMoteur_motorBoard, 0x80, 5000, 1, 3, 20000, 0, -99999999, 999999999);
+	set_position_constants_m2( _controlMoteur_motorBoard, 0x80, 5000, 1, 3, 20000, 0, -99999999, 999999999);
+
 	if ( ptr )
 	{
 		*ptr = _controlMoteur_motorBoard;
@@ -200,6 +205,7 @@ int envoiOrdrePositionMoteurs(int accel_m1, int speed_m1, int decel_m1, int posi
 {
 	if ( roboclaw_position_m1_m2 ( _controlMoteur_motorBoard, 0x80, accel_m1, speed_m1, decel_m1, position_m1, accel_m2, speed_m2, decel_m2, position_m2 ) != ROBOCLAW_OK )
 	{
+		printf("ERREUR !\n");
 		return ( __LINE__ );
 	}
 

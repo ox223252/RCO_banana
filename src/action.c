@@ -912,7 +912,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 		}
 
 		case aT(move):
-		{
+		{			
 			void * tmp = NULL;
 			if ( getCharFromParams ( step, action, "Type", (void**)&tmp ) )
 			{
@@ -960,13 +960,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 
 		}
 		case aT(position):
-		{
-			if ( testFlagsArms ( step, action, true  ) ||
-				( _action_dynaFd <= 0 ) )
-			{ // arm disabled
-				return ( 0 );
-			}
-
+		{	
 			void * tmp = NULL;
 			if ( getCharFromParams ( step, action, "Sens", (void**)&tmp ) )
 			{
