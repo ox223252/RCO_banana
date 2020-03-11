@@ -30,6 +30,7 @@
 #include "utils.h"
 #include "action.h"
 #include "fileSelector.h"
+#include "init.h"
 
 static Robot robot1 = { 0 };
 const uint8_t speedStep = 10;
@@ -92,14 +93,6 @@ int main ( int argc, char * argv[] )
 
 	uint8_t mcp23017Addr = 0;          // gpio direr addr (i2c)
 	int mcp23017Fd = 0;                // mcp23017 file descriptor
-
-	char *menuItems[] = {              // menu items used to select strategy
-		"run \e[1;32mGREEN\e[0m",
-		"run \e[1;31mRED\e[0m",
-		"manual mode",
-		"exit",
-		NULL
-	};
 
 	struct
 	{
@@ -306,7 +299,7 @@ int main ( int argc, char * argv[] )
 	if ( !flagAction.noArm )
 	{ // arm enabled
 		// init dynamixel
-		if ( initDyna ( dynamixelsPath, &dynamixelsPath, dynamixelUartSpeed ) )
+		if ( initDyna ( dynamixelsPath, &dynaPortNum, dynamixelUartSpeed ) )
 		{
 			return ( __LINE__ );
 		}
