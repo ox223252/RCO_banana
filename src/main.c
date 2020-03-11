@@ -42,11 +42,6 @@ void actionClose ( void * arg )
 }
 #pragma GCC diagnostic pop
 
-void dynamixelClose ( void * arg )
-{
-	closePort ( ( long ) arg );
-}
-
 void proccessNormalEnd ( void * arg )
 {
 	if ( arg )
@@ -311,74 +306,21 @@ int main ( int argc, char * argv[] )
 	if ( !flagAction.noArm )
 	{ // arm enabled
 		// init dynamixel
-		dynaPortNum = portHandler ( dynamixelsPath );
-		packetHandler ( );
-		if ( !openPort ( dynaPortNum ) )
-		{ // can't open port
-			flagAction.noArm = 0;
-			logVerbose ( " - dyna : \e[31m%s\e[0m (open failure)\n", dynamixelsPath );
-		}
-		else
+		if ( initDyna ( dynamixelsPath, &dynamixelsPath, dynamixelUartSpeed ) )
 		{
-			logVerbose ( " - dyna : %s\n", dynamixelsPath );
-			logVerbose ( "   - Device Name : %s\n", dynamixelsPath );
-
-			logVerbose ( "   - Baudrate : %d \n", dynamixelUartSpeed );
-			if ( !setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
-			{
-				logVerbose ( "   - Baudratesetting failed, stay with last value\n" );
-			}
-			else
-			{
-				logVerbose ( "   - Baudrate	: %d\n", getBaudRate ( dynaPortNum ) );
-			}
-
-			setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
+			return ( __LINE__ );
 		}
 
 		// init gpio expander
-		if ( mcp23017Addr )
+		if ( initMCP23017 ( i2cPortName, mcp23017Addr, &mcp23017Fd ) )
 		{
-			logVerbose ( "   - mcp23017 : %d\n", mcp23017Addr );
-			if ( err = openMCP23017 ( i2cPortName, mcp23017Addr, &mcp23017Fd ), err )
-			{
-				logVerbose ( "      - error : %d\n", err );
-				logVerbose ( "         %s\n", strerror ( errno ) );
-				return ( __LINE__ );
-			}
-
-			if ( err = setCloseOnExit ( mcp23017Fd ), err )
-			{
-				logVerbose ( "       - error : %d\n", err );
-				logVerbose ( "         %s\n", strerror ( errno ) );
-				close ( mcp23017Fd );
-				return ( __LINE__ );
-			}
-
-			gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_OUTPUT );
-			gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_OUTPUT );
-			gpioSet ( mcp23017Fd, 'A', 0, 1 );
-			gpioSet ( mcp23017Fd, 'A', 1, 1 );
+			return ( __LINE__ );
 		}
 
 		// init pwm epander
-		if ( pca9685Addr )
+		if ( initPAC9685 ( i2cPortName, pca9685Addr, &pca9685Fd ) )
 		{
-			logVerbose ( "   - pca9685 : %d\n", pca9685Addr );
-			if ( err = openPCA9685 ( i2cPortName, pca9685Addr, &pca9685Fd ), err )
-			{
-				logVerbose ( "   - error : %d\n", err );
-				logVerbose ( "     %s\n", strerror ( errno ) );
-				return ( __LINE__ );
-			}
-
-			if ( err = setCloseOnExit ( pca9685Fd ), err )
-			{
-				logVerbose ( "   - error : %d\n", err );
-				logVerbose ( "     %s\n", strerror ( errno ) );
-				close ( pca9685Fd );
-				return ( __LINE__ );
-			}
+			return ( __LINE__ );
 		}
 	}
 	else
