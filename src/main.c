@@ -308,8 +308,6 @@ int main ( int argc, char * argv[] )
 
 	printf ( "   use %s\n", jsonActionPath );
 
-	return ( 0 );
-
 	if ( !flagAction.noArm )
 	{ // arm enabled
 		// init dynamixel
