@@ -69,9 +69,9 @@ static const char * _action_name[] = {
 
 static ActionFlag *_action_flags = NULL;
 
-int _action_mcpFd = -1;
-int _action_pcaFd = -1;
-int _action_dynaFd = -1;
+static int _action_mcpFd = -1;
+static int _action_pcaFd = -1;
+static int _action_dynaFd = -1;
 
 ////////////////////////////////////////////////////////////////////////////////
 /// internals functions
@@ -303,6 +303,34 @@ static void delCurrent ( uint32_t step, uint32_t action )
 	pthread_mutex_unlock ( &_action_mutex );
 }
 
+static inline void actionDone ( const uint32_t step, const uint32_t action )
+{
+	pthread_mutex_lock ( &_action_mutex );
+	if ( _action_current &&
+		( _action_currentLength > step ) &&
+		( _action_current[ step ].length > action ) )
+	{
+		jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+	}
+	pthread_mutex_unlock ( &_action_mutex );
+}
+
+static inline int actionGet ( const uint32_t step, const uint32_t action, const char * str,  void ** const out, JSON_TYPE *type )
+{
+
+	pthread_mutex_lock ( &_action_mutex );
+	if ( str &&
+		out &&
+		_action_current &&
+		( _action_currentLength > step ) &&
+		( _action_current[ step ].length > action ) )
+	{
+		jsonGet ( _action_current[ step ].params[ action ], 0, str, out, type );
+	}
+	pthread_mutex_unlock ( &_action_mutex );
+	return ( *out == NULL );
+}
+
 // return the index of key in the _action_name array
 // if -1 key is not in array
 static int actionNameToId ( const char * __restrict__ const  key )
@@ -358,19 +386,16 @@ static void cleanCurrent ( void )
 // if error set status to "done"
 static inline int getCharFromParams ( const uint32_t step, const uint32_t action, const char * __restrict__ const str, void ** const out )
 {
-	pthread_mutex_lock ( &_action_mutex );
 
 	JSON_TYPE type = jT ( undefined );
-	if ( !jsonGet ( _action_current[ step ].params[ action ], 0, str, out, &type ) ||
+
+	if ( !actionGet ( step, action, str, out, &type ) ||
 		type != jT( str ) )
 	{
 		logDebug ( "ERROR param \"%s\" not found %p %d\n", str, *out, type );
-		logDebug ( "      %p\n", _action_current[ step ].params[ action ] );
-		jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-		pthread_mutex_unlock ( &_action_mutex );
+		actionDone ( step, action );
 		return ( __LINE__ );
 	}
-	pthread_mutex_unlock ( &_action_mutex );
 	return ( 0 );
 }
 
@@ -379,18 +404,14 @@ static inline int getCharFromParams ( const uint32_t step, const uint32_t action
 // if error set status to "done"
 static inline int getCharFromMain ( const uint32_t step, const uint32_t action, const char * __restrict__ const str, void ** const out )
 {
-	pthread_mutex_lock ( &_action_mutex );
-
 	JSON_TYPE type = jT ( undefined );
-	if ( !jsonGet ( _action_json,  _action_current[ step ].actionsId[ action ], str, out, &type ) ||
+	if ( !actionGet ( step, action, str, out, &type ) ||
 		type != jT( str ) )
 	{
 		logDebug ( "ERROR param \"%s\" not found %p %d\n", str, *out, type );
-		jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-		pthread_mutex_unlock ( &_action_mutex );
+		actionDone ( step, action );
 		return ( __LINE__ );
 	}
-	pthread_mutex_unlock ( &_action_mutex );
 	return ( 0 );
 }
 
@@ -398,8 +419,6 @@ static inline int getCharFromMain ( const uint32_t step, const uint32_t action, 
 // retrun 0 if no flag set else no action need to be done
 static inline int testFlagsArms ( const uint32_t step, const uint32_t action, const bool bloquante )
 {
-	pthread_mutex_lock ( &_action_mutex );
-
 	if ( _action_flags &&
 		_action_flags->noArm )
 	{
@@ -412,18 +431,16 @@ static inline int testFlagsArms ( const uint32_t step, const uint32_t action, co
 				_kbhit ( ) &&
 				_getch ( ) )
 			{ // if wait key hit
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				actionDone ( step, action );
 			}
 			else if ( _action_flags->armDone &&
 				bloquante )
 			{
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				actionDone ( step, action );
 			}
 		}
-		pthread_mutex_unlock ( &_action_mutex );
 		return ( __LINE__ );
 	}
-	pthread_mutex_unlock ( &_action_mutex );
 	return ( 0 );
 }
 
@@ -431,8 +448,6 @@ static inline int testFlagsArms ( const uint32_t step, const uint32_t action, co
 // retrun 0 if no flag set else no action need to be done
 static inline int testFlagsDrivers ( const uint32_t step, const uint32_t action, const bool bloquante )
 {
-	pthread_mutex_lock ( &_action_mutex );
-
 	if ( _action_flags &&
 		_action_flags->noDrive )
 	{
@@ -445,18 +460,16 @@ static inline int testFlagsDrivers ( const uint32_t step, const uint32_t action,
 				_kbhit ( ) &&
 				_getch ( ) )
 			{ // if wait key hit
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				actionDone ( step, action );
 			}
 			else if ( _action_flags->driveDone &&
 				bloquante )
 			{
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				actionDone ( step, action );
 			}
 		}
-		pthread_mutex_unlock ( &_action_mutex );
 		return ( __LINE__ );
 	}
-	pthread_mutex_unlock ( &_action_mutex );
 	return ( 0 );
 }
 
@@ -469,7 +482,6 @@ typedef struct {
 // step used by external timeout to stop everything and set new actions
 static void actionCleanAndSet ( void * arg )
 {
-
 	printf ( "action timeout\n" );
 	actionCleanAndSet_t * a = arg;
 
@@ -491,7 +503,6 @@ static void actionCleanAndSet ( void * arg )
 	unsetFreeOnExit ( a );
 	free ( a );
 	a = NULL;
-	
 }
 
 // make one action select by step index and action index
@@ -581,9 +592,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 
 			if ( (uint32_t)abs ( getPositionDyna ( mID ) - mValue ) < mTolerance )
 			{
-				pthread_mutex_lock ( &_action_mutex );
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-				pthread_mutex_unlock ( &_action_mutex );
+				actionDone ( step, action );
 			}
 			break;
 		}
@@ -618,20 +627,12 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			// on recupère la cible
 			double * target = NULL;
 			double tmp = 0.0;
-
-
-			pthread_mutex_lock ( &_action_mutex );
-			if ( !jsonGet ( _action_var, 0, name, (void**)&target, &type ) )
+			if ( !actionGet ( step, action, name, (void**)&target, &type ) ||
+				( type != jT(double) ) )
 			{ // the var $name doesn't existe
+				// the var is not a number... not normal
 				target = &tmp;
 			}
-			else if ( type != jT(double) )
-			{ // the var is not a number... not normal
-				logDebug ( "\n" );
-				pthread_mutex_unlock ( &_action_mutex );
-				return ( __LINE__ );
-			}
-			pthread_mutex_unlock ( &_action_mutex );
 
 			// le type d'action à faire
 			char * op = NULL;
@@ -666,6 +667,10 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			{
 				value = (*target) - value;
 			}
+			else
+			{
+				(*target) = value;
+			}
 			pthread_mutex_lock ( &_action_mutex );
 			jsonSet ( _action_var, 0, name, (void*)&value, jT ( double ) );
 			pthread_mutex_unlock ( &_action_mutex );
@@ -675,7 +680,6 @@ static int execOne ( const uint32_t step, const uint32_t action )
 		{ // done
 			pthread_mutex_lock ( &_action_mutex );
 			jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-			pthread_mutex_unlock ( &_action_mutex );
 
 			uint32_t delay = _action_current[ step ].timeout[ action ];
 			delay -= ( getDateMs ( ) - _action_current[ step ].start[ action ] );
@@ -704,6 +708,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 					{
 						free ( arg );
 						logDebug ( "externel timeout start failed\n" );
+						pthread_mutex_unlock ( &_action_mutex );
 						return ( __LINE__ );
 					}
 					break;
@@ -711,9 +716,11 @@ static int execOne ( const uint32_t step, const uint32_t action )
 				default:
 				{ // error case
 					free ( arg );
+					pthread_mutex_unlock ( &_action_mutex );
 					return ( __LINE__ );
 				}
 			}
+			pthread_mutex_unlock ( &_action_mutex );
 			break;
 		}
 		case aT(servo):
@@ -924,12 +931,10 @@ static int execOne ( const uint32_t step, const uint32_t action )
 				return ( __LINE__ );
 			}
 
-			pthread_mutex_lock ( &_action_mutex );
 			// on recupère la cible
 			double * target = NULL;
-			if ( !jsonGet ( _action_var, 0, name, (void**)&target, &type ) )
+			if ( !actionGet ( step, action, name, (void**)&target, &type ) )
 			{ // the var doesn't existe
-				pthread_mutex_unlock ( &_action_mutex );
 				return ( 0 );
 			}
 			else if ( type != jT(double) )
@@ -939,27 +944,13 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			}
 			
 			// et puis on fini par faire le calcul
-			if ( !strcmp( op, "!=" ) &&
-				( *target != value ) )
+			if ( ( !strcmp( op, "!=" ) && ( *target != value ) ) ||
+				( !strcmp( op, "==" ) && ( *target == value ) ) ||
+				( !strcmp( op, "<" ) && ( value < *target ) ) ||
+				( !strcmp( op, ">" ) && ( value > *target  ) ) )
 			{
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				actionDone ( step, action );
 			}
-			else if ( !strcmp( op, "==" ) &&
-				( *target == value ) )
-			{
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-			}
-			else if ( !strcmp( op, "<" ) &&
-				( value < *target ) )
-			{
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-			}
-			else if ( !strcmp( op, ">" ) &&
-				( value > *target  ) )
-			{
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-			}
-			pthread_mutex_unlock ( &_action_mutex );
 			break;
 		}
 		case aT(position):
