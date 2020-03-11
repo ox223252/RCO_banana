@@ -47,4 +47,6 @@ void initBoost ( const float voltage, const uint32_t delay );
 ////////////////////////////////////////////////////////////////////////////////
 int requestBoost ( bool flag );
 
+int envoiOrdrePositionMoteurs(int accel_m1, int speed_m1, int decel_m1, int position_m1, int accel_m2, int speed_m2, int decel_m2, int position_m2);
+
 #endif //__CONTROLEMOTEUR_H__

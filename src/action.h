@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "struct/structRobot.h"
 #define aT(type) ACTION_TYPE_##type
 
 enum {
@@ -17,6 +18,7 @@ enum {
 	aT(start),
 	aT(sequence),
 	aT(position),
+	aT(orientation),
 	aT(stopMove),
 	aT(blocked),
 	aT(pick),
@@ -35,7 +37,7 @@ enum {
 /// \brief parse the json and create needed elements
 /// \return 0 if Ok, else see errno for more details
 ////////////////////////////////////////////////////////////////////////////////
-int actionManagerInit ( const char * const file );
+int actionManagerInit ( const char * const file , Robot* robot);
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \fn int actionManagerDeInit ( void );
