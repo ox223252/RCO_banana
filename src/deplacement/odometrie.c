@@ -72,6 +72,11 @@ int calculPosition ( struct roboclaw* rc, Robot* robot )
 	robot->xRobot += dDeplacement * cos ( ( dAngle * ( M_PI / 180. ) ) );
 	robot->yRobot += dDeplacement * sin ( ( dAngle * ( M_PI / 180. ) ) );
 
+	robot->detection->xRobot = robot->xRobot;
+	robot->detection->yRobot = robot->yRobot;
+	robot->detection->orientationRobot = robot->orientationRobot;
+
+
 	return ( 0 );
 }
 

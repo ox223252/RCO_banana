@@ -579,7 +579,7 @@ int main ( int argc, char * argv[] )
 		robot1.vitesseGaucheToSend = robot1.vitesseGaucheDefault;
 		robot1.vitesseDroiteToSend = robot1.vitesseDroiteDefault;
 
-		if ( actionManagerExec ( ) )
+		//if ( actionManagerExec ( ) )
 		{
 
 		}

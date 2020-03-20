@@ -17,6 +17,9 @@ typedef struct
 {
 	direction_e dir;
 	float distance;
+	float xRobot;
+	float yRobot;
+	float orientationRobot;
 }
 detection_t;
 
