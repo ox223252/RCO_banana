@@ -11,14 +11,13 @@
 #include "lib/freeOnExit/freeOnExit.h"
 #include "lib/log/log.h"
 #include "lib/signalHandler/signalHandler.h"
-#include "lib/termRequest/request.h"
-#include "lib/termRequest/menu.h"
 #include "lib/roboclaw/roboclaw.h"
 #include "lib/dynamixel_sdk/dynamixel_sdk.h"
 #include "lib/GPIO/gpio.h"
 #include "lib/mcp23017/mcp23017.h"
 #include "lib/sharedMem/sharedMem.h"
 #include "lib/pca9685/pca9685.h"
+#include "lib/termRequest/request.h"
 
 #include "struct/structRobot.h"
 #include "struct/structAction.h"
@@ -30,16 +29,10 @@
 
 #include "utils.h"
 #include "action.h"
+#include "fileSelector.h"
+#include "init.h"
 
 static Robot robot1 = { 0 };
-
-enum
-{
-	MENU_green,
-	MENU_red,
-	MENU_exit
-};
-
 const uint8_t speedStep = 10;
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -49,11 +42,6 @@ void actionClose ( void * arg )
 	actionManagerDeInit ( );
 }
 #pragma GCC diagnostic pop
-
-void dynamixelClose ( void * arg )
-{
-	closePort ( ( long ) arg );
-}
 
 void proccessNormalEnd ( void * arg )
 {
@@ -105,14 +93,6 @@ int main ( int argc, char * argv[] )
 
 	uint8_t mcp23017Addr = 0;          // gpio direr addr (i2c)
 	int mcp23017Fd = 0;                // mcp23017 file descriptor
-
-	char *menuItems[] = {              // menu items used to select strategy
-		"run \e[1;32mGREEN\e[0m",
-		"run \e[1;31mRED\e[0m",
-		"manual mode",
-		"exit",
-		NULL
-	};
 
 	struct
 	{
@@ -277,7 +257,6 @@ int main ( int argc, char * argv[] )
 		return ( 0 );
 	}
 
-
 	if ( flag.test )
 	{
 		logVerbose ( "### TEST ###\n" );
@@ -301,173 +280,40 @@ int main ( int argc, char * argv[] )
 		initBoost ( Vboost, tBoost );
 
 		initOdometrie ( motorBoard, &robot1 );
-
 	}
 
-
-	while ( true )
-	{ // test du/des /fichiers de jeux
-		while ( !( flag.green ^ flag.red ) )
-		{ // if no color or both colors set
-			switch ( menu ( 0, menuItems, NULL ) )
-			{
-				case MENU_red:
-				{
-					flag.red = 1;
-					flag.green = 0;
-					break;
-				}
-				case MENU_green:
-				{
-					flag.green = 1;
-					flag.red = 0;
-					break;
-				}
-				case MENU_exit:
-				default:
-				{
-					logVerbose ( " - keyboard exit\n" );
-					return ( __LINE__ );
-				}
-			}
-		}
-
-		if ( strlen ( jsonActionPath ) == 0 )
-		{
-			printf ( "Saisir le nom du fichier de jeux : ");
-			scanf( "%115s", jsonActionPath );
-			while ( getchar ( ) != '\n' );
-		}
-
-		char tName[ 128 ];
-		bool green = 0;
-		if ( !flag.red || flag.green )
-		{
-			logDebug ( "test GREEN file status:\n" );
-			sprintf ( tName, "%s-green.json", jsonActionPath );
-			int tFile = open ( tName, O_RDONLY );
-			if ( tFile > 0 )
-			{
-				close ( tFile );
-				green = true;
-			}
-		}
-
-		bool red = 0;
-		if ( !flag.green || flag.red )
-		{
-			logDebug ( "test RED file status:\n" );
-			sprintf ( tName, "%s-red.json", jsonActionPath );
-			int tFile = open ( tName, O_RDONLY );
-			if ( tFile > 0 )
-			{
-				close ( tFile );
-				red = true;
-			}
-		}
-
-		if ( ( !flag.green || flag.red ) && !red )
-		{
-			printf ( "le fichier pour la couleur \e[1;31mRED\e[0m n'existe pas\n" );
-		}
-
-		if ( ( !flag.red || flag.green ) && !green )
-		{
-			printf ( "le fichier pour la couleur \e[1;32mGREEN\e[0m n'existe pas\n" );
-		}
-
-		if ( ( green && red ) ||
-			( green && flag.green ) ||
-			( red && flag.red ) )
-		{ // le fichier est disponilble pour les deux couleurs ou 
-			// pour la couleur delectionné
-			logDebug ( "\n" );
-			break;
-		}
-		else
-		{
-			logDebug ( "\n" );
-			jsonActionPath[ 0 ] = 0;
-			continue;
-		}
+	colorSelect_t c[2] = {
+		{ .name="green", .title="\e[1;32mGREEN\e[0m", .active=flag.green },
+		{ .name="red", .title="\e[1;31mRED\e[0m", .active=flag.red }
+	};
+	if ( fileSelect ( jsonActionPath, 2, c ) )
+	{
+		return ( 0 );
 	}
-	
 
-	sprintf ( jsonActionPath, "%s-%s.json", jsonActionPath, ( flag.green )? "green" : "red" );
-	printf ( "%s\n", ( flag.green )? menuItems[ MENU_green ] : menuItems[ MENU_red ] );
+	flag.green = c[0].active;
+	flag.red = c[1].active;
+
 	printf ( "   use %s\n", jsonActionPath );
 
 	if ( !flagAction.noArm )
 	{ // arm enabled
 		// init dynamixel
-		dynaPortNum = portHandler ( dynamixelsPath );
-		packetHandler ( );
-		if ( !openPort ( dynaPortNum ) )
-		{ // can't open port
-			flagAction.noArm = 0;
-			logVerbose ( " - dyna : \e[31m%s\e[0m (open failure)\n", dynamixelsPath );
-		}
-		else
+		if ( initDyna ( dynamixelsPath, &dynaPortNum, dynamixelUartSpeed ) )
 		{
-			logVerbose ( " - dyna : %s\n", dynamixelsPath );
-			logVerbose ( "   - Device Name : %s\n", dynamixelsPath );
-
-			logVerbose ( "   - Baudrate : %d \n", dynamixelUartSpeed );
-			if ( !setBaudRate ( dynaPortNum, dynamixelUartSpeed ) )
-			{
-				logVerbose ( "   - Baudratesetting failed, stay with last value\n" );
-			}
-			else
-			{
-				logVerbose ( "   - Baudrate	: %d\n", getBaudRate ( dynaPortNum ) );
-			}
-
-			setExecAfterAllOnExit ( dynamixelClose, ( void * )dynaPortNum );
+			return ( __LINE__ );
 		}
 
 		// init gpio expander
-		if ( mcp23017Addr )
+		if ( initMCP23017 ( i2cPortName, mcp23017Addr, &mcp23017Fd ) )
 		{
-			logVerbose ( "   - mcp23017 : %d\n", mcp23017Addr );
-			if ( err = openMCP23017 ( i2cPortName, mcp23017Addr, &mcp23017Fd ), err )
-			{
-				logVerbose ( "      - error : %d\n", err );
-				logVerbose ( "         %s\n", strerror ( errno ) );
-				return ( __LINE__ );
-			}
-
-			if ( err = setCloseOnExit ( mcp23017Fd ), err )
-			{
-				logVerbose ( "       - error : %d\n", err );
-				logVerbose ( "         %s\n", strerror ( errno ) );
-				close ( mcp23017Fd );
-				return ( __LINE__ );
-			}
-
-			gpioSetDir ( mcp23017Fd, 'A', 0, mcp23017_OUTPUT );
-			gpioSetDir ( mcp23017Fd, 'A', 1, mcp23017_OUTPUT );
-			gpioSet ( mcp23017Fd, 'A', 0, 1 );
-			gpioSet ( mcp23017Fd, 'A', 1, 1 );
+			return ( __LINE__ );
 		}
 
 		// init pwm epander
-		if ( pca9685Addr )
+		if ( initPAC9685 ( i2cPortName, pca9685Addr, &pca9685Fd ) )
 		{
-			logVerbose ( "   - pca9685 : %d\n", pca9685Addr );
-			if ( err = openPCA9685 ( i2cPortName, pca9685Addr, &pca9685Fd ), err )
-			{
-				logVerbose ( "   - error : %d\n", err );
-				logVerbose ( "     %s\n", strerror ( errno ) );
-				return ( __LINE__ );
-			}
-
-			if ( err = setCloseOnExit ( pca9685Fd ), err )
-			{
-				logVerbose ( "   - error : %d\n", err );
-				logVerbose ( "     %s\n", strerror ( errno ) );
-				close ( pca9685Fd );
-				return ( __LINE__ );
-			}
+			return ( __LINE__ );
 		}
 	}
 	else
@@ -540,15 +386,15 @@ int main ( int argc, char * argv[] )
 	do 
 	{
 		logDebug ( "\n" ); 
-		//printf ( "\e[A\e[KLOOP : %6d\n", getDateMs ( ) - start );
+		printf ( "\e[A\e[KLOOP : %6d\n", getDateMs ( ) - start );
 
 		static uint32_t nb = 0;
 		if ( nb != actionManagerCurrentIndex ( ) )
 		{
 			nb = actionManagerCurrentIndex ( );
-			//actionManagerPrintCurrent ( );
-			//actionManagerPrintEnv ( );
-			//printf("\n");
+			actionManagerPrintCurrent ( );
+			actionManagerPrintEnv ( );
+			printf("\n");
 		}
 
 		// if no action remainig for this step, search next available step

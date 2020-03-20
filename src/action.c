@@ -16,6 +16,10 @@
 #include "lib/pca9685/pca9685.h"
 
 
+
+
+static pthread_mutex_t _action_mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
+
 static json_el * _action_json = NULL;
 static uint32_t _action_jsonLength = 0;
 
@@ -71,9 +75,9 @@ static const char * _action_name[] = {
 
 static ActionFlag *_action_flags = NULL;
 
-int _action_mcpFd = -1;
-int _action_pcaFd = -1;
-int _action_dynaFd = -1;
+static int _action_mcpFd = -1;
+static int _action_pcaFd = -1;
+static int _action_dynaFd = -1;
 
 ////////////////////////////////////////////////////////////////////////////////
 /// internals functions
@@ -81,7 +85,9 @@ static int newCurrent ( uint32_t step, uint32_t action )
 {
 	uint32_t i;
 	void *tmp = NULL;
+	int rt = 0;
 
+	pthread_mutex_lock ( &_action_mutex );
 	for ( i = 0; i < _action_currentLength; i++ )
 	{
 		if ( _action_current[ i ].stepId == step )
@@ -98,7 +104,8 @@ static int newCurrent ( uint32_t step, uint32_t action )
 		if ( !tmp )
 		{
 			logDebug ( "\n" );
-			return ( -__LINE__ );
+			rt = __LINE__;
+			goto newCurrent_end;
 		}
 
 		_action_current = tmp;
@@ -117,7 +124,8 @@ static int newCurrent ( uint32_t step, uint32_t action )
 	if ( !tmp )
 	{
 		logDebug ( "\n" );
-		return ( -__LINE__ );
+		rt = __LINE__;
+		goto newCurrent_end;
 	}
 	else
 	{
@@ -130,7 +138,8 @@ static int newCurrent ( uint32_t step, uint32_t action )
 	if ( !tmp )
 	{
 		logDebug ( "\n" );
-		return ( -__LINE__ );
+		rt = __LINE__;
+		goto newCurrent_end;
 	}
 	else
 	{ // add params to the current array
@@ -146,7 +155,8 @@ static int newCurrent ( uint32_t step, uint32_t action )
 	if ( !tmp )
 	{
 		logDebug ( "\n" );
-		return ( -__LINE__ );
+		rt = __LINE__;
+		goto newCurrent_end;
 	}
 	else
 	{
@@ -171,7 +181,8 @@ static int newCurrent ( uint32_t step, uint32_t action )
 	if ( !tmp )
 	{
 		logDebug ( "\n" );
-		return ( -__LINE__ );
+		rt = __LINE__;
+		goto newCurrent_end;
 	}
 	else
 	{
@@ -197,7 +208,8 @@ static int newCurrent ( uint32_t step, uint32_t action )
 	if ( !tmp )
 	{
 		logDebug ( "\n" );
-		return ( -__LINE__ );
+		rt = __LINE__;
+		goto newCurrent_end;
 	}
 	else
 	{
@@ -207,12 +219,16 @@ static int newCurrent ( uint32_t step, uint32_t action )
 
 	_action_current[ i ].length += 1;
 
-	return ( 0 );
+newCurrent_end:
+	pthread_mutex_unlock ( &_action_mutex );
+	return ( rt );
 }
 
 static void delCurrent ( uint32_t step, uint32_t action )
 {
 	uint8_t stepExchange = 0;
+	pthread_mutex_lock ( &_action_mutex );
+
 	for ( uint32_t i = 0; i < ( _action_currentLength - stepExchange ); i++ )
 	{
 		if ( _action_current[i].stepId != step )
@@ -289,6 +305,36 @@ static void delCurrent ( uint32_t step, uint32_t action )
 		free ( _action_current );
 		_action_current = NULL;
 	}
+	
+	pthread_mutex_unlock ( &_action_mutex );
+}
+
+static inline void actionDone ( const uint32_t step, const uint32_t action )
+{
+	pthread_mutex_lock ( &_action_mutex );
+	if ( _action_current &&
+		( _action_currentLength > step ) &&
+		( _action_current[ step ].length > action ) )
+	{
+		jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+	}
+	pthread_mutex_unlock ( &_action_mutex );
+}
+
+static inline int actionGet ( const uint32_t step, const uint32_t action, const char * str,  void ** const out, JSON_TYPE *type )
+{
+
+	pthread_mutex_lock ( &_action_mutex );
+	if ( str &&
+		out &&
+		_action_current &&
+		( _action_currentLength > step ) &&
+		( _action_current[ step ].length > action ) )
+	{
+		jsonGet ( _action_current[ step ].params[ action ], 0, str, out, type );
+	}
+	pthread_mutex_unlock ( &_action_mutex );
+	return ( *out == NULL );
 }
 
 // return the index of key in the _action_name array
@@ -296,20 +342,25 @@ static void delCurrent ( uint32_t step, uint32_t action )
 static int actionNameToId ( const char * __restrict__ const  key )
 {
 	uint32_t i = 0;
+	pthread_mutex_lock ( &_action_mutex );
 	while ( _action_name[i] )
 	{
 		if ( !strcmp ( _action_name[i], key ) )
 		{
+			pthread_mutex_unlock ( &_action_mutex );
 			return ( i );
 		}
 		i++;
 	}
+	
+	pthread_mutex_unlock ( &_action_mutex );
 	return ( -1 );
 }
 
 // clean all current actions
 static void cleanCurrent ( void )
 {
+	pthread_mutex_lock ( &_action_mutex );
 	for ( uint32_t i = 0; i < _action_currentLength; i++ )
 	{
 		for ( uint32_t j = 0; j < _action_current[ i ].length; j++ )
@@ -332,6 +383,8 @@ static void cleanCurrent ( void )
 	free ( _action_current );
 	_action_current = NULL;
 	_action_currentLength = 0;
+	
+	pthread_mutex_unlock ( &_action_mutex );
 }
 
 // get char* from _action_current array
@@ -339,13 +392,14 @@ static void cleanCurrent ( void )
 // if error set status to "done"
 static inline int getCharFromParams ( const uint32_t step, const uint32_t action, const char * __restrict__ const str, void ** const out )
 {
+
 	JSON_TYPE type = jT ( undefined );
-	if ( !jsonGet ( _action_current[ step ].params[ action ], 0, str, out, &type ) ||
+
+	if ( !actionGet ( step, action, str, out, &type ) ||
 		type != jT( str ) )
 	{
 		logDebug ( "ERROR param \"%s\" not found %p %d\n", str, *out, type );
-		logDebug ( "      %p\n", _action_current[ step ].params[ action ] );
-		jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+		actionDone ( step, action );
 		return ( __LINE__ );
 	}
 	return ( 0 );
@@ -357,11 +411,11 @@ static inline int getCharFromParams ( const uint32_t step, const uint32_t action
 static inline int getCharFromMain ( const uint32_t step, const uint32_t action, const char * __restrict__ const str, void ** const out )
 {
 	JSON_TYPE type = jT ( undefined );
-	if ( !jsonGet ( _action_json,  _action_current[ step ].actionsId[ action ], str, out, &type ) ||
+	if ( !actionGet ( step, action, str, out, &type ) ||
 		type != jT( str ) )
 	{
 		logDebug ( "ERROR param \"%s\" not found %p %d\n", str, *out, type );
-		jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+		actionDone ( step, action );
 		return ( __LINE__ );
 	}
 	return ( 0 );
@@ -383,12 +437,12 @@ static inline int testFlagsArms ( const uint32_t step, const uint32_t action, co
 				_kbhit ( ) &&
 				_getch ( ) )
 			{ // if wait key hit
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				actionDone ( step, action );
 			}
 			else if ( _action_flags->armDone &&
 				bloquante )
 			{
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				actionDone ( step, action );
 			}
 		}
 		return ( __LINE__ );
@@ -412,12 +466,12 @@ static inline int testFlagsDrivers ( const uint32_t step, const uint32_t action,
 				_kbhit ( ) &&
 				_getch ( ) )
 			{ // if wait key hit
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				actionDone ( step, action );
 			}
 			else if ( _action_flags->driveDone &&
 				bloquante )
 			{
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				actionDone ( step, action );
 			}
 		}
 		return ( __LINE__ );
@@ -441,7 +495,9 @@ static void actionCleanAndSet ( void * arg )
 
 	for ( uint32_t k = 0; k < a->length; k++ )
 	{
+		pthread_mutex_lock ( &_action_mutex );
 		getActionId ( _action_json, a->stepId, &(a->nexts[ k ]) );
+		pthread_mutex_unlock ( &_action_mutex );
 		newCurrent ( a->stepId, a->nexts[ k ] );
 		_action_currentIndex++;
 	}
@@ -542,7 +598,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 
 			if ( (uint32_t)abs ( getPositionDyna ( mID ) - mValue ) < mTolerance )
 			{
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				actionDone ( step, action );
 			}
 			break;
 		}
@@ -555,11 +611,13 @@ static int execOne ( const uint32_t step, const uint32_t action )
 				return ( __LINE__ );
 			}
 
+			pthread_mutex_lock ( &_action_mutex );
 			uint32_t temps = atoi ( (char*)tmp );
 			if ( getDateMs ( ) - _action_current[ step ].start[ action ] > temps )
 			{ // le temps est passé
 				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
 			}
+			pthread_mutex_unlock ( &_action_mutex );
 			break;
 		}
 		case aT(set_var):
@@ -575,15 +633,11 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			// on recupère la cible
 			double * target = NULL;
 			double tmp = 0.0;
-
-			if ( !jsonGet ( _action_var, 0, name, (void**)&target, &type ) )
+			if ( !actionGet ( step, action, name, (void**)&target, &type ) ||
+				( type != jT(double) ) )
 			{ // the var $name doesn't existe
+				// the var is not a number... not normal
 				target = &tmp;
-			}
-			else if ( type != jT(double) )
-			{ // the var is not a number... not normal
-				logDebug ( "\n" );
-				return ( __LINE__ );
 			}
 
 			// le type d'action à faire
@@ -619,13 +673,18 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			{
 				value = (*target) - value;
 			}
-
+			else
+			{
+				(*target) = value;
+			}
+			pthread_mutex_lock ( &_action_mutex );
 			jsonSet ( _action_var, 0, name, (void*)&value, jT ( double ) );
-
+			pthread_mutex_unlock ( &_action_mutex );
 			break;
 		}
 		case aT(timeout):
 		{ // done
+			pthread_mutex_lock ( &_action_mutex );
 			jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
 
 			uint32_t delay = _action_current[ step ].timeout[ action ];
@@ -655,6 +714,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 					{
 						free ( arg );
 						logDebug ( "externel timeout start failed\n" );
+						pthread_mutex_unlock ( &_action_mutex );
 						return ( __LINE__ );
 					}
 					break;
@@ -662,9 +722,11 @@ static int execOne ( const uint32_t step, const uint32_t action )
 				default:
 				{ // error case
 					free ( arg );
+					pthread_mutex_unlock ( &_action_mutex );
 					return ( __LINE__ );
 				}
 			}
+			pthread_mutex_unlock ( &_action_mutex );
 			break;
 		}
 		case aT(servo):
@@ -875,9 +937,9 @@ static int execOne ( const uint32_t step, const uint32_t action )
 				return ( __LINE__ );
 			}
 
-						// on recupère la cible
+			// on recupère la cible
 			double * target = NULL;
-			if ( !jsonGet ( _action_var, 0, name, (void**)&target, &type ) )
+			if ( !actionGet ( step, action, name, (void**)&target, &type ) )
 			{ // the var doesn't existe
 				return ( 0 );
 			}
@@ -886,27 +948,14 @@ static int execOne ( const uint32_t step, const uint32_t action )
 				logDebug ( "\n" );
 				return ( __LINE__ );
 			}
-
+			
 			// et puis on fini par faire le calcul
-			if ( !strcmp( op, "!=" ) &&
-				( *target != value ) )
+			if ( ( !strcmp( op, "!=" ) && ( *target != value ) ) ||
+				( !strcmp( op, "==" ) && ( *target == value ) ) ||
+				( !strcmp( op, "<" ) && ( value < *target ) ) ||
+				( !strcmp( op, ">" ) && ( value > *target  ) ) )
 			{
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-			}
-			else if ( !strcmp( op, "==" ) &&
-				( *target == value ) )
-			{
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-			}
-			else if ( !strcmp( op, "<" ) &&
-				( value < *target ) )
-			{
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
-			}
-			else if ( !strcmp( op, ">" ) &&
-				( value > *target  ) )
-			{
-				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
+				actionDone ( step, action );
 			}
 			break;
 		}
@@ -1053,6 +1102,10 @@ static int execOne ( const uint32_t step, const uint32_t action )
 				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
 			}
 
+			pthread_mutex_lock ( &_action_mutex );
+			// x, y, vitesse, acceleration, tolerance, sens
+			// TODO
+			pthread_mutex_unlock ( &_action_mutex );
 			break;
 		}
 		case aT(stopMove):
@@ -1096,26 +1149,30 @@ static int execOne ( const uint32_t step, const uint32_t action )
 int actionManagerInit ( const char * __restrict__ const file , Robot* robot)
 {
 	actionManagerDeInit ( );
+	pthread_mutex_lock ( &_action_mutex );
 
 	mRobot = robot;
 
 	if ( jsonParseFile ( file, &_action_json, &_action_jsonLength ) )
 	{
-		logDebug ( "\n" );
+		pthread_mutex_unlock ( &_action_mutex );
 		return ( __LINE__ );
 	}
 
 	if ( jsonParseString ( "{}", &_action_var, &_action_varLength ) )
 	{
 		logDebug ( "\n" );
+		pthread_mutex_unlock ( &_action_mutex );
 		return ( __LINE__ );
 	}
 
+	pthread_mutex_unlock ( &_action_mutex );
 	return ( 0 );
 }
 
 int actionManagerDeInit ( void )
 {
+	pthread_mutex_lock ( &_action_mutex );
 	if ( _action_json )
 	{
 		jsonFree ( &_action_json, _action_jsonLength );
@@ -1129,6 +1186,7 @@ int actionManagerDeInit ( void )
 		_action_var = NULL;
 		_action_jsonLength = 0;
 	}
+	pthread_mutex_unlock ( &_action_mutex );
 
 	mRobot = NULL;
 
@@ -1164,7 +1222,9 @@ int actionStartStep ( void )
 		}
 
 		char * name = NULL;
+		pthread_mutex_lock ( &_action_mutex );
 		jsonGet ( _action_json, actionId, "nomAction", (void**)&name, NULL );
+		pthread_mutex_unlock ( &_action_mutex );
 
 		if ( !strcmp ( "Départ", name ) )
 		{
@@ -1187,18 +1247,8 @@ int actionManagerUpdate ( void )
 	// pour toutes les etapes courrantes (normalement on ne devrait en avoir qu'une mais ça permet déviter un oubli)
 	for ( uint32_t i = 0; i < _action_currentLength; i++ )
 	{
-		#ifdef ONE_LEVEL_BY_LOOP
-		// on sauvegarde le nombre d'action en cours car s'il y en à de nouvelle opn les rajoutera à la suite donc il faut
-		/// eviter de rajouter une action et la retraiter aussitot ce qui nous empecherait d'executer l'action par la suite
-		uint32_t length = _action_current[ i ].length;
-		#endif
-
 		// pour toutes les actions enregistrées dans le tableau
-		#ifdef ONE_LEVEL_BY_LOOP
-		for ( uint32_t j = 0; j < length; j++ )
-		#else
 		for ( uint32_t j = 0; _action_current && j < _action_current[ i ].length; j++ )
-		#endif
 		{
 			bool timeout = false;
 
@@ -1223,7 +1273,10 @@ int actionManagerUpdate ( void )
 				char * status = NULL;
 				JSON_TYPE type = jT( undefined );
 
-				if ( !jsonGet ( _action_current[ i ].params[ j ], 0, "status", (void**)&status, &type ) )
+				pthread_mutex_lock ( &_action_mutex );
+				void * tmp = jsonGet ( _action_current[ i ].params[ j ], 0, "status", (void**)&status, &type );
+				pthread_mutex_unlock ( &_action_mutex );
+				if ( !tmp )
 				{ // on a rien trouvé
 					continue;
 				}
@@ -1245,11 +1298,9 @@ int actionManagerUpdate ( void )
 			}
 			else
 			{ // si l'action n'est pas bloquante ...
-				#ifndef ONE_LEVEL_BY_LOOP
-				// sin on peut faire plusieurs niveau de l'arbre généalogique en une boucle
+				// si on peut faire plusieurs niveau de l'arbre généalogique en une boucle
 				// alors on doit traiter les action à ce niveau
 				execOne ( i, j );
-				#endif
 			}
 
 			uint32_t * next = NULL;
@@ -1285,9 +1336,6 @@ int actionManagerUpdate ( void )
 			_action_currentIndex++;
 
 			j--; // remove one element so need to take care about
-			#ifdef ONE_LEVEL_BY_LOOP
-			length--;
-			#endif
 		}
 	}
 	return ( 0 );
