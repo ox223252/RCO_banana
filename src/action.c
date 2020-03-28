@@ -321,7 +321,7 @@ static inline void actionDone ( const uint32_t step, const uint32_t action )
 	pthread_mutex_unlock ( &_action_mutex );
 }
 
-static inline int actionGet ( const uint32_t step, const uint32_t action, const char * str,  void ** const out, JSON_TYPE *type )
+static inline int actionGetFromParams ( const uint32_t step, const uint32_t action, const char * str,  void ** const out, JSON_TYPE *type )
 {
 
 	pthread_mutex_lock ( &_action_mutex );
@@ -332,6 +332,22 @@ static inline int actionGet ( const uint32_t step, const uint32_t action, const 
 		( _action_current[ step ].length > action ) )
 	{
 		jsonGet ( _action_current[ step ].params[ action ], 0, str, out, type );
+	}
+	pthread_mutex_unlock ( &_action_mutex );
+	return ( *out == NULL );
+}
+
+static inline int actionGetFromMain ( const uint32_t step, const uint32_t action, const char * str,  void ** const out, JSON_TYPE *type )
+{
+
+	pthread_mutex_lock ( &_action_mutex );
+	if ( str &&
+		out &&
+		_action_current &&
+		( _action_currentLength > step ) &&
+		( _action_current[ step ].length > action ) )
+	{
+		jsonGet ( _action_json, _action_current[ step ].actionsId[ action ], str, out, type );
 	}
 	pthread_mutex_unlock ( &_action_mutex );
 	return ( *out == NULL );
@@ -395,10 +411,10 @@ static inline int getCharFromParams ( const uint32_t step, const uint32_t action
 
 	JSON_TYPE type = jT ( undefined );
 
-	if ( !actionGet ( step, action, str, out, &type ) ||
+	if ( actionGetFromParams ( step, action, str, out, &type ) ||
 		type != jT( str ) )
 	{
-		logDebug ( "ERROR param \"%s\" not found %p %d\n", str, *out, type );
+		logDebug ( "ERROR : from param \"%s\" not found %p %d\n", str, *out, type );
 		actionDone ( step, action );
 		return ( __LINE__ );
 	}
@@ -411,10 +427,11 @@ static inline int getCharFromParams ( const uint32_t step, const uint32_t action
 static inline int getCharFromMain ( const uint32_t step, const uint32_t action, const char * __restrict__ const str, void ** const out )
 {
 	JSON_TYPE type = jT ( undefined );
-	if ( !actionGet ( step, action, str, out, &type ) ||
+
+	if ( actionGetFromMain ( step, action, str, out, &type ) ||
 		type != jT( str ) )
 	{
-		logDebug ( "ERROR param \"%s\" not found %p %d\n", str, *out, type );
+		logDebug ( "ERROR : from main \"%s\" not found %p %d\n", str, *out, type );
 		actionDone ( step, action );
 		return ( __LINE__ );
 	}
@@ -633,7 +650,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			// on recupère la cible
 			double * target = NULL;
 			double tmp = 0.0;
-			if ( !actionGet ( step, action, name, (void**)&target, &type ) ||
+			if ( !actionGetFromParams ( step, action, name, (void**)&target, &type ) ||
 				( type != jT(double) ) )
 			{ // the var $name doesn't existe
 				// the var is not a number... not normal
@@ -939,7 +956,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 
 			// on recupère la cible
 			double * target = NULL;
-			if ( !actionGet ( step, action, name, (void**)&target, &type ) )
+			if ( !actionGetFromParams ( step, action, name, (void**)&target, &type ) )
 			{ // the var doesn't existe
 				return ( 0 );
 			}
@@ -959,9 +976,8 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			}
 			break;
 		}
-
 		case aT(move):
-		{			
+		{
 			void * tmp = NULL;
 			if ( getCharFromParams ( step, action, "Type", (void**)&tmp ) )
 			{
@@ -1006,7 +1022,6 @@ static int execOne ( const uint32_t step, const uint32_t action )
 				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
 			}
 			break;
-
 		}
 		case aT(position):
 		{	
