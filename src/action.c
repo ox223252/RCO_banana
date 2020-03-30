@@ -81,7 +81,11 @@ static int _action_dynaFd = -1;
 
 ////////////////////////////////////////////////////////////////////////////////
 /// internals functions
-static int newCurrent ( uint32_t step, uint32_t action )
+/// \param [ in ] step : step if of the current action
+/// \param [ in ] action : action if of the new action
+/// \brief create new element in the current array
+/// \return 0 if OK else return num line of error
+static int newCurrent ( const uint32_t step, const uint32_t action )
 {
 	uint32_t i;
 	void *tmp = NULL;
@@ -224,7 +228,10 @@ newCurrent_end:
 	return ( rt );
 }
 
-static void delCurrent ( uint32_t step, uint32_t action )
+/// \param [ in ] step : step if of the current action
+/// \param [ in ] action : action if of the selected action
+/// \brief remove all actions (with couple ste/action) of the current actions array
+static void delCurrent ( const uint32_t step, const uint32_t action )
 {
 	uint8_t stepExchange = 0;
 	pthread_mutex_lock ( &_action_mutex );
@@ -309,6 +316,9 @@ static void delCurrent ( uint32_t step, uint32_t action )
 	pthread_mutex_unlock ( &_action_mutex );
 }
 
+/// \param [ in ] step : step if of the current action
+/// \param [ in ] action : action if of the selected action
+/// \brief set string "status" in params at "done"
 static inline void actionDone ( const uint32_t step, const uint32_t action )
 {
 	pthread_mutex_lock ( &_action_mutex );
@@ -321,6 +331,13 @@ static inline void actionDone ( const uint32_t step, const uint32_t action )
 	pthread_mutex_unlock ( &_action_mutex );
 }
 
+/// \param [ in ] step : step if of the current action
+/// \param [ in ] action : action if of the selected action
+/// \param [ in ] str : string searched
+/// \param [ out ] out : value returned
+/// \param [ out ] type : type of element returned
+/// \brief search a key in the params jsaon  array of a selected action (with couple step/action).
+/// \return 0 if value found else value not found
 static inline int actionGetFromParams ( const uint32_t step, const uint32_t action, const char * str,  void ** const out, JSON_TYPE *type )
 {
 
@@ -337,6 +354,13 @@ static inline int actionGetFromParams ( const uint32_t step, const uint32_t acti
 	return ( *out == NULL );
 }
 
+/// \param [ in ] step : step if of the current action
+/// \param [ in ] action : action if of the selected action
+/// \param [ in ] str : string searched
+/// \param [ out ] out : value returned
+/// \param [ out ] type : type of element returned
+/// \brief search a key in the main jaon array of a selected action (with couple step/action).
+/// \return 0 if value found else value not found
 static inline int actionGetFromMain ( const uint32_t step, const uint32_t action, const char * str,  void ** const out, JSON_TYPE *type )
 {
 
@@ -353,8 +377,8 @@ static inline int actionGetFromMain ( const uint32_t step, const uint32_t action
 	return ( *out == NULL );
 }
 
-// return the index of key in the _action_name array
-// if -1 key is not in array
+/// \brief search the index of a string in the _action_name array
+/// \return if >= 0 valid index else key is not in array
 static int actionNameToId ( const char * __restrict__ const  key )
 {
 	uint32_t i = 0;
@@ -373,7 +397,7 @@ static int actionNameToId ( const char * __restrict__ const  key )
 	return ( -1 );
 }
 
-// clean all current actions
+/// \brief clean all current actions
 static void cleanCurrent ( void )
 {
 	pthread_mutex_lock ( &_action_mutex );
