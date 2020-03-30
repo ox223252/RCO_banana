@@ -15,39 +15,41 @@
 #include "lib/termRequest/request.h"
 #include "lib/pca9685/pca9685.h"
 
-
-
-
+///< mutex used to allow usage of thread in actions and their management
 static pthread_mutex_t _action_mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
 
-static json_el * _action_json = NULL;
-static uint32_t _action_jsonLength = 0;
 
-static json_el * _action_var = NULL;
-static uint32_t _action_varLength = 0;
+static json_el * _action_json = NULL; ///< json used to store all parsed file
+static uint32_t _action_jsonLength = 0; ///< length of json array
+
+static json_el * _action_var = NULL; ///< json used to store env vars : aT(get_var)/aT(set_var)
+static uint32_t _action_varLength = 0; ///< length of env json array
 
 static bool isPremierAppel = true;
 static int32_t posGauche = 0;
 static int32_t posDroite = 0;
 
+/// \brief this struct store the current actions
 typedef struct
 {
-	uint32_t stepId;
-	uint32_t * actionsId;
-	uint32_t * timeout;
-	time_t * start;
-	bool * blocking;
-	json_el ** params;
-	uint32_t length;
+	uint32_t stepId; ///< the step what this instance is related
+	uint32_t * actionsId; ///< running action array 
+	uint32_t * timeout; ///< running action's timeout array (ms)
+	time_t * start; ///< running actions's start time array (ms)
+	bool * blocking; ///< running action's blocking mode's status
+	json_el ** params; ///< running action's parameters stored as json 
+	uint32_t length; ///< parameters length
 }
 currentWork;
 
-static currentWork * _action_current = NULL;
-static uint32_t _action_currentLength = 0;
+static currentWork * _action_current = NULL; ///< array of action running
+static uint32_t _action_currentLength = 0; ///< length of running action's array
 
-static uint32_t _action_currentIndex = 0;
-static Robot * mRobot = NULL;
+static uint32_t _action_currentIndex = 0; ///< count hwo many action was done 
+	/// from the beginin used to know changed from two call of actionManagerUpdate
+static Robot * mRobot = NULL; ///< struct used to manage robot
 
+///< array that contain string reffderence to manage action
 static const char * _action_name[] = {
 	[aT(none)] = "none",
 	[aT(servo)] = "setServo",
@@ -73,11 +75,11 @@ static const char * _action_name[] = {
 	[aT(last)] = NULL
 };
 
-static ActionFlag *_action_flags = NULL;
+static ActionFlag *_action_flags = NULL; ///< flag action noArm/noDrive
 
-static int _action_mcpFd = -1;
-static int _action_pcaFd = -1;
-static int _action_dynaFd = -1;
+static int _action_mcpFd = -1; ///< file descriptor of mcp23017
+static int _action_pcaFd = -1; ///< file descriptor of pca9685
+static int _action_dynaFd = -1; ///< file descriptor of dynamixels
 
 ////////////////////////////////////////////////////////////////////////////////
 /// internals functions
