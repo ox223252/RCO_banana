@@ -352,6 +352,21 @@ static inline void actionDone ( const uint32_t step, const uint32_t action )
 
 /// \param [ in ] step : step if of the current action
 /// \param [ in ] action : action if of the selected action
+/// \brief set string "status" in params at "done"
+static inline void actionWIP ( const uint32_t step, const uint32_t action )
+{
+	pthread_mutex_lock ( &_action_mutex );
+	if ( _action_current &&
+		( _action_currentLength > step ) &&
+		( _action_current[ step ].length > action ) )
+	{
+		jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"wip", jT ( str ) );
+	}
+	pthread_mutex_unlock ( &_action_mutex );
+}
+
+/// \param [ in ] step : step if of the current action
+/// \param [ in ] action : action if of the selected action
 /// \param [ in ] str : string searched
 /// \param [ out ] out : value returned
 /// \param [ out ] type : type of element returned
