@@ -52,14 +52,26 @@ void proccessNormalEnd ( void * arg )
 	exit ( 0 );
 }
 
+typedef struct {
+	int fd;
+	uint8_t addr;
+} i2cDevice_t;
+
+typedef struct {
+	char path[ 128 ]; // dynamixel acces point /dev/dyna
+	uint32_t uartSpeed; // dynamixel uart speed
+	long int fd; // dynamixel file descriptor
+} dyna_t;
+
+static inline int armInit ( const bool active, dyna_t * const __restrict__ dyna, 
+	const char * __restrict__ i2cName, i2cDevice_t * const pca9685, i2cDevice_t * const mcp23017 );
+
 int main ( int argc, char * argv[] )
 {
 	int err = 0;                       // var used to stor error of init function
 	void * tmp = NULL;                 // tmp pointer used for initialisation only
 
-	char dynamixelsPath[ 128 ] = { 0 }; // dynamixel acces point /dev/dyna
-	uint32_t dynamixelUartSpeed = 1000000; // dynamixel uart speed
-	long int dynaPortNum = 0;          // dynamixel file descriptor
+	dyna_t dyna = { .uartSpeed = 1000000 };
 
 	char motorBoadPath[ 128 ] = { 0 }; // roboclaw access point /dev/roboclaw
 	struct roboclaw *motorBoard = NULL; // roboclaw file descriptor
@@ -88,11 +100,8 @@ int main ( int argc, char * argv[] )
 
 	char i2cPortName[ 64 ] = "/dev/i2c-1";
 
-	uint8_t pca9685Addr = 0;           // servo driver addr (i2c)
-	int pca9685Fd = 0;                 // pca9685 file descriptor
-
-	uint8_t mcp23017Addr = 0;          // gpio direr addr (i2c)
-	int mcp23017Fd = 0;                // mcp23017 file descriptor
+	i2cDevice_t pca9685;
+	i2cDevice_t mcp23017;
 
 	struct
 	{
@@ -143,15 +152,15 @@ int main ( int argc, char * argv[] )
 		{ "--Vboost", 	"-vB",	1, 		cT ( float ), &Vboost, "maximum voltage that should provide systeme to engine during boost mode" },
 		{ "--tBoost", 	"-tB",	1, 		cT ( uint32_t ), &tBoost, "maximum delay for boost mode" },
 		{ "--i2cPortName", "-iN", 1, 	cT ( str ), i2cPortName, "i2c port name" },
-		{ "--pcaAddr", 	"-p",	1, 		cT ( uint8_t ), &pca9685Addr, "pca9685 board i2c addr"},
-		{ "--mcpAddr",	"-m",	1, 		cT ( uint8_t ), &mcp23017Addr, "mcp23017 board i2c addr"},
+		{ "--pcaAddr", 	"-p",	1, 		cT ( uint8_t ), &pca9685.addr, "pca9685 board i2c addr"},
+		{ "--mcpAddr",	"-m",	1, 		cT ( uint8_t ), &mcp23017.addr, "mcp23017 board i2c addr"},
 		{ "--memKey",	"-k", 	1, 		cT ( uint32_t ), &(robot1.memKey), "shared memory key" },
 		{ NULL, NULL, 0, 0, NULL, NULL }
 	};
 
 	config_el configList[] =
 	{ // config els list used in parsing of cmd line and config file
-		{ "PATH_DYNA", cT ( str ), dynamixelsPath, "PATH to access to dynamixels"},
+		{ "PATH_DYNA", cT ( str ), dyna.path, "PATH to access to dynamixels"},
 		{ "PATH_MOTOR_BOARD", cT ( str ), motorBoadPath, "PATH to access to dynamixels"},
 		{ "PATH_MOTOR_BOARD_UART_SPEED", cT ( uint32_t ), &motorBoardUartSpeed, "UART speed for robocloaw board" },
 		{ "JSON_ACTION_PATH", cT ( str ), jsonActionPath, "json action file path"},
@@ -171,8 +180,8 @@ int main ( int argc, char * argv[] )
 		{ "COEFF_ID_VITESSE", cT ( float ), &speedAsservID, "D Integral coefficient for speed asservissment" },
 		{ "COEFF_DD_VITESSE", cT ( float ), &speedAsservDD, "D derivative coefficient for speed asservissment" },
 		{ "I2C_PORT_NAME", cT ( str ), i2cPortName, "i2c port name" },
-		{ "PCA9685_ADDR", cT ( uint8_t ), &pca9685Addr, "pca9685 board i2c addr"},
-		{ "MCP23017_ADDR", cT ( uint8_t ), &mcp23017Addr, "mcp23017 board i2c addr"},
+		{ "PCA9685_ADDR", cT ( uint8_t ), &pca9685.addr, "pca9685 board i2c addr"},
+		{ "MCP23017_ADDR", cT ( uint8_t ), &mcp23017.addr, "mcp23017 board i2c addr"},
 		{ "SHARED_MEM_KEY",	cT ( uint32_t ), &(robot1.memKey), "shared memory key" },
 		{ NULL, 0, NULL, NULL }
 	};
@@ -263,6 +272,10 @@ int main ( int argc, char * argv[] )
 		return ( 0 );
 	}
 
+	if ( armInit ( flagAction.noArm, &dyna, i2cPortName, &pca9685, &mcp23017 ) )
+	{
+		return ( __LINE__ );
+	}
 
 	if ( !flagAction.noDrive )
 	{ // if engine wasn't disabled
@@ -296,32 +309,7 @@ int main ( int argc, char * argv[] )
 
 	printf ( "   use %s\n", jsonActionPath );
 
-	if ( !flagAction.noArm )
-	{ // arm enabled
-		// init dynamixel
-		if ( initDyna ( dynamixelsPath, &dynaPortNum, dynamixelUartSpeed ) )
-		{
-			return ( __LINE__ );
-		}
 
-		// init gpio expander
-		if ( initMCP23017 ( i2cPortName, mcp23017Addr, &mcp23017Fd ) )
-		{
-			return ( __LINE__ );
-		}
-
-		// init pwm epander
-		if ( initPAC9685 ( i2cPortName, pca9685Addr, &pca9685Fd ) )
-		{
-			return ( __LINE__ );
-		}
-	}
-	else
-	{ // arm disabled
-		logVerbose ( " - dyna : \e[31m%s\e[0m\n", dynamixelsPath );
-		logVerbose ( " - mcp23017 : \e[31m%d\e[0m (GPIO)\n", mcp23017Addr );
-		logVerbose ( " - pca9685 : \e[31m%d\e[0m (PWM)\n", pca9685Addr );
-	}
 
 	// only for display
 	logVerbose ( " - robotclaw : %s%s\e[0m\n", (flagAction.noDrive)?"\e[31m":"", motorBoadPath );
@@ -334,7 +322,7 @@ int main ( int argc, char * argv[] )
 		return ( __LINE__ );
 	}
 
-	actionManagerSetFd ( mcp23017Fd, pca9685Fd, dynaPortNum );
+	actionManagerSetFd ( mcp23017.fd, pca9685.fd, dyna.fd );
 
 	// printf ( "\e[3;33m--> Don't forget to start detection\e[0m\n" );
 		// if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
@@ -435,6 +423,39 @@ int main ( int argc, char * argv[] )
 	while ( true );
 
 	logVerbose ( "normal end\n" );
+
+	return ( 0 );
+}
+
+static inline int armInit ( const bool active, dyna_t * const __restrict__ dyna, 
+	const char * __restrict__ i2cName, i2cDevice_t * const pca9685, i2cDevice_t * const mcp23017 )
+{
+	if ( !active )
+	{ // arm enabled
+		// init dynamixel
+		if ( initDyna ( dyna->path, &dyna->fd, dyna->uartSpeed ) )
+		{
+			return ( __LINE__ );
+		}
+
+		// init gpio expander
+		if ( initMCP23017 ( i2cName, mcp23017->addr, &mcp23017->fd ) )
+		{
+			return ( __LINE__ );
+		}
+
+		// init pwm epander
+		if ( initPAC9685 ( i2cName, pca9685->addr, &pca9685->fd ) )
+		{
+			return ( __LINE__ );
+		}
+	}
+	else
+	{ // arm disabled
+		logVerbose ( " - dyna : \e[31m%s\e[0m\n", dyna->path );
+		logVerbose ( " - mcp23017 : \e[31m%d\e[0m (GPIO)\n", mcp23017->addr );
+		logVerbose ( " - pca9685 : \e[31m%d\e[0m (PWM)\n", pca9685->addr );
+	}
 
 	return ( 0 );
 }
