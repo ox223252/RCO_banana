@@ -307,7 +307,7 @@ int main ( int argc, char * argv[] )
 	flag.green = c[0].active;
 	flag.red = c[1].active;
 
-	printf ( "   use %s\n", jsonActionPath );
+	printf ( " - use %s\n", jsonActionPath );
 
 
 
@@ -403,9 +403,9 @@ int main ( int argc, char * argv[] )
 		}
 
 		calculPosition( motorBoard, &robot1);
-		/*logVerbose ( "\e[2K\rVGauche : %.3f VDroite : %.3f\n\e[A",
+		logVerbose ( "\e[2K\rVGauche : %.3f VDroite : %.3f\n\e[A",
 			robot1.vitesseGauche,
-			robot1.vitesseDroite );*/
+			robot1.vitesseDroite );
 		
 		// Mise à 0 des valeurs moteurs avant le parcours des actions, sans envoyer d'ordre.
 		// Comme ça, si on a pas d'actions influant sur les moteurs, on arrête la bête.
@@ -413,7 +413,7 @@ int main ( int argc, char * argv[] )
 		robot1.vitesseGaucheToSend = robot1.vitesseGaucheDefault;
 		robot1.vitesseDroiteToSend = robot1.vitesseDroiteDefault;
 
-		//if ( actionManagerExec ( ) )
+		if ( actionManagerExec ( ) )
 		{
 
 		}
