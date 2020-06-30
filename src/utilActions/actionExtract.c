@@ -19,7 +19,30 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 #include "../lib/log/log.h"
+#include "../lib/freeOnExit/freeOnExit.h"
+
+static uint32_t * stepDone = NULL; ///< used to store what steps was done
+
+static inline int stepCmp (  const json_el * const data, const uint32_t a, const uint32_t b )
+{
+	double *a_points = NULL;
+	double *b_points = NULL;
+
+	jsonGet ( data, a, "nbPoints", (void**)&a_points, NULL );
+	jsonGet ( data, b, "nbPoints", (void**)&b_points, NULL );
+
+	printf ( "A %lf\n", *a_points );
+	printf ( "B %lf\n", *b_points );
+
+	if ( *a_points > *b_points )
+	{
+		return ( 0 );
+	}
+
+	return ( 1 );
+}
 
 /// \retrun 0 : valid id found
 ///     -1 : no step remaining
@@ -49,53 +72,78 @@ int getStepId ( const json_el * const data, uint32_t * const stepId )
 		return ( __LINE__ );
 	}
 
-	// verify if index is valid and if step associated is an object
-	if ( *stepId < data[ *strategieId ].length )
+	if ( *stepId == 0 )
 	{
-		if ( data[ *strategieId ].type[ *stepId ] == jT( obj ) )
+		if ( stepDone )
 		{
-			*stepId = *(uint32_t*)data[ *strategieId ].value[ *stepId ];
-			return ( 0 );
+			unsetFreeOnExit ( stepDone );
+			free ( stepDone );
+		}
+
+		stepDone = malloc ( sizeof ( *stepDone ) * data[ *strategieId ].length );
+		if ( !stepDone )
+		{
+			return ( __LINE__ );
+		}
+		setFreeOnExit ( stepDone );
+
+		memset ( stepDone, 0, sizeof ( *stepDone ) * data[ *strategieId ].length );
+	}
+		
+	uint32_t best = 0;
+
+	for ( uint32_t i = 0; i < data[ *strategieId ].length; i++ )
+	{
+		if ( data[ *strategieId ].type[ i ] != jT( obj ) )
+		{
+			continue;
+		}
+
+		uint32_t tmp = *(uint32_t*) data[ *strategieId ].value[ i ];
+
+		// verify if we have already done step [ tmp ]
+		bool thisOneDone = false;
+		for ( uint32_t j = 0; j < data[ *strategieId ].length; j++ )
+		{
+			if ( stepDone && 
+				( tmp == stepDone[ j ] ) )
+			{
+				thisOneDone = true;
+				break;
+			}
+			else if ( !tmp )
+			{
+				break;
+			}
+		}
+
+		if ( thisOneDone )
+		{
+			continue;
+		}
+
+		if ( !best )
+		{
+			best = tmp;
+		}
+		else if ( stepCmp ( data, best, tmp ) )
+		{
+			best = tmp;
 		}
 	}
 
-	return ( -1 );
-}
-
-// TODO : fonction qui calcule l'ordre des etapes
-int getNextStepId ( const json_el * const data, uint32_t * stepId )
-{
-	if ( !data ||
-		!stepId )
+	if ( best )
 	{
-		errno = EINVAL;
-		logDebug ( "\n" );
-		return ( __LINE__ );
-	}
-
-	uint32_t * strategieId = 0;
-	JSON_TYPE type = jT( undefined );
-
-	if ( !jsonGetRecursive ( data, 0, "Strategie", (void*)&strategieId, &type ) )
-	{ // no object found
-		logDebug ( "\n" );
-		return ( __LINE__ );
-	}
-
-	if ( type != jT( array ) )
-	{ // strategie is not an array
-		logDebug ( "\n" );
-		return ( __LINE__ );
-	}
-
-	// verify if index is valid and if step associated is an object
-	if ( *stepId < data[ *strategieId ].length )
-	{
-		if ( data[ *strategieId ].type[ *stepId ] == jT( obj ) )
+		int i = 0;
+		while ( stepDone[ i ] )
 		{
-			*stepId = *(uint32_t*)data[ *strategieId ].value[ *stepId ];
-			return ( 0 );
+			printf ( "%d\n", stepDone[ i ] );
+			i++;
 		}
+		stepDone[ i ] = best;
+		*stepId = best;
+		
+		return ( 0 );
 	}
 
 	return ( -1 );
