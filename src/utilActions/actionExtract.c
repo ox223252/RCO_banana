@@ -20,11 +20,129 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "../lib/log/log.h"
 #include "../lib/freeOnExit/freeOnExit.h"
+#include "../actionGetEnv.h" // need exctra from env
+#include "../date.h"
 
 static uint32_t * stepDone = NULL; ///< used to store what steps was done
 
+typedef enum {
+	UT, // up than
+	EQ, // equal
+	LT // less than
+}
+condition_t;
+
+typedef enum {
+	TIME,
+	CUPS
+}
+param_t;
+
+static double getTaux ( const json_el * const data, const uint32_t id )
+{
+	// recuperation de nombre de verres
+	uint16_t nbCups = getNbCups ( );
+
+	// recuperation du temps
+	struct timeval time;
+	getChronoValue ( &time );
+
+	printf ( "nb cup : %d at %d\n", nbCups, time.tv_sec );
+
+	// recuperation du bon taux
+	uint32_t *index;
+	JSON_TYPE type;
+	jsonGet ( data, id, "arrayTaux", (void**)&index, &type );
+
+	if ( type != jT(array) )
+	{
+		printf ( "type : %d %d\n", type, *index );
+		printf ( "     : %d\n", id );
+		return ( -1.0 );
+	}
+
+	for ( uint32_t i = 0; i < data[ *index ].length; i++ )
+	{
+		double *cond = NULL;
+		double *value = NULL;
+		double *param = NULL;
+
+		jsonGet ( data, *index, "condition", (void**)&cond, NULL );
+		jsonGet ( data, *index, "valeur", (void**)&value, NULL );
+		jsonGet ( data, *index, "param", (void**)&param, NULL );
+
+		uint16_t comparator;
+		switch ( (param_t)((int)*param) )
+		{
+			case TIME:
+			{
+				comparator = (uint16_t)*param;
+				break;
+			}
+			case CUPS:
+			{
+				comparator = nbCups;
+				break;
+			}
+			default:
+			{
+				break;
+			}
+		}
+
+		switch ( (condition_t)((int)*cond) )
+		{
+			case UT:
+			{
+				if ( comparator > *value )
+				{
+					double *taux;
+					jsonGet ( data, index, "taux", (void**)&taux, NULL );
+
+					return ( *taux );
+				}
+				break;
+			}
+			case EQ:
+			{
+				if ( comparator == *value )
+				{
+					double *taux;
+					jsonGet ( data, index, "taux", (void**)&taux, NULL );
+
+					return ( *taux );
+				}
+				break;
+			}
+			case LT:
+			{
+				if ( comparator < *value )
+				{
+					double *taux;
+					jsonGet ( data, index, "taux", (void**)&taux, NULL );
+
+					return ( *taux );
+				}
+				break;
+			}
+			default:
+			{
+				break;
+			}
+		}
+	}
+	return ( 0 );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// \param [ in ] data : pointeur on json main database
+/// \param [ in ] a : index of first element in the database
+/// \param [ in ] b : index of second element in the database
+/// \return -1 on error, 0 if a beter than b or 1 if b better than a
+////////////////////////////////////////////////////////////////////////////////
 static inline int stepCmp (  const json_el * const data, const uint32_t a, const uint32_t b )
 {
 	double *a_points = NULL;
@@ -33,10 +151,13 @@ static inline int stepCmp (  const json_el * const data, const uint32_t a, const
 	jsonGet ( data, a, "nbPoints", (void**)&a_points, NULL );
 	jsonGet ( data, b, "nbPoints", (void**)&b_points, NULL );
 
-	printf ( "A %lf\n", *a_points );
-	printf ( "B %lf\n", *b_points );
+	double a_taux = getTaux ( data, a );
+	double b_taux = getTaux ( data, b );
 
-	if ( *a_points > *b_points )
+	printf ( "A %lf : %lf\n", *a_points, a_taux );
+	printf ( "B %lf : %lf\n", *b_points, b_taux );
+
+	if ( *a_points * a_taux > *b_points * b_taux )
 	{
 		return ( 0 );
 	}
