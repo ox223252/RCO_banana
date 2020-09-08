@@ -32,15 +32,10 @@
 #include "lib/termRequest/request.h"
 #include "lib/pca9685/pca9685.h"
 
+#include "utilActions/actionVars.h"
+
 ///< mutex used to allow usage of thread in actions and their management
 static pthread_mutex_t _action_mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
-
-
-static json_el * _action_json = NULL; ///< json used to store all parsed file
-static uint32_t _action_jsonLength = 0; ///< length of json array
-
-static json_el * _action_var = NULL; ///< json used to store env vars : aT(get_var)/aT(set_var)
-static uint32_t _action_varLength = 0; ///< length of env json array
 
 static bool isPremierAppel = true;
 static int32_t posGauche = 0;
