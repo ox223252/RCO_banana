@@ -371,6 +371,8 @@ int main ( int argc, char * argv[] )
 
 	uint32_t start = getDateMs ( );
 	int step = actionStartStep ( );
+	startChrono ( );
+	
 	do 
 	{
 		logDebug ( "\n" ); 
