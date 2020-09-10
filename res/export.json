@@ -2,6 +2,18 @@
     "Strategie": [
         {
             "TauxArray": [
+                {
+                    "condition": 2,
+                    "param": 0,
+                    "taux": 100,
+                    "valeur": 3500
+                },
+                {
+                    "condition": 2,
+                    "param": 0,
+                    "taux": 75,
+                    "valeur": 5000
+                }
             ],
             "arraySequence": [
                 {
@@ -10,9 +22,6 @@
                     "arrayGirl": [
                         {
                             "indiceFille": 1
-                        },
-                        {
-                            "indiceFille": 7
                         }
                     ],
                     "arrayParam": [
@@ -22,41 +31,13 @@
                     "blocante": false,
                     "indice": 0,
                     "nomAction": "Départ",
-                    "xBloc": 224,
-                    "yBloc": 215
+                    "xBloc": 81,
+                    "yBloc": 299
                 },
                 {
                     "arrayDaddy": [
                     ],
                     "arrayGirl": [
-                        {
-                            "indiceFille": 8
-                        }
-                    ],
-                    "arrayParam": [
-                        {
-                            "defaultValue": "Init.json",
-                            "nomParam": "Nom"
-                        }
-                    ],
-                    "arrayTimeout": [
-                    ],
-                    "blocante": false,
-                    "indice": 1,
-                    "nomAction": "Sequence",
-                    "xBloc": 345,
-                    "yBloc": 210
-                },
-                {
-                    "arrayDaddy": [
-                    ],
-                    "arrayGirl": [
-                        {
-                            "indiceFille": 3
-                        },
-                        {
-                            "indiceFille": 4
-                        }
                     ],
                     "arrayParam": [
                         {
@@ -66,293 +47,162 @@
                     ],
                     "arrayTimeout": [
                     ],
-                    "blocante": false,
-                    "indice": 2,
+                    "blocante": true,
+                    "indice": 1,
                     "nomAction": "Pause",
-                    "xBloc": 702,
-                    "yBloc": 205
+                    "xBloc": 2753,
+                    "yBloc": 428
+                }
+            ],
+            "color": "#aa007f",
+            "dateMax": 10,
+            "deadline": 100,
+            "nbPoints": 10,
+            "nomEtape": "Action A",
+            "tempsMax": 20,
+            "tempsMoyen": 15,
+            "xEtape": 174,
+            "yEtape": 417
+        },
+        {
+            "TauxArray": [
+                {
+                    "condition": 2,
+                    "param": 0,
+                    "taux": 100,
+                    "valeur": 2000
                 },
+                {
+                    "condition": 2,
+                    "param": 0,
+                    "taux": 75,
+                    "valeur": 3000
+                },
+                {
+                    "condition": 2,
+                    "param": 0,
+                    "taux": 50,
+                    "valeur": 6000
+                },
+                {
+                    "condition": 2,
+                    "param": 0,
+                    "taux": 25,
+                    "valeur": 70000
+                }
+            ],
+            "arraySequence": [
                 {
                     "arrayDaddy": [
                     ],
                     "arrayGirl": [
                         {
-                            "indiceFille": 5
+                            "indiceFille": 1
                         }
                     ],
                     "arrayParam": [
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 0,
+                    "nomAction": "Départ",
+                    "xBloc": 81,
+                    "yBloc": 299
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                    ],
+                    "arrayParam": [
                         {
-                            "defaultValue": "500",
+                            "defaultValue": "3600",
                             "nomParam": "Temps"
                         }
                     ],
                     "arrayTimeout": [
                     ],
-                    "blocante": false,
-                    "indice": 3,
+                    "blocante": true,
+                    "indice": 1,
                     "nomAction": "Pause",
-                    "xBloc": 1046,
-                    "yBloc": 461
-                },
-                {
-                    "arrayDaddy": [
-                    ],
-                    "arrayGirl": [
-                    ],
-                    "arrayParam": [
-                        {
-                            "defaultValue": "5000",
-                            "nomParam": "Timeout"
-                        },
-                        {
-                            "defaultValue": "1300",
-                            "nomParam": "x"
-                        },
-                        {
-                            "defaultValue": "800",
-                            "nomParam": "y"
-                        },
-                        {
-                            "defaultValue": "700",
-                            "nomParam": "Vitesse"
-                        },
-                        {
-                            "defaultValue": "200",
-                            "nomParam": "Accélération"
-                        },
-                        {
-                            "defaultValue": "25",
-                            "nomParam": "Tolérance"
-                        },
-                        {
-                            "defaultValue": "0",
-                            "nomParam": "Sens"
-                        }
-                    ],
-                    "arrayTimeout": [
-                    ],
-                    "blocante": true,
-                    "indice": 4,
-                    "nomAction": "Position",
-                    "xBloc": 1049,
-                    "yBloc": 69
-                },
-                {
-                    "arrayDaddy": [
-                    ],
-                    "arrayGirl": [
-                        {
-                            "indiceFille": 6
-                        }
-                    ],
-                    "arrayParam": [
-                        {
-                            "defaultValue": "10",
-                            "nomParam": "id"
-                        },
-                        {
-                            "defaultValue": "120",
-                            "nomParam": "Value"
-                        },
-                        {
-                            "defaultValue": "200",
-                            "nomParam": "Vitesse"
-                        }
-                    ],
-                    "arrayTimeout": [
-                    ],
-                    "blocante": false,
-                    "indice": 5,
-                    "nomAction": "setDyna",
-                    "xBloc": 1390,
-                    "yBloc": 458
-                },
-                {
-                    "arrayDaddy": [
-                    ],
-                    "arrayGirl": [
-                    ],
-                    "arrayParam": [
-                        {
-                            "defaultValue": "5000",
-                            "nomParam": "Timeout"
-                        },
-                        {
-                            "defaultValue": "10",
-                            "nomParam": "id"
-                        },
-                        {
-                            "defaultValue": "120",
-                            "nomParam": "Value"
-                        },
-                        {
-                            "defaultValue": "5",
-                            "nomParam": "Tolerance"
-                        }
-                    ],
-                    "arrayTimeout": [
-                    ],
-                    "blocante": true,
-                    "indice": 6,
-                    "nomAction": "getDyna",
-                    "xBloc": 1714,
-                    "yBloc": 458
-                },
-                {
-                    "arrayDaddy": [
-                    ],
-                    "arrayGirl": [
-                    ],
-                    "arrayParam": [
-                        {
-                            "defaultValue": "nbPoint",
-                            "nomParam": "id"
-                        },
-                        {
-                            "defaultValue": "=",
-                            "nomParam": "condition"
-                        },
-                        {
-                            "defaultValue": "0",
-                            "nomParam": "value"
-                        }
-                    ],
-                    "arrayTimeout": [
-                    ],
-                    "blocante": false,
-                    "indice": 7,
-                    "nomAction": "setVar",
-                    "xBloc": 382,
-                    "yBloc": 395
-                },
-                {
-                    "arrayDaddy": [
-                    ],
-                    "arrayGirl": [
-                        {
-                            "indiceFille": 9
-                        },
-                        {
-                            "indiceFille": 11
-                        }
-                    ],
-                    "arrayParam": [
-                    ],
-                    "arrayTimeout": [
-                    ],
-                    "blocante": false,
-                    "indice": 8,
-                    "nomAction": "Départ",
-                    "xBloc": 155,
-                    "yBloc": 222
-                },
-                {
-                    "arrayDaddy": [
-                    ],
-                    "arrayGirl": [
-                    ],
-                    "arrayParam": [
-                        {
-                            "defaultValue": "9900",
-                            "nomParam": "Timeout"
-                        }
-                    ],
-                    "arrayTimeout": [
-                        {
-                            "indiceTimeout": 10
-                        }
-                    ],
-                    "blocante": true,
-                    "indice": 9,
-                    "nomAction": "PermAction",
-                    "xBloc": 251,
-                    "yBloc": 302
-                },
-                {
-                    "arrayDaddy": [
-                    ],
-                    "arrayGirl": [
-                    ],
-                    "arrayParam": [
-                        {
-                            "defaultValue": "01",
-                            "nomParam": "id"
-                        },
-                        {
-                            "defaultValue": "02",
-                            "nomParam": "Value"
-                        },
-                        {
-                            "defaultValue": "03",
-                            "nomParam": "Vitesse"
-                        }
-                    ],
-                    "arrayTimeout": [
-                    ],
-                    "blocante": false,
-                    "indice": 10,
-                    "nomAction": "setDyna",
-                    "xBloc": 611,
-                    "yBloc": 324
-                },
-                {
-                    "arrayDaddy": [
-                    ],
-                    "arrayGirl": [
-                        {
-                            "indiceFille": 12
-                        }
-                    ],
-                    "arrayParam": [
-                        {
-                            "defaultValue": "01",
-                            "nomParam": "id"
-                        },
-                        {
-                            "defaultValue": "02",
-                            "nomParam": "Value"
-                        },
-                        {
-                            "defaultValue": "03",
-                            "nomParam": "Vitesse"
-                        }
-                    ],
-                    "arrayTimeout": [
-                    ],
-                    "blocante": false,
-                    "indice": 11,
-                    "nomAction": "setDyna",
-                    "xBloc": 443,
-                    "yBloc": 87
-                },
-                {
-                    "arrayDaddy": [
-                    ],
-                    "arrayGirl": [
-                        {
-                            "indiceFille": 2
-                        }
-                    ],
-                    "arrayParam": [
-                    ],
-                    "arrayTimeout": [
-                    ],
-                    "blocante": false,
-                    "indice": 12,
-                    "nomAction": "Fin",
-                    "xBloc": 799,
-                    "yBloc": 82
+                    "xBloc": 2753,
+                    "yBloc": 428
                 }
             ],
             "color": "#aa007f",
-            "dateMax": 222,
-            "deadline": 111,
-            "nbPoints": 666,
-            "nomEtape": "verreViolet",
-            "tempsMax": 333,
-            "tempsMoyen": 444,
+            "dateMax": 10,
+            "deadline": 100,
+            "nbPoints": 20,
+            "nomEtape": "Action B",
+            "tempsMax": 20,
+            "tempsMoyen": 15,
             "xEtape": 174,
-            "yEtape": 418
+            "yEtape": 417
+        },
+        {
+            "TauxArray": [
+                {
+                    "condition": 2,
+                    "param": 0,
+                    "taux": 99,
+                    "valeur": 3500
+                },
+                {
+                    "condition": 2,
+                    "param": 0,
+                    "taux": 25,
+                    "valeur": 5000
+                }
+            ],
+            "arraySequence": [
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                        {
+                            "indiceFille": 1
+                        }
+                    ],
+                    "arrayParam": [
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": false,
+                    "indice": 0,
+                    "nomAction": "Départ",
+                    "xBloc": 81,
+                    "yBloc": 299
+                },
+                {
+                    "arrayDaddy": [
+                    ],
+                    "arrayGirl": [
+                    ],
+                    "arrayParam": [
+                        {
+                            "defaultValue": "2500",
+                            "nomParam": "Temps"
+                        }
+                    ],
+                    "arrayTimeout": [
+                    ],
+                    "blocante": true,
+                    "indice": 1,
+                    "nomAction": "Pause",
+                    "xBloc": 2753,
+                    "yBloc": 428
+                }
+            ],
+            "color": "#aa007f",
+            "dateMax": 10,
+            "deadline": 100,
+            "nbPoints": 20,
+            "nomEtape": "Action C",
+            "tempsMax": 12,
+            "tempsMoyen": 15,
+            "xEtape": 174,
+            "yEtape": 417
         }
     ]
 }
