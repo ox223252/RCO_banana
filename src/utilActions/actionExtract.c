@@ -21,25 +21,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "actionExtractDefines.h"
+
 #include "../lib/log/log.h"
 #include "../lib/freeOnExit/freeOnExit.h"
 #include "../actionGetEnv.h" // need exctra from env
 #include "../date.h"
 
 static uint32_t * stepDone = NULL; ///< used to store what steps was done
-
-typedef enum {
-	UT, // up than
-	EQ, // equal
-	LT // less than
-}
-condition_t;
-
-typedef enum {
-	TIME,
-	CUPS
-}
-param_t;
 
 static double getTaux ( const json_el * const data, const uint32_t id )
 {
@@ -55,7 +44,11 @@ static double getTaux ( const json_el * const data, const uint32_t id )
 	// recuperation du bon taux
 	uint32_t *index;
 	JSON_TYPE type;
-	jsonGet ( data, id, "arrayTaux", (void**)&index, &type );
+
+	if ( !jsonGet ( data, id, RATE_ARRAY, (void**)&index, &type ) )
+	{ // pas de TauxArray trouvé
+		return ( -1.0 );
+	}
 
 	if ( type != jT(array) )
 	{
@@ -70,9 +63,16 @@ static double getTaux ( const json_el * const data, const uint32_t id )
 		double *value = NULL;
 		double *param = NULL;
 
-		jsonGet ( data, *index, "condition", (void**)&cond, NULL );
-		jsonGet ( data, *index, "valeur", (void**)&value, NULL );
-		jsonGet ( data, *index, "param", (void**)&param, NULL );
+		// on recupère l'id du l'objet 'i' dans le tableau data[*index]
+		uint32_t nextObjId = *(uint32_t*)data[ *index ].value[ i ];
+
+		if ( !jsonGet ( data, nextObjId, CONDITINON, (void**)&cond, NULL ) ||
+			!jsonGet ( data, nextObjId, VALUE, (void**)&value, NULL ) ||
+			!jsonGet ( data, nextObjId, PARAMETER, (void**)&param, NULL ) )
+		{ // une des trois valeur precedente non trouvée
+			logDebug ( "Taux array not correct\n" );
+			continue;
+		}
 
 		uint16_t comparator;
 		switch ( (param_t)((int)*param) )
@@ -93,15 +93,19 @@ static double getTaux ( const json_el * const data, const uint32_t id )
 			}
 		}
 
+		double *taux;
+		if ( !jsonGet ( data, *index, RATE, (void**)&taux, NULL ) )
+		{ // on à pas trouvé le taux... pas normal ça
+			logDebug ( "Taux not found\n" );
+			continue;
+		}
+
 		switch ( (condition_t)((int)*cond) )
 		{
 			case UT:
 			{
 				if ( comparator > *value )
 				{
-					double *taux;
-					jsonGet ( data, index, "taux", (void**)&taux, NULL );
-
 					return ( *taux );
 				}
 				break;
@@ -110,9 +114,6 @@ static double getTaux ( const json_el * const data, const uint32_t id )
 			{
 				if ( comparator == *value )
 				{
-					double *taux;
-					jsonGet ( data, index, "taux", (void**)&taux, NULL );
-
 					return ( *taux );
 				}
 				break;
@@ -121,9 +122,6 @@ static double getTaux ( const json_el * const data, const uint32_t id )
 			{
 				if ( comparator < *value )
 				{
-					double *taux;
-					jsonGet ( data, index, "taux", (void**)&taux, NULL );
-
 					return ( *taux );
 				}
 				break;
