@@ -22,6 +22,7 @@
 #include "lib/log/log.h"
 
 #include "utils.h"
+#include "date.h"
 #include "action.h"
 #include "utilActions/actionExtract.h"
 #include "utilActions/actionDyna.h"
@@ -232,7 +233,7 @@ static int newCurrent ( const uint32_t step, const uint32_t action )
 	else
 	{
 		_action_current[ i ].start = tmp;
-		_action_current[ i ].start[ _action_current[ i ].length ] = getDateMs ( );
+		_action_current[ i ].start[ _action_current[ i ].length ] = getChronoMs ( );
 	}
 
 	_action_current[ i ].length += 1;
@@ -683,7 +684,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 
 			pthread_mutex_lock ( &_action_mutex );
 			uint32_t temps = atoi ( (char*)tmp );
-			if ( getDateMs ( ) - _action_current[ step ].start[ action ] > temps )
+			if ( getChronoMs ( ) - _action_current[ step ].start[ action ] > temps )
 			{ // le temps est passé
 				jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
 			}
@@ -758,7 +759,7 @@ static int execOne ( const uint32_t step, const uint32_t action )
 			jsonSet ( _action_current[ step ].params[ action ], 0, "status", &"done", jT ( str ) );
 
 			uint32_t delay = _action_current[ step ].timeout[ action ];
-			delay -= ( getDateMs ( ) - _action_current[ step ].start[ action ] );
+			delay -= ( getChronoMs ( ) - _action_current[ step ].start[ action ] );
 			delay *= 1000;
 
 			actionCleanAndSet_t *arg = malloc ( sizeof(*arg) );
@@ -1328,8 +1329,8 @@ int actionManagerUpdate ( void )
 			}
 
 
-			uint32_t now = getDateMs ( );
-
+			uint32_t now = getChronoMs ( );
+			
 			if ( ( 0 != _action_current[ i ].timeout[ j ] ) &&
 				( ( now - _action_current[ i ].start[ j ] ) > _action_current[ i ].timeout[ j ] ) )
 			{ // si il y à un timeout et qu'il est passé 

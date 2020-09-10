@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-uint32_t getDateMs ( void );
 uint32_t fileExist ( const char * const format, ... );
 
 #endif

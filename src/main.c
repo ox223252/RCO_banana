@@ -31,6 +31,7 @@
 #include "action.h"
 #include "fileSelector.h"
 #include "init.h"
+#include "date.h"
 
 static Robot robot1 = { 0 };
 const uint8_t speedStep = 10;
@@ -322,6 +323,8 @@ int main ( int argc, char * argv[] )
 		return ( __LINE__ );
 	}
 
+	startChrono ( );
+
 	actionManagerSetFd ( mcp23017.fd, pca9685.fd, dyna.fd );
 
 	// printf ( "\e[3;33m--> Don't forget to start detection\e[0m\n" );
@@ -369,14 +372,12 @@ int main ( int argc, char * argv[] )
 
 	printf ( "\n" );
 
-	uint32_t start = getDateMs ( );
 	int step = actionStartStep ( );
-	startChrono ( );
 	
 	do 
 	{
 		logDebug ( "\n" ); 
-		printf ( "\e[A\e[KLOOP : %6d\n", getDateMs ( ) - start );
+		printf ( "\e[A\e[KLOOP : %.3lfs\n", getChronoMs ( ) / 1000 );
 
 		static uint32_t nb = 0;
 		if ( nb != actionManagerCurrentIndex ( ) )
