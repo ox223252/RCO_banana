@@ -39,7 +39,7 @@ static double getTaux ( const json_el * const data, const uint32_t id )
 	struct timeval time;
 	getChronoValue ( &time );
 
-	printf ( "nb cup : %d at %d\n", nbCups, time.tv_sec );
+	logDebug ( "nb cup : %d at %d\n", nbCups, time.tv_sec );
 
 	// recuperation du bon taux
 	uint32_t *index;
@@ -52,8 +52,8 @@ static double getTaux ( const json_el * const data, const uint32_t id )
 
 	if ( type != jT(array) )
 	{
-		printf ( "type : %d %d\n", type, *index );
-		printf ( "     : %d\n", id );
+		logDebug ( "type : %d %d\n", type, index );
+		logDebug ( "     : %d\n", id );
 		return ( -1.0 );
 	}
 
@@ -146,14 +146,23 @@ static inline int stepCmp (  const json_el * const data, const uint32_t a, const
 	double *a_points = NULL;
 	double *b_points = NULL;
 
+
 	jsonGet ( data, a, "nbPoints", (void**)&a_points, NULL );
 	jsonGet ( data, b, "nbPoints", (void**)&b_points, NULL );
 
 	double a_taux = getTaux ( data, a );
 	double b_taux = getTaux ( data, b );
 
-	printf ( "A %lf : %lf\n", *a_points, a_taux );
-	printf ( "B %lf : %lf\n", *b_points, b_taux );
+	#ifdef MODE_DEBUG
+	{
+		char *a_name;
+		char *b_name;
+		jsonGet ( data, a, "nomEtape", (void**)&a_name, NULL );
+		jsonGet ( data, b, "nomEtape", (void**)&b_name, NULL );
+		logDebug ( "%s %lf : %lf\n", a_name, *a_points, a_taux );
+		logDebug ( "%s %lf : %lf\n", b_name, *b_points, b_taux );
+	}
+	#endif
 
 	if ( *a_points * a_taux > *b_points * b_taux )
 	{

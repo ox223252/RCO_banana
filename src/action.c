@@ -1279,6 +1279,7 @@ int actionStartStep ( void )
 		return ( -__LINE__ );
 	}
 
+	// Ici on va recuperer toutes les actions nomé Départ et les ajouter au tableau des action à faire
 	uint32_t actionIndex = 0;
 	do
 	{
