@@ -74,12 +74,12 @@ static double getTaux ( const json_el * const data, const uint32_t id )
 			continue;
 		}
 
-		uint16_t comparator;
+		double comparator;
 		switch ( (param_t)((int)*param) )
 		{
 			case TIME:
 			{
-				comparator = (uint16_t)*param;
+				comparator = getChronoMs ( );
 				break;
 			}
 			case CUPS:
@@ -94,7 +94,7 @@ static double getTaux ( const json_el * const data, const uint32_t id )
 		}
 
 		double *taux;
-		if ( !jsonGet ( data, *index, RATE, (void**)&taux, NULL ) )
+		if ( !jsonGet ( data, nextObjId, RATE, (void**)&taux, NULL ) )
 		{ // on à pas trouvé le taux... pas normal ça
 			logDebug ( "Taux not found\n" );
 			continue;
