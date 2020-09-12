@@ -30,6 +30,14 @@
 
 static uint32_t * stepDone = NULL; ///< used to store what steps was done
 
+////////////////////////////////////////////////////////////////////////////////
+/// \fn static double getTaux ( const json_el * const data, const uint32_t id );
+/// \param [ in ] data :  pointer on json main database
+/// \param [ in ] id : id of the step to evaluate
+/// \return the rate of point available for a specifi step at this moment in the
+///     game. 
+/// \note its the AI part of our software
+////////////////////////////////////////////////////////////////////////////////
 static double getTaux ( const json_el * const data, const uint32_t id )
 {
 	// recuperation de nombre de verres
@@ -201,7 +209,7 @@ int getStepId ( const json_el * const data, uint32_t * const stepId )
 	}
 
 	if ( *stepId == 0 )
-	{
+	{ // only for the first step or for a remake of the full game
 		if ( stepDone )
 		{
 			unsetFreeOnExit ( stepDone );
@@ -218,18 +226,20 @@ int getStepId ( const json_el * const data, uint32_t * const stepId )
 		memset ( stepDone, 0, sizeof ( *stepDone ) * data[ *strategieId ].length );
 	}
 		
-	uint32_t best = 0;
+	uint32_t best = 0; // a step ID can't be zero, because it's the stategy ID
 
+	// search the new step to do
 	for ( uint32_t i = 0; i < data[ *strategieId ].length; i++ )
 	{
 		if ( data[ *strategieId ].type[ i ] != jT( obj ) )
-		{
+		{ // if it's not an object.. we have a problem
 			continue;
 		}
 
+		// get id in the stategy array of the nex step
 		uint32_t tmp = *(uint32_t*) data[ *strategieId ].value[ i ];
 
-		// verify if we have already done step [ tmp ]
+		// verify if we have already done this step [ tmp ]
 		bool thisOneDone = false;
 		for ( uint32_t j = 0; j < data[ *strategieId ].length; j++ )
 		{
@@ -246,22 +256,22 @@ int getStepId ( const json_el * const data, uint32_t * const stepId )
 		}
 
 		if ( thisOneDone )
-		{
+		{ // if done we continue
 			continue;
 		}
 
 		if ( !best )
-		{
+		{ // if its the first step meet we saved it
 			best = tmp;
 		}
 		else if ( stepCmp ( data, best, tmp ) )
-		{
+		{ // else we compare the value of the two step (AI part here)
 			best = tmp;
 		}
 	}
 
 	if ( best )
-	{
+	{ // if we found a valid step to do
 		int i = 0;
 		while ( stepDone[ i ] )
 		{

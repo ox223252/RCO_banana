@@ -391,7 +391,7 @@ int main ( int argc, char * argv[] )
 		// if no action remainig for this step, search next available step
 		if ( !actionManagerCurrentNumber ( step ) )
 		{
-			// TODO calcul de la prochaine etape dans la strategie
+			// our AI search the best new step to do
 			step = actionStartStep ( );
 			
 			if ( step < 0 )
