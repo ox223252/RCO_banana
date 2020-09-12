@@ -328,39 +328,6 @@ int main ( int argc, char * argv[] )
 	actionManagerSetFd ( mcp23017.fd, pca9685.fd, dyna.fd );
 
 	// printf ( "\e[3;33m--> Don't forget to start detection\e[0m\n" );
-		// if ( !updateActionEnCours ( tabActionTotal, nbAction, &robot1 ) )
-		// {
-		// 	logVerbose ( "no more action remaining\n" );
-		// 	break;
-		// }
-
-		// if ( !flagAction.noDrive &&
-		// 	detectBlocage ( &robot1, 1000 ) )
-		// { // if engines are set to value and braking detected
-		// 	logVerbose ("BLOCAGE\n" );
-		// 	arreteTesMoteursSimone ( );
-		// }
-		// else if ( !flagAction.noDrive &&
-		// 	asservirVitesseGaucheDroite ( robot1.vitesseGaucheToSend, robot1.vitesseDroiteToSend, robot1.vitesseGauche, robot1.vitesseDroite ) )
-		// { // error occured
-		// 	logVerbose ( "%s\n ", strerror ( errno ) );
-		// }
-		// else if ( flagAction.driveScan &&
-		// 	_kbhit ( ) &&
-		// 	getchar ( ) )
-		// { // if we select action manageùent mode were we can set next action by keyboard key bressed
-		// 	robot1.xRobot = robot1.cible.xCible;
-		// 	robot1.yRobot = robot1.cible.yCible;
-		// 	robot1.orientationRobot = robot1.orientationVisee;
-		// }
-		// else if ( flagAction.driveWait )
-		// {
-		// 	// wait timeout
-		// }
-		// else
-		// {
-		// 	// nothing to be done yet
-		// }
 
 	if ( actionManagerInit ( jsonActionPath, &robot1) )
 	{
