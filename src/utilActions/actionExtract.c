@@ -74,11 +74,11 @@ static double getTaux ( const json_el * const data, const uint32_t id )
 		// on recupère l'id du l'objet 'i' dans le tableau data[*index]
 		uint32_t nextObjId = *(uint32_t*)data[ *index ].value[ i ];
 
-		if ( !jsonGet ( data, nextObjId, CONDITINON, (void**)&cond, NULL ) ||
-			!jsonGet ( data, nextObjId, VALUE, (void**)&value, NULL ) ||
-			!jsonGet ( data, nextObjId, PARAMETER, (void**)&param, NULL ) )
+		if ( !jsonGet ( data, nextObjId, RATE_CONDITINON, (void**)&cond, NULL ) ||
+			!jsonGet ( data, nextObjId, RATE_VALUE, (void**)&value, NULL ) ||
+			!jsonGet ( data, nextObjId, RATE_PARAMETER, (void**)&param, NULL ) )
 		{ // une des trois valeur precedente non trouvée
-			logDebug ( "Taux array not correct\n" );
+			logDebug ( "%s not correct\n", RATE_ARRAY );
 			continue;
 		}
 
@@ -104,7 +104,7 @@ static double getTaux ( const json_el * const data, const uint32_t id )
 		double *taux;
 		if ( !jsonGet ( data, nextObjId, RATE, (void**)&taux, NULL ) )
 		{ // on à pas trouvé le taux... pas normal ça
-			logDebug ( "Taux not found\n" );
+			logDebug ( "%s not found\n", RATE );
 			continue;
 		}
 
@@ -155,8 +155,8 @@ static inline int stepCmp (  const json_el * const data, const uint32_t a, const
 	double *b_points = NULL;
 
 
-	jsonGet ( data, a, "nbPoints", (void**)&a_points, NULL );
-	jsonGet ( data, b, "nbPoints", (void**)&b_points, NULL );
+	jsonGet ( data, a, STEP_POINTS, (void**)&a_points, NULL );
+	jsonGet ( data, b, STEP_POINTS, (void**)&b_points, NULL );
 
 	double a_taux = getTaux ( data, a );
 	double b_taux = getTaux ( data, b );
@@ -165,8 +165,8 @@ static inline int stepCmp (  const json_el * const data, const uint32_t a, const
 	{
 		char *a_name;
 		char *b_name;
-		jsonGet ( data, a, "nomEtape", (void**)&a_name, NULL );
-		jsonGet ( data, b, "nomEtape", (void**)&b_name, NULL );
+		jsonGet ( data, a, STEP_NAME, (void**)&a_name, NULL );
+		jsonGet ( data, b, STEP_NAME, (void**)&b_name, NULL );
 		logDebug ( "%s %lf : %lf\n", a_name, *a_points, a_taux );
 		logDebug ( "%s %lf : %lf\n", b_name, *b_points, b_taux );
 	}
@@ -196,7 +196,7 @@ int getStepId ( const json_el * const data, uint32_t * const stepId )
 	uint32_t * strategieId = 0;
 	JSON_TYPE type = jT( undefined );
 
-	if ( !jsonGetRecursive ( data, 0, "Strategie", (void*)&strategieId, &type ) )
+	if ( !jsonGetRecursive ( data, 0, STRATEGY, (void*)&strategieId, &type ) )
 	{ // no object found
 		logDebug ( "\n" );
 		return ( __LINE__ );
@@ -300,7 +300,7 @@ int getActionId ( const json_el * const data, const uint32_t stepId, uint32_t * 
 	uint32_t * sequenceId = NULL;
 
 	if ( ( sequenceId == NULL ) &&
-		!jsonGetRecursive ( data, stepId, "arraySequence", (void*)&sequenceId, &type ) )
+		!jsonGetRecursive ( data, stepId, ACTION_ARRAY, (void*)&sequenceId, &type ) )
 	{ // no object found
 		logDebug ( "\n" );
 		return ( __LINE__ );
@@ -337,17 +337,21 @@ int getNextActions ( const json_el * const data, const uint32_t actionId,
 		return ( __LINE__ );
 	}
 
-	char search[16] = "arrayGirl";
+	char search[32] = ""; // we search the next action from the next array or from the timeout array
 
 	if ( timeout )
 	{
-		sprintf ( search, "arrayTimeout" ); 
+		sprintf ( search, TIMEOUT_ARRAY ); 
+	}
+	else
+	{
+		sprintf ( search, NEXT_ARRAY ); 
 	}
 
 	JSON_TYPE type;
 	uint32_t *fils = NULL;
 
-	if ( !jsonGet ( data, actionId, search, (void**)&fils, &type ) )
+	if ( !jsonGet ( data, actionId, NEXT_ARRAY, (void**)&fils, &type ) )
 	{ // pas d'element'
 		return ( -1 );
 	}
@@ -375,11 +379,11 @@ int getNextActions ( const json_el * const data, const uint32_t actionId,
 
 	if ( !timeout )
 	{
-		sprintf ( search, "indiceFille" ); 
+		sprintf ( search, NEXT_ID ); 
 	}
 	else
 	{
-		sprintf ( search, "indiceTimeout" ); 
+		sprintf ( search, TIMEOUT_ID ); 
 	}
 
 	for ( uint32_t i = 0; i < data[ *fils ].length; i++ )
@@ -416,7 +420,7 @@ int getActionParams ( const json_el * const data, const uint32_t actionId, json_
 	uint32_t * paramArrayId = NULL;
 	JSON_TYPE type = jT( undefined );
 
-	if ( !jsonGetRecursive ( data, actionId, "arrayParam", (void*)&paramArrayId, &type ) )
+	if ( !jsonGetRecursive ( data, actionId, PARAM_ARRAY, (void*)&paramArrayId, &type ) )
 	{ // no object found
 		logDebug ( "\n" );
 		return ( __LINE__ );
@@ -436,13 +440,13 @@ int getActionParams ( const json_el * const data, const uint32_t actionId, json_
 
 		char * key = NULL;
 		char * value = NULL;
-		jsonGetRecursive ( data, paramId, "nomParam", (void*)&key, &type );
+		jsonGetRecursive ( data, paramId, PARAM_NAME, (void*)&key, &type );
 		if ( type != jT( str ) )
 		{ // key invalid
 			continue;
 		}
 
-		jsonGetRecursive ( data, paramId, "defaultValue", (void*)&value, &type );
+		jsonGetRecursive ( data, paramId, PARAM_VALUE, (void*)&value, &type );
 		jsonSet ( *out, 0, key, value, type );
 	}
 

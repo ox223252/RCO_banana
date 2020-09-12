@@ -25,11 +25,71 @@
 /// \copyright GPLv2
 ////////////////////////////////////////////////////////////////////////////////
 
-static const char CONDITINON[] = "condition";
-static const char PARAMETER[] = "param";
-static const char VALUE[] = "valeur";
+static const char STRATEGY[] = "Strategie";
+static const char STEP_NAME[] = "nomEtape";
+static const char STEP_POINTS[] = "nbPoints";
+static const char ACTION_ARRAY[] = "arraySequence";
 static const char RATE[] = "taux";
 static const char RATE_ARRAY[] = "TauxArray";
+static const char RATE_CONDITINON[] = "condition";
+static const char RATE_PARAMETER[] = "param";
+static const char RATE_VALUE[] = "valeur";
+static const char NEXT_ARRAY[] = "arrayGirl";
+static const char NEXT_ID[] = "indiceFille";
+static const char TIMEOUT_ARRAY[] = "arrayTimeout";
+static const char TIMEOUT_ID[] = "indiceTimeout";
+static const char PARAM_ARRAY[] = "arrayParam";
+static const char PARAM_NAME[] = "nomParam";
+static const char PARAM_VALUE[] = "defaultValue";
+
+/// \note a json strategy file contain an obect with a \see STRATEGY, a STRATEGY
+///     is an array of object each object is called STEP. Each STEP is an 
+///     independent collection of action stored in ACTION_ARRAY. Each action as
+///     is own parameters sotred in PARAM_ARRY
+/// \exemple of strategy file
+/// {
+///     STRATEGY: [
+///         {
+///             RATE_ARRAY: [
+///                 {
+///                     RATE_CONDITINON: float,
+///                     RATE_PARAMETER: float,
+///                     RATE: float,
+///                     RATE_VALUE: float
+///                 }
+///             ],
+///             ACTION_ARRAY: [
+///                 {
+///                     "arrayDaddy": [
+///                     ],
+///                     NEXT_ARRAY: [
+///                         {
+///                             NEXT_ID: 1
+///                         }
+///                     ],
+///                     PARAM_ARRAY: [
+///                     ],
+///                     TIMEOUT_ARRAY: [
+///                     ],
+///                     "blocante": false,
+///                     "indice": 0,
+///                     "nomAction": "Départ",
+///                     "xBloc": 81,
+///                     "yBloc": 299
+///                 }
+///             ],
+///             "color": "#aa007f",
+///             "dateMax": 10,
+///             "deadline": 100,
+///             STEP_POINTS: float,
+///             STEP_NAME: "Str",
+///             "tempsMax": 20,
+///             "tempsMoyen": 15,
+///             "xEtape": 174,
+///             "yEtape": 417
+///         }
+///     ]
+/// }
 
 typedef enum {
 	UT, // up than
